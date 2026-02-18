@@ -1011,3 +1011,19 @@ entries:
     path: "skills/scientific-computing/nextflow-workflow-engine/SKILL.md"
     description: "Dataflow-based scientific workflow engine for scalable bioinformatics pipelines. Nextflow defines processes (containerized tasks) connected by channels (data queues); supports local, HPC (SLURM/SGE), cloud (AWS/GCP/Azure), and Kubernetes execution with a single config change. Powers the nf-core community pipeline library. Use Snakemake instead for rule-based workflows with Python integration; use Nextflow for containerized, cloud-native, and nf-core-based pipelines."
     date_added: "2026-02-18"
+
+  - name: "mofaplus-multi-omics"
+    type: skill
+    sub_type: pipeline
+    category: "systems-biology-multiomics"
+    path: "skills/systems-biology-multiomics/mofaplus-multi-omics/SKILL.md"
+    description: "Multi-Omics Factor Analysis v2 (MOFA+) with mofapy2. Jointly decompose multiple omics layers (scRNA-seq, ATAC-seq, proteomics, methylation) into latent factors capturing major sources of biological variation. Supports multi-group designs (patients, conditions). Pipeline: prepare AnnData views → create MOFA object → train → inspect variance explained → correlate factors with metadata → visualize and cluster → enrichment of top loadings."
+    date_added: "2026-02-18"
+
+  - name: "trackpy-particle-tracking"
+    type: skill
+    sub_type: toolkit
+    category: "cell-biology"
+    path: "skills/cell-biology/trackpy-particle-tracking/SKILL.md"
+    description: "Python library for single-particle tracking (SPT) in video microscopy using the Crocker-Grier algorithm. Locates fluorescent spots with subpixel accuracy, links positions into trajectories, filters short tracks, and computes mean squared displacement (MSD) and diffusion coefficients. Supports 2D and 3D tracking, drift correction, and motion classification (confined, Brownian, directed). Integrates with pims for TIF stacks, AVI, and image series. Use TrackMate instead when you need a GUI or manual track curation."
+    date_added: "2026-02-18"
