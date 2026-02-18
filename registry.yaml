@@ -555,3 +555,59 @@ entries:
     path: "skills/structural-biology-drug-discovery/deepchem/SKILL.md"
     description: "Deep learning framework for drug discovery and materials science. 60+ models (GCN, GAT, AttentiveFP, MPNN, DMPNN, ChemBERTa, GROVER), 50+ molecular featurizers, MoleculeNet benchmarks, hyperparameter optimization, transfer learning. Unified load-featurize-split-train-evaluate API. For fingerprint-only cheminformatics use rdkit-cheminformatics; for featurization hub without training use molfeat-molecular-featurization."
     date_added: "2026-02-17"
+
+  - name: "ensembl-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/ensembl-database/SKILL.md"
+    description: "Query Ensembl REST API for gene/transcript/variant annotations across 300+ species. Retrieve gene info by symbol/ID, sequence, cross-references (HGNC, RefSeq, UniProt), variants, regulatory features, comparative genomics. For bulk local access use pyensembl; for pathway lookups use kegg-database or reactome-database."
+    date_added: "2026-02-18"
+
+  - name: "clinvar-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/clinvar-database/SKILL.md"
+    description: "Query NCBI ClinVar via E-utilities REST API for clinical significance, pathogenicity classifications, and disease associations of genetic variants. Search by gene, rsID, condition, or review status. Returns structured variant records: ClinSig, submitter data, conditions, HGVS expressions. For GWAS associations use gwas-database; for variant consequence prediction use Ensembl VEP."
+    date_added: "2026-02-18"
+
+  - name: "gene-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/gene-database/SKILL.md"
+    description: "Query NCBI Gene via E-utilities for curated gene records across 1M+ taxa. Retrieve official gene symbols, aliases, RefSeq accessions, summary descriptions, genomic coordinates, GO annotations, and interaction data. Use for gene ID resolution, cross-species queries, and gene function summaries. For sequence retrieval use Ensembl; for expression data use geo-database."
+    date_added: "2026-02-18"
+
+  - name: "geo-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/geo-database/SKILL.md"
+    description: "Query NCBI Gene Expression Omnibus (GEO) for gene expression datasets and sample metadata via GEOparse Python library and E-utilities. Search datasets by keyword/organism/platform, download GSE series matrices, parse GPL platform annotations, extract GSM sample metadata, and load expression matrices into pandas. For single-cell data use cellxgene-census; for programmatic multi-DB access use gget-genomic-databases."
+    date_added: "2026-02-18"
+
+  - name: "opentargets-database"
+    type: skill
+    sub_type: database
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/opentargets-database/SKILL.md"
+    description: "Query Open Targets Platform GraphQL API for target-disease associations, evidence scores, drug-target links, and safety data. Search targets by gene symbol, diseases by EFO ID, retrieve evidence scores from 20+ data sources, drug mechanisms, and tractability assessments. For ChEMBL bioactivity use chembl-database-bioactivity; for clinical trials use clinicaltrials-database-search."
+    date_added: "2026-02-18"
+
+  - name: "zinc-database"
+    type: skill
+    sub_type: database
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/zinc-database/SKILL.md"
+    description: "Query ZINC15/ZINC22 virtual compound libraries for drug discovery. Search purchasable lead-like, fragment-like, and drug-like compounds by molecular weight, logP, reactivity class, or SMILES similarity. Download 3D compound sets for docking, retrieve SMILES for in-silico screening. ZINC20 contains 1.4B compounds; purchasable subset is 750M. For bioactivity data use chembl-database-bioactivity; for approved drugs use drugbank-database-access."
+    date_added: "2026-02-18"
+
+  - name: "fda-database"
+    type: skill
+    sub_type: database
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/fda-database/SKILL.md"
+    description: "Query openFDA REST API for drug adverse event reports (FAERS), drug labeling, product information, recalls, and enforcement actions. Search by drug name, active ingredient, adverse event term (MedDRA), or NDC code. No API key needed for 1000 req/day; free key for 120,000 req/day. For clinical trial data use clinicaltrials-database-search; for drug structures use drugbank-database-access or chembl-database-bioactivity."
+    date_added: "2026-02-18"

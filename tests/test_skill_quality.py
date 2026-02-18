@@ -240,3 +240,138 @@ class TestContentDepth:
         assert has_url, (
             f"[{entry['name']}] No URLs found in '## References' or '## Further Reading'"
         )
+
+    @pytest.mark.parametrize("entry", ALL_ENTRIES, ids=entry_id)
+    def test_references_minimum_three_items(self, entry):
+        """References or Further Reading must contain at least 3 reference items."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+
+        ref_match = re.search(
+            r"^## References\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        further_match = re.search(
+            r"^## Further Reading\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+
+        section_text = ""
+        if ref_match:
+            section_text += ref_match.group(1)
+        if further_match:
+            section_text += further_match.group(1)
+
+        # Count reference items: lines starting with - or a number (1. 2. etc.)
+        items = re.findall(r"^\s*[-*]\s+\S|^\s*\d+\.\s+\S", section_text, re.MULTILINE)
+        assert len(items) >= 3, (
+            f"[{entry['name']}] References/Further Reading has {len(items)} items, minimum is 3"
+        )
+
+    @pytest.mark.parametrize("entry", CODE_ENTRIES, ids=entry_id)
+    def test_when_to_use_minimum_items(self, entry):
+        """When to Use section must have at least 5 bullet-point items."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+
+        match = re.search(
+            r"^## When to Use\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        if not match:
+            pytest.fail(f"[{entry['name']}] Missing '## When to Use' section")
+
+        bullets = re.findall(r"^\s*[-*]", match.group(1), re.MULTILINE)
+        assert len(bullets) >= 5, (
+            f"[{entry['name']}] '## When to Use' has {len(bullets)} items, minimum is 5"
+        )
+
+    @pytest.mark.parametrize("entry", CODE_ENTRIES, ids=entry_id)
+    def test_key_parameters_minimum_rows(self, entry):
+        """Key Parameters table must have at least 5 data rows."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+
+        match = re.search(
+            r"^## Key Parameters\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        if not match:
+            pytest.fail(f"[{entry['name']}] Missing '## Key Parameters' section")
+
+        # Count table rows: lines starting with | but NOT the header or separator
+        section = match.group(1)
+        table_rows = re.findall(r"^\|[^|]+\|", section, re.MULTILINE)
+        # Exclude header row (contains letters) and separator row (contains dashes only)
+        data_rows = [r for r in table_rows
+                     if not re.match(r"^\|[-| :]+\|$", r.strip())]
+        # First row is the header, remaining are data rows
+        n_data = max(0, len(data_rows) - 1)
+        assert n_data >= 5, (
+            f"[{entry['name']}] '## Key Parameters' has {n_data} data rows, minimum is 5"
+        )
+
+    @pytest.mark.parametrize("entry", CODE_ENTRIES, ids=entry_id)
+    def test_troubleshooting_minimum_rows(self, entry):
+        """Troubleshooting table must have at least 5 data rows."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+
+        match = re.search(
+            r"^## Troubleshooting\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        if not match:
+            pytest.fail(f"[{entry['name']}] Missing '## Troubleshooting' section")
+
+        section = match.group(1)
+        table_rows = re.findall(r"^\|[^|]+\|", section, re.MULTILINE)
+        data_rows = [r for r in table_rows
+                     if not re.match(r"^\|[-| :]+\|$", r.strip())]
+        n_data = max(0, len(data_rows) - 1)
+        assert n_data >= 5, (
+            f"[{entry['name']}] '## Troubleshooting' has {n_data} data rows, minimum is 5"
+        )
+
+
+# ---------------------------------------------------------------------------
+# TestDatabaseAndToolkitStructure
+# ---------------------------------------------------------------------------
+
+DATABASE_ENTRIES = [e for e in ALL_ENTRIES if e.get("sub_type") == "database"]
+TOOLKIT_AND_DB_ENTRIES = [e for e in ALL_ENTRIES if e.get("sub_type") in {"database", "toolkit"}]
+
+
+class TestDatabaseAndToolkitStructure:
+    """Verify database and toolkit specific structural requirements."""
+
+    @pytest.mark.parametrize("entry", TOOLKIT_AND_DB_ENTRIES, ids=entry_id)
+    def test_has_core_api_section(self, entry):
+        """Database and toolkit entries must have '## Core API' or '## Workflow' section."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+        has_core_api = "## Core API" in text
+        has_workflow = "## Workflow" in text
+        assert has_core_api or has_workflow, (
+            f"[{entry['name']}] Missing '## Core API' or '## Workflow' section "
+            "(required for database/toolkit sub_types)"
+        )
+
+    @pytest.mark.parametrize("entry", TOOLKIT_AND_DB_ENTRIES, ids=entry_id)
+    def test_has_common_workflows_or_recipes(self, entry):
+        """Database and toolkit entries must have Common Workflows or Common Recipes."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        sections = set(re.findall(r"^## .+", path.read_text(encoding="utf-8"), re.MULTILINE))
+        has_workflows = "## Common Workflows" in sections
+        has_recipes = "## Common Recipes" in sections
+        assert has_workflows or has_recipes, (
+            f"[{entry['name']}] Missing both '## Common Workflows' and '## Common Recipes'; "
+            "at least one is required for database/toolkit entries"
+        )
