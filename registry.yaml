@@ -667,3 +667,115 @@ entries:
     path: "skills/lab-automation/protocolsio-integration/SKILL.md"
     description: "Access protocols.io public library via REST API. Search and retrieve experimental protocols (wet-lab, bioinformatics, clinical) by keyword, DOI, or category. Download step-by-step protocol content including reagents, materials, equipment, and timing. Free public access; authentication needed for private protocols or publishing. Use alongside opentrons-integration or benchling-integration to programmatically execute downloaded protocols."
     date_added: "2026-02-18"
+
+  - name: "omero-integration"
+    type: skill
+    sub_type: toolkit
+    category: "cell-biology"
+    path: "skills/cell-biology/omero-integration/SKILL.md"
+    description: "OMERO is an open-source platform for biological image data management. Use the omero-py Python client to connect to an OMERO server, search and retrieve images as numpy arrays, annotate images with tags and key-value pairs, manage ROIs, and integrate OMERO image data into downstream analysis pipelines — all programmatically without the OMERO desktop GUI."
+    date_added: "2026-02-18"
+
+  - name: "pathml"
+    type: skill
+    sub_type: pipeline
+    category: "cell-biology"
+    path: "skills/cell-biology/pathml/SKILL.md"
+    description: "PathML is an open-source toolkit for computational pathology. Use it to process whole-slide images (WSIs): load slides, extract tiles, apply stain normalization and nuclear segmentation preprocessing, extract features, and train machine learning models. Supports H&E and multiplex imaging. Ideal for building end-to-end digital pathology pipelines from raw WSI files to quantitative outputs."
+    date_added: "2026-02-18"
+
+  - name: "scientific-visualization"
+    type: skill
+    sub_type: guide
+    category: "data-visualization"
+    path: "skills/data-visualization/scientific-visualization/SKILL.md"
+    description: "Guide for choosing and creating scientific visualizations for publications and presentations. Covers selecting chart types for different data structures, color theory for accessibility and print, figure composition, journal-specific formatting requirements (Nature, Cell, ACS), and common pitfalls that undermine scientific credibility. Consult this guide when deciding how to visualize your data or preparing figures for submission."
+    date_added: "2026-02-18"
+
+  - name: "etetoolkit"
+    type: skill
+    sub_type: toolkit
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/etetoolkit/SKILL.md"
+    description: "ETE Toolkit (ETE3) is a Python environment for phylogenetic tree analysis, manipulation, and visualization. Parse Newick/NHX/PhyloXML trees, traverse and annotate nodes, render publication-quality figures with TreeStyle/NodeStyle, integrate NCBI taxonomy for taxon-aware operations, and run PhyloTree workflows for comparative genomics. Use for building species trees, gene family evolution analysis, and annotated tree figures."
+    date_added: "2026-02-18"
+
+  - name: "geniml"
+    type: skill
+    sub_type: toolkit
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/geniml/SKILL.md"
+    description: "Geniml is a Python library for genomic interval machine learning. Train and apply region2vec embeddings to convert BED file regions into numeric vectors, load and index genomic interval datasets for ML pipelines, search embedding spaces with BEDSpace, and evaluate embedding quality. Use for chromatin accessibility clustering, regulatory element classification, cross-sample region comparison, and building ML models on genomic intervals."
+    date_added: "2026-02-18"
+
+  - name: "gtars"
+    type: skill
+    sub_type: toolkit
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/gtars/SKILL.md"
+    description: "GTARS is a Rust-backed Python library for fast genomic token arithmetic and BED file processing. Perform high-performance BED file I/O, genomic interval set operations (intersect, merge, complement, subtract), tokenization of genomic regions against a universe, and universe construction. Use for preprocessing large BED file collections, building token vocabularies for ML pipelines, and computing interval statistics at scale."
+    date_added: "2026-02-18"
+
+  - name: "pylabrobot"
+    type: skill
+    sub_type: toolkit
+    category: "lab-automation"
+    path: "skills/lab-automation/pylabrobot/SKILL.md"
+    description: "PyLabRobot is a hardware-agnostic Python library for liquid handling robots. Use it to write portable automation scripts that run on Hamilton STAR, Tecan Freedom EVO, Opentrons OT-2, or a simulation backend — without vendor lock-in. Ideal for protocol automation, method development, plate reformatting, serial dilutions, and integrating liquid handlers into larger Python-based lab workflows."
+    date_added: "2026-02-18"
+
+  - name: "uspto-database"
+    type: skill
+    sub_type: database
+    category: "scientific-computing"
+    path: "skills/scientific-computing/uspto-database/SKILL.md"
+    description: "Access US Patent and Trademark Office (USPTO) patent data via the PatentsView REST API and Google Patents Public Data (BigQuery). Use it to search patents by inventor, assignee, CPC classification, or keywords; download full patent metadata and claims; analyze patent portfolios; and track technology trends. Ideal for IP landscape analysis, competitor monitoring, prior art searches, and technology forecasting in life sciences and biotech."
+    date_added: "2026-02-18"
+
+  - name: "citation-management"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/citation-management/SKILL.md"
+    description: "Guide for selecting a reference manager, organizing citations, and applying citation styles in scientific writing. Covers Zotero, Mendeley, EndNote, and Paperpile comparison; APA, Vancouver, ACS, and Nature citation styles; DOI management; citation tracking; and integration with Word, Google Docs, and LaTeX. Use when setting up a reference workflow, switching tools, or troubleshooting citation formatting."
+    date_added: "2026-02-18"
+
+  - name: "literature-review"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/literature-review/SKILL.md"
+    description: "Guide for conducting systematic, scoping, and narrative literature reviews. Covers PRISMA and PRISMA-ScR protocols, structured search strategy design (Boolean operators, MeSH terms), database selection (PubMed, Scopus, Web of Science, Embase), title/abstract/full-text screening, data extraction templates, evidence synthesis (narrative, meta-analysis, thematic), and reporting standards. Use when planning or executing a formal literature review."
+    date_added: "2026-02-18"
+
+  - name: "scientific-critical-thinking"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/scientific-critical-thinking/SKILL.md"
+    description: "Guide for evaluating scientific evidence and claims. Covers study design hierarchy (RCT to expert opinion), effect size interpretation (OR, RR, NNT, Cohen's d), confounding identification, p-value limitations vs clinical significance, GRADE evidence quality assessment, reproducibility, and bias types (selection, information, confounding, reporting). Use when reading a paper, evaluating a preprint, or assessing claims in a literature review."
+    date_added: "2026-02-18"
+
+  - name: "diffdock"
+    type: skill
+    sub_type: pipeline
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/diffdock/SKILL.md"
+    description: "DiffDock is a diffusion-based molecular docking tool that predicts protein-ligand binding poses without requiring a predefined binding site. Use it when the binding site is unknown, when traditional docking fails, or when exploring multiple binding modes. Pipeline: prepare protein (PDB) and ligand (SMILES/SDF) inputs → run DiffDock inference → analyze confidence-ranked poses → visualize in PyMOL or NGLview."
+    date_added: "2026-02-18"
+
+  - name: "rowan"
+    type: skill
+    sub_type: toolkit
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/rowan/SKILL.md"
+    description: "Rowan is a cloud-based computational chemistry platform providing quantum chemistry calculations via a Python SDK. Use it to run geometry optimization, conformer generation, torsional scans, and energy minimization with DFT or semiempirical methods, and retrieve molecular properties (dipole moment, partial charges, frontier orbital energies) — without managing local quantum chemistry software or HPC clusters."
+    date_added: "2026-02-18"
+
+  - name: "torchdrug"
+    type: skill
+    sub_type: toolkit
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/torchdrug/SKILL.md"
+    description: "TorchDrug is a PyTorch-based machine learning platform for drug discovery. Use it for graph-based molecular representation learning, molecular property prediction (ADMET, activity), retrosynthesis prediction, drug-target interaction (DTI) modeling, and pretraining on large molecular datasets. Provides GNN layers (GraphConv, GAT, MPNN), pretrained models, and benchmark datasets in a unified PyTorch-compatible API."
+    date_added: "2026-02-18"
