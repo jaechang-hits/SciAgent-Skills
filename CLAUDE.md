@@ -198,6 +198,24 @@ entries:
 
 ---
 
+### Step 6. Validate
+
+After creating or modifying an entry, run the test suite:
+
+```bash
+pixi run test
+```
+
+Tests verify registry integrity, frontmatter fields, required sections by sub-type, and content depth (code block counts, line counts). Fix any failures before finalizing.
+
+For quick registry-only validation:
+
+```bash
+pixi run validate
+```
+
+---
+
 ## Quality Checklist
 
 Before finalizing any entry, verify:

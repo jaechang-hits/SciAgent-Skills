@@ -69,7 +69,7 @@ entries:
   - name: "matplotlib-scientific-plotting"
     type: skill
     sub_type: toolkit
-    category: "data-visualization"
+    category: "biostatistics"
     path: "skills/biostatistics/matplotlib-scientific-plotting/SKILL.md"
     description: "Low-level Python plotting for publication-quality scientific figures: line, scatter, bar, heatmap, 3D, multi-panel layouts, export to PNG/PDF/SVG"
     date_added: "2026-02-16"
