@@ -971,3 +971,19 @@ entries:
     path: "skills/genomics-bioinformatics/featurecounts-rna-counting/SKILL.md"
     description: "Counts aligned RNA-seq reads overlapping gene features in a GTF annotation. Takes sorted BAM files from STAR alignment and a GTF file; outputs a tab-delimited count matrix per gene across all samples. Handles strandedness (0=unstranded, 1=stranded, 2=reverse-stranded), paired-end, and multi-sample batch counting in a single command. Use Salmon instead for alignment-free quantification; use featureCounts when STAR BAMs already exist and a gene-level count matrix is needed."
     date_added: "2026-02-18"
+
+  - name: "mdanalysis-trajectory"
+    type: skill
+    sub_type: toolkit
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/mdanalysis-trajectory/SKILL.md"
+    description: "Python library for analyzing molecular dynamics (MD) trajectories from GROMACS, AMBER, NAMD, CHARMM, and LAMMPS. Reads topology and trajectory files into Universe objects; supports RMSD, RMSF, radius of gyration, contact maps, hydrogen bond analysis, PCA, and custom distance/angle calculations across millions of frames. Use for structural analysis after MD simulations; use OpenMM or GROMACS directly for running simulations."
+    date_added: "2026-02-18"
+
+  - name: "plink2-gwas-analysis"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/plink2-gwas-analysis/SKILL.md"
+    description: "Genome-wide association study (GWAS) and population genetics analysis tool. Processes PLINK (.bed/.bim/.fam), VCF, and BGEN files; performs QC (MAF, HWE, missingness), identity-by-descent estimation, principal component analysis, and linear/logistic regression GWAS. Outputs Manhattan-plot-ready summary statistics. Use regenie or SAIGE instead for very large biobanks (>100k samples) with mixed models."
+    date_added: "2026-02-18"
