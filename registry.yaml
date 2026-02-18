@@ -931,3 +931,19 @@ entries:
     path: "skills/genomics-bioinformatics/gseapy-gene-enrichment/SKILL.md"
     description: "Gene set enrichment analysis (GSEA) and over-representation analysis (ORA) for RNA-seq and proteomics data. Wraps Enrichr API for ORA against MSigDB, KEGG, GO, and 200+ gene set databases; implements preranked GSEA for ranked gene lists from differential expression. Outputs enrichment tables and GSEA running-score plots. Use after DESeq2 or edgeR for pathway-level interpretation of differential expression results."
     date_added: "2026-02-18"
+
+  - name: "cellpose-cell-segmentation"
+    type: skill
+    sub_type: pipeline
+    category: "cell-biology"
+    path: "skills/cell-biology/cellpose-cell-segmentation/SKILL.md"
+    description: "Deep learning cell and nucleus segmentation from fluorescence and brightfield microscopy images. Uses pre-trained models (cyto3, nuclei, tissuenet) and a generalist flow-based algorithm that segments cells without requiring retraining on new image types. Outputs label masks for downstream morphology measurement and tracking. Use scikit-image watershed for rule-based segmentation; use Cellpose when deep learning generalization across staining conditions is needed."
+    date_added: "2026-02-18"
+
+  - name: "bwa-mem2-dna-aligner"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/bwa-mem2-dna-aligner/SKILL.md"
+    description: "Fast short-read DNA aligner for whole-genome, whole-exome, and ChIP-seq alignment to a reference genome. BWA-MEM2 is the 2× faster successor to BWA-MEM; outputs SAM/BAM with read group headers required by GATK. Produces primary alignments with supplementary records for chimeric reads. Use STAR instead for RNA-seq splice-aware alignment; use Bowtie2 as an alternative with comparable accuracy."
+    date_added: "2026-02-18"
