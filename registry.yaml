@@ -1027,3 +1027,19 @@ entries:
     path: "skills/cell-biology/trackpy-particle-tracking/SKILL.md"
     description: "Python library for single-particle tracking (SPT) in video microscopy using the Crocker-Grier algorithm. Locates fluorescent spots with subpixel accuracy, links positions into trajectories, filters short tracks, and computes mean squared displacement (MSD) and diffusion coefficients. Supports 2D and 3D tracking, drift correction, and motion classification (confined, Brownian, directed). Integrates with pims for TIF stacks, AVI, and image series. Use TrackMate instead when you need a GUI or manual track curation."
     date_added: "2026-02-18"
+
+  - name: "spikeinterface-electrophysiology"
+    type: skill
+    sub_type: toolkit
+    category: "scientific-computing"
+    path: "skills/scientific-computing/spikeinterface-electrophysiology/SKILL.md"
+    description: "Unified Python framework for extracellular electrophysiology. Load recordings from 20+ formats (SpikeGLX, OpenEphys, NWB, Intan, Maxwell, Blackrock), preprocess signals, run 10+ spike sorters (Kilosort4, SpykingCircus2, Tridesclous, MountainSort5) with a single API, compute quality metrics (SNR, ISI violations, firing rate, amplitude cutoff), compare sorter outputs, and export to NWB or Phy. Use for format-agnostic and multi-sorter workflows. For Neuropixels-specific Kilosort4 workflows use neuropixels-analysis."
+    date_added: "2026-02-18"
+
+  - name: "seaborn-statistical-plots"
+    type: skill
+    sub_type: toolkit
+    category: "data-visualization"
+    path: "skills/data-visualization/seaborn-statistical-plots/SKILL.md"
+    description: "Statistical visualization library built on matplotlib with native pandas DataFrame support. Automatic aggregation, confidence intervals, and grouping for distribution plots (histplot, kdeplot), categorical comparisons (boxplot, violinplot, stripplot), relational plots (scatterplot, lineplot), regression plots (regplot, lmplot), matrix plots (heatmap, clustermap), and multi-variable grids (pairplot, jointplot, FacetGrid). Use seaborn for statistical summaries with minimal code; use matplotlib for fine-grained figure control; use plotly for interactive HTML output."
+    date_added: "2026-02-18"
