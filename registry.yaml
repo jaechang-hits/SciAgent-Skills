@@ -1003,3 +1003,11 @@ entries:
     path: "skills/cell-biology/opencv-bioimage-analysis/SKILL.md"
     description: "Computer vision library for bio-image preprocessing, feature detection, and real-time microscopy analysis. Performs color space conversion, morphological operations, contour/blob detection, template matching, and optical flow on fluorescence and brightfield images. 10-100× faster than pure Python implementations using optimized C++ kernels. Use scikit-image for scientific morphometry and regionprops; use OpenCV for real-time processing, video, and classical feature extraction pipelines."
     date_added: "2026-02-18"
+
+  - name: "nextflow-workflow-engine"
+    type: skill
+    sub_type: toolkit
+    category: "scientific-computing"
+    path: "skills/scientific-computing/nextflow-workflow-engine/SKILL.md"
+    description: "Dataflow-based scientific workflow engine for scalable bioinformatics pipelines. Nextflow defines processes (containerized tasks) connected by channels (data queues); supports local, HPC (SLURM/SGE), cloud (AWS/GCP/Azure), and Kubernetes execution with a single config change. Powers the nf-core community pipeline library. Use Snakemake instead for rule-based workflows with Python integration; use Nextflow for containerized, cloud-native, and nf-core-based pipelines."
+    date_added: "2026-02-18"

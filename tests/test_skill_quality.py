@@ -191,6 +191,45 @@ class TestContentDepth:
     """Verify code block counts and line counts meet minimum thresholds."""
 
     @pytest.mark.parametrize("entry", PIPELINE_ENTRIES, ids=entry_id)
+    def test_pipeline_workflow_steps_have_code(self, entry):
+        """Every ### Step N: in the Workflow section must contain at least one code block."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+        workflow_match = re.search(
+            r"^## Workflow\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        if not workflow_match:
+            return  # no Workflow section — OK for some pipelines
+        steps = re.split(r"^### Step \d", workflow_match.group(1), flags=re.MULTILINE)
+        for i, step in enumerate(steps[1:], 1):
+            has_code = "```" in step
+            assert has_code, (
+                f"[{entry['name']}] Workflow Step {i} has no code block"
+            )
+
+    @pytest.mark.parametrize("entry", TOOLKIT_ENTRIES, ids=entry_id)
+    def test_toolkit_core_api_modules_have_code(self, entry):
+        """Every ### Module / ### Query section in Core API must have a code block."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+        core_api_match = re.search(
+            r"^## Core API\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        if not core_api_match:
+            return  # no Core API section — other test catches this
+        modules = re.split(r"^### ", core_api_match.group(1), flags=re.MULTILINE)
+        for mod in modules[1:]:
+            mod_name = mod.split("\n")[0].strip()
+            has_code = "```" in mod
+            assert has_code, (
+                f"[{entry['name']}] Core API module '{mod_name}' has no code block"
+            )
+
+    @pytest.mark.parametrize("entry", PIPELINE_ENTRIES, ids=entry_id)
     def test_pipeline_code_blocks(self, entry):
         path = ROOT / entry["path"]
         if not path.exists():
