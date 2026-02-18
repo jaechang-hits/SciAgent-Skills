@@ -33,7 +33,7 @@ entries:
     date_added: "2026-02-16"
   - name: "rdkit-cheminformatics"
     type: skill
-    sub_type: toolkit
+    sub_type: pipeline
     category: "structural-biology-drug-discovery"
     path: "skills/structural-biology-drug-discovery/rdkit-cheminformatics/SKILL.md"
     description: "Cheminformatics toolkit for molecular analysis: SMILES/SDF parsing, descriptors, fingerprints, similarity search, substructure filtering, drug-likeness, 3D conformers"
@@ -850,4 +850,20 @@ entries:
     category: "biostatistics"
     path: "skills/biostatistics/pyhealth/SKILL.md"
     description: "PyHealth is a Python library for healthcare machine learning. Build clinical prediction models from EHR (Electronic Health Record) data: process MIMIC-III/IV, eICU, and OMOP-CDM datasets, encode medical codes (ICD, ATC, NDC), construct patient-level datasets, and train models (Transformer, RETAIN, GRASP, MedBERT) for tasks including mortality prediction, drug recommendation, readmission, and diagnosis prediction. Alternatives: FIDDLE (EHR preprocessing only), clinical-longformer (NLP on clinical notes only), ehr-ml (EHR embedding only)."
+    date_added: "2026-02-18"
+
+  - name: "samtools-bam-processing"
+    type: skill
+    sub_type: toolkit
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/samtools-bam-processing/SKILL.md"
+    description: "Command-line toolkit for SAM/BAM/CRAM alignment file manipulation. Sort, index, convert, filter, and QC sequencing alignments. Core commands: view (filter/convert), sort, index, flagstat, stats, depth, markdup, merge. Required for all NGS pipelines between alignment and variant calling or peak calling. Use pysam for Python-native BAM access; use deeptools for normalized coverage tracks."
+    date_added: "2026-02-18"
+
+  - name: "bedtools-genomic-intervals"
+    type: skill
+    sub_type: toolkit
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/bedtools-genomic-intervals/SKILL.md"
+    description: "Toolkit for genomic interval operations on BED, BAM, GFF, VCF files. Find overlapping regions, merge adjacent intervals, calculate coverage depth, extract FASTA sequences, find nearest features, and manipulate interval coordinates. Essential for ChIP-seq peak annotation, target region filtering, and genome arithmetic. Use tabix for indexed single-region queries; use deeptools for normalized bigWig coverage."
     date_added: "2026-02-18"
