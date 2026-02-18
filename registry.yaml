@@ -1106,3 +1106,19 @@ entries:
     path: "skills/genomics-bioinformatics/snpeff-variant-annotation/SKILL.md"
     description: "Annotate and filter genetic variants in VCF files with SnpEff (functional effect prediction: HIGH/MODERATE/LOW/MODIFIER impact, gene, HGVS) and SnpSift (filter by impact, AF, ClinVar pathogenicity; add dbSNP rsIDs; extract fields to TSV). Java CLI with Python cyvcf2 integration. Use ANNOVAR for multi-database annotation; use Ensembl VEP for REST API annotation."
     date_added: "2026-02-18"
+
+  - name: "maxquant-proteomics"
+    type: skill
+    sub_type: pipeline
+    category: "proteomics-protein-engineering"
+    path: "skills/proteomics-protein-engineering/maxquant-proteomics/SKILL.md"
+    description: "MaxQuant + Perseus proteomics pipeline: configure and run MaxQuant for LFQ and SILAC; parse proteinGroups.txt; filter contaminants/decoys; log2-transform and median-normalize LFQ intensities; impute MNAR missing values; t-test with BH FDR correction; volcano plot; GO/pathway enrichment. Use Proteome Discoverer for Thermo instrument-native processing; FragPipe/MSFragger for GPU-accelerated database search."
+    date_added: "2026-02-18"
+
+  - name: "opentrons-protocol-api"
+    type: skill
+    sub_type: toolkit
+    category: "lab-automation"
+    path: "skills/lab-automation/opentrons-protocol-api/SKILL.md"
+    description: "Python Protocol API v2 for Opentrons OT-2 and Flex liquid handling robots. Deck setup, pipette operations (aspirate/dispense/transfer/distribute/consolidate), labware and liquid tracking, hardware module control (thermocycler, heater-shaker, magnetic, temperature). Simulate locally with opentrons_simulate before uploading. Use PyLabRobot for multi-vendor (Hamilton, Tecan) portability."
+    date_added: "2026-02-18"
