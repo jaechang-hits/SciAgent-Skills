@@ -611,3 +611,59 @@ entries:
     path: "skills/structural-biology-drug-discovery/fda-database/SKILL.md"
     description: "Query openFDA REST API for drug adverse event reports (FAERS), drug labeling, product information, recalls, and enforcement actions. Search by drug name, active ingredient, adverse event term (MedDRA), or NDC code. No API key needed for 1000 req/day; free key for 120,000 req/day. For clinical trial data use clinicaltrials-database-search; for drug structures use drugbank-database-access or chembl-database-bioactivity."
     date_added: "2026-02-18"
+
+  - name: "openalex-database"
+    type: skill
+    sub_type: database
+    category: "scientific-writing"
+    path: "skills/scientific-writing/openalex-database/SKILL.md"
+    description: "Query OpenAlex REST API for scholarly literature — 250M+ works, authors, institutions, journals, and concepts. Search by title/abstract keywords, author, DOI, ORCID, or OpenAlex ID. Filter by year, open access status, citation count, or field. Retrieve citations, references, and author disambiguation. Free, no authentication required. For PubMed biomedical search use pubmed-database; for bioRxiv preprints use biorxiv-database."
+    date_added: "2026-02-18"
+
+  - name: "biorxiv-database"
+    type: skill
+    sub_type: database
+    category: "scientific-writing"
+    path: "skills/scientific-writing/biorxiv-database/SKILL.md"
+    description: "Query bioRxiv and medRxiv preprint servers via REST API for biology and health science preprints. Search by DOI, category, or date range. Retrieve metadata (title, abstract, authors, category, DOI, version history) and download full-text PDFs. No authentication required. For peer-reviewed biomedical literature use pubmed-database; for broader scholarly search use openalex-database."
+    date_added: "2026-02-18"
+
+  - name: "cosmic-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/cosmic-database/SKILL.md"
+    description: "Query COSMIC (Catalogue Of Somatic Mutations In Cancer) for cancer somatic mutations, gene census data, mutational signatures, drug resistance variants, and cancer gene annotations. REST API v3.1 supports gene/sample/variant queries. Free registration required. For germline clinical variants use clinvar-database; for drug-target data use opentargets-database or chembl-database-bioactivity."
+    date_added: "2026-02-18"
+
+  - name: "brenda-database"
+    type: skill
+    sub_type: database
+    category: "systems-biology-multiomics"
+    path: "skills/systems-biology-multiomics/brenda-database/SKILL.md"
+    description: "Query BRENDA Enzyme Database for kinetic parameters (Km, Vmax, kcat, Ki), enzyme classifications, substrate specificity, inhibitors, cofactors, and organism-specific enzyme data via SOAP/REST API. 80,000+ enzyme entries, 7M+ kinetic values. Requires free academic registration. For metabolic pathway modeling use cobrapy-metabolic-modeling; for metabolite structures use hmdb-database."
+    date_added: "2026-02-18"
+
+  - name: "clinpgx-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/clinpgx-database/SKILL.md"
+    description: "Query PharmGKB (Clinical Pharmacogenomics) database via REST API for drug-gene interactions, clinical annotations, dosing guidelines (CPIC, DPWG), variant-drug associations, and pharmacogenomic pathways. Search by gene, drug, rsID, or pathway. No authentication required. For somatic cancer pharmacogenomics use cosmic-database or opentargets-database; for drug structures use chembl-database-bioactivity."
+    date_added: "2026-02-18"
+
+  - name: "imaging-data-commons"
+    type: skill
+    sub_type: database
+    category: "cell-biology"
+    path: "skills/cell-biology/imaging-data-commons/SKILL.md"
+    description: "Query NCI Imaging Data Commons (IDC) for cancer radiology and pathology imaging datasets hosted on Google Cloud. Search DICOM collections by modality, anatomical site, cancer type, or collection name. Download images via Google Cloud Storage or IDAT tool. 50TB+ of publicly accessible DICOM images. Requires Google Cloud account for large downloads; small queries work without billing. For local DICOM processing use pydicom-medical-imaging; for whole-slide pathology use histolab."
+    date_added: "2026-02-18"
+
+  - name: "protocolsio-integration"
+    type: skill
+    sub_type: database
+    category: "lab-automation"
+    path: "skills/lab-automation/protocolsio-integration/SKILL.md"
+    description: "Access protocols.io public library via REST API. Search and retrieve experimental protocols (wet-lab, bioinformatics, clinical) by keyword, DOI, or category. Download step-by-step protocol content including reagents, materials, equipment, and timing. Free public access; authentication needed for private protocols or publishing. Use alongside opentrons-integration or benchling-integration to programmatically execute downloaded protocols."
+    date_added: "2026-02-18"
