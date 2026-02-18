@@ -803,3 +803,27 @@ entries:
     path: "skills/scientific-computing/neurokit2/SKILL.md"
     description: "NeuroKit2 is a Python toolkit for neurophysiological signal processing. Process ECG (heart rate, HRV, R-peak detection), EEG (complexity, power spectral density), EMG (muscle activation onset), EDA/GSR (skin conductance, SCR decomposition), PPG (photoplethysmography), and RSP (respiration) signals. Simulate synthetic signals for testing. Alternatives: BioSPPy (older, less maintained), MNE (EEG/MEG specialist), heartpy (ECG only), scipy.signal (raw DSP without biosignal abstraction)."
     date_added: "2026-02-18"
+
+  - name: "aeon"
+    type: skill
+    sub_type: toolkit
+    category: "scientific-computing"
+    path: "skills/scientific-computing/aeon/SKILL.md"
+    description: "aeon is a scikit-learn compatible Python toolkit for time series machine learning and data mining. Classify, cluster, regress, segment, and transform time series using 30+ algorithms including ROCKET, InceptionTime, KNN-DTW, HIVE-COTE, and WEASEL. Supports panel (multi-instance), multivariate, and unequal-length time series. Designed as the maintained successor to sktime. Alternatives: sktime (older, larger ecosystem), tslearn (less algorithms), catch22 (feature extraction only)."
+    date_added: "2026-02-18"
+
+  - name: "transformers-bio-nlp"
+    type: skill
+    sub_type: toolkit
+    category: "scientific-computing"
+    path: "skills/scientific-computing/transformers-bio-nlp/SKILL.md"
+    description: "Use HuggingFace Transformers with biomedical language models for scientific NLP tasks. Load BioBERT, PubMedBERT, BioGPT, and BioMedLM for named entity recognition (genes, diseases, chemicals), relation extraction, question answering on biomedical literature, text classification, and abstract summarization. Covers model loading, tokenization of biomedical text, inference pipelines, and fine-tuning on domain-specific datasets. Alternatives: spaCy with en_core_sci_lg (rule-based NER), Stanza (Stanford NLP, biomedical models), NLTK (classical NLP)."
+    date_added: "2026-02-18"
+
+  - name: "neuropixels-analysis"
+    type: skill
+    sub_type: pipeline
+    category: "scientific-computing"
+    path: "skills/scientific-computing/neuropixels-analysis/SKILL.md"
+    description: "Pipeline for analyzing Neuropixels extracellular electrophysiology recordings. Covers probe geometry loading (ProbeInterface), spike sorting with Kilosort via SpikeInterface, quality metrics computation, unit curation (ISI violations, firing rate, signal-to-noise), and post-sort analysis (PSTH, tuning curves, population decoding) using pandas and matplotlib. Designed for acute and chronic Neuropixels 1.0/2.0/Ultra recordings from rodent and primate experiments."
+    date_added: "2026-02-18"
