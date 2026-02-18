@@ -38,6 +38,24 @@ pip install pathml
 pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu118
 ```
 
+## Quick Start
+
+```python
+from pathml.core import SlideData
+from pathml.preprocessing import Pipeline
+from pathml.preprocessing.transforms import BoxBlur, TissueDetectionHE
+
+# Load → build pipeline → tile → preprocess
+slide = SlideData("tumor.svs", name="demo")
+pipeline = Pipeline([BoxBlur(kernel_size=3), TissueDetectionHE(mask_name="tissue")])
+slide.run(pipeline, tile_size=256, tile_stride=256)
+
+# Inspect tiles
+from pathml.core import Tile
+tiles = [t for t in slide.tiles if t.masks["tissue"].any()]
+print(f"Tissue tiles: {len(tiles)} of {len(slide.tiles)}")
+```
+
 ## Workflow
 
 ### Step 1: Load a Whole-Slide Image

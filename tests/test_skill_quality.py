@@ -206,8 +206,8 @@ class TestContentDepth:
         if not path.exists():
             pytest.skip(f"SKILL.md not found: {entry['path']}")
         count = count_code_blocks(path.read_text(encoding="utf-8"))
-        assert count >= 10, (
-            f"[{entry['name']}] Toolkit has {count} code blocks, minimum is 10"
+        assert count >= 12, (
+            f"[{entry['name']}] Toolkit has {count} code blocks, minimum is 12"
         )
 
     @pytest.mark.parametrize("entry", GUIDE_ENTRIES, ids=entry_id)

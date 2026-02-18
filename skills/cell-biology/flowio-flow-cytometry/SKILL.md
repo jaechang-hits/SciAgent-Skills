@@ -302,6 +302,25 @@ for key in ["$DATE", "$CYT", "$INST", "$SRC"]:
     print(f"  {key}: {flow.text.get(key, 'N/A')}")
 ```
 
+### Recipe: Normalize Events to [0, 1] Range
+
+When to use: Prepare fluorescence channels for machine learning or cross-sample comparison.
+
+```python
+from flowio import FlowData
+import numpy as np
+
+flow = FlowData("sample.fcs")
+events = flow.as_array()
+
+# Normalize each fluorescence channel to [0, 1]
+fluoro_idx = flow.fluoro_indices
+fluoro = events[:, fluoro_idx]
+pnr = np.array(flow.pnr_values)[fluoro_idx]  # Per-channel max range
+normalized = fluoro / pnr
+print(f"Normalized shape: {normalized.shape}, range: [{normalized.min():.3f}, {normalized.max():.3f}]")
+```
+
 ## Troubleshooting
 
 | Problem | Cause | Solution |

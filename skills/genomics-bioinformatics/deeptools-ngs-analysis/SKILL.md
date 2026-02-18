@@ -243,11 +243,31 @@ plotProfile -m peak_matrix.gz -o peak_profile.png
 
 ### Workflow: ATAC-seq Analysis
 
-1. Apply Tn5 offset correction: `alignmentSieve --ATACshift`
-2. Index corrected BAM: `samtools index shifted.bam`
-3. Generate coverage: `bamCoverage --normalizeUsing RPGC`
-4. Check fragment sizes: `bamPEFragmentSize` — expect nucleosome ladder (mono ~200bp, di ~400bp)
-5. Visualize at peaks: `computeMatrix reference-point` → `plotHeatmap`
+```bash
+#!/bin/bash
+ATAC="atac.bam"
+PEAKS="atac_peaks.bed"
+GSIZE=2913022398
+THREADS=8
+
+# 1. Apply Tn5 offset correction (+4/-5 bp)
+alignmentSieve --bam $ATAC --outFile shifted.bam --ATACshift -p $THREADS
+samtools index shifted.bam
+
+# 2. Generate RPGC-normalized coverage
+bamCoverage --bam shifted.bam --outFileName atac.bw \
+    --normalizeUsing RPGC --effectiveGenomeSize $GSIZE \
+    --binSize 5 --extendReads -p $THREADS
+
+# 3. Check nucleosome periodicity (expect 200bp/400bp peaks)
+bamPEFragmentSize -b shifted.bam -o fragsize.png \
+    --maxFragmentLength 1000 --binSize 1
+
+# 4. Heatmap at ATAC peaks
+computeMatrix reference-point -S atac.bw -R $PEAKS \
+    -b 2000 -a 2000 -o atac_matrix.gz -p $THREADS
+plotHeatmap -m atac_matrix.gz -o atac_heatmap.png --colorMap Blues --kmeans 2
+```
 
 ## Key Parameters
 
