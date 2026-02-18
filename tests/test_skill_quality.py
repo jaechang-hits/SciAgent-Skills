@@ -385,6 +385,67 @@ class TestContentDepth:
             f"[{entry['name']}] '## Common Pitfalls' has {len(items)} items, minimum is 5"
         )
 
+    @pytest.mark.parametrize("entry", GUIDE_ENTRIES, ids=entry_id)
+    def test_guide_key_concepts_has_subsections(self, entry):
+        """Guide 'Key Concepts' must have at least 3 '###' subsections."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+        match = re.search(
+            r"^## Key Concepts\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        if not match:
+            pytest.fail(f"[{entry['name']}] Missing '## Key Concepts' section")
+        subsections = re.findall(r"^### ", match.group(1), re.MULTILINE)
+        assert len(subsections) >= 3, (
+            f"[{entry['name']}] '## Key Concepts' has {len(subsections)} subsections, minimum is 3"
+        )
+
+    @pytest.mark.parametrize("entry", GUIDE_ENTRIES, ids=entry_id)
+    def test_guide_decision_framework_has_structure(self, entry):
+        """Guide 'Decision Framework' must contain an ASCII diagram and a decision table."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+        match = re.search(
+            r"^## Decision Framework\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        if not match:
+            pytest.fail(f"[{entry['name']}] Missing '## Decision Framework' section")
+        content = match.group(1)
+        has_ascii = bool(re.search(r"[+|]---|---|\+--|└|├|→|▶|↓", content))
+        has_table = bool(re.search(r"^\|.+\|", content, re.MULTILINE))
+        assert has_ascii, (
+            f"[{entry['name']}] '## Decision Framework' missing ASCII diagram (tree/flowchart)"
+        )
+        assert has_table, (
+            f"[{entry['name']}] '## Decision Framework' missing decision table (| col | col |)"
+        )
+
+    @pytest.mark.parametrize("entry", GUIDE_ENTRIES, ids=entry_id)
+    def test_guide_common_pitfalls_has_avoid_language(self, entry):
+        """Guide 'Common Pitfalls' must contain 'how to avoid' / avoidance language."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+        match = re.search(
+            r"^## Common Pitfalls\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        if not match:
+            pytest.fail(f"[{entry['name']}] Missing '## Common Pitfalls' section")
+        content = match.group(1)
+        avoid_count = len(re.findall(
+            r"(?i)how to avoid|to avoid:|avoid this|instead[,:]?\s|\bdon['']t\b",
+            content,
+        ))
+        assert avoid_count >= 3, (
+            f"[{entry['name']}] '## Common Pitfalls' has only {avoid_count} avoidance guidance(s); "
+            "each pitfall should explain how to avoid it"
+        )
+
 
 # ---------------------------------------------------------------------------
 # TestDatabaseAndToolkitStructure
