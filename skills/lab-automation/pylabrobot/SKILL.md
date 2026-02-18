@@ -18,7 +18,7 @@ PyLabRobot is an open-source Python library that abstracts liquid handling robot
 - **Building serial dilution curves**: Systematically aspirate and dispense across a plate with precise volume steps.
 - **Integrating liquid handling into Python data pipelines**: Trigger robot actions from analysis code, LIMS queries, or machine learning models.
 - **Rapid method development**: Iterate quickly in Python rather than in vendor-specific scripting environments.
-- For Opentrons-specific features (module temperature control via the Opentrons app), the `opentrons` SDK may be more appropriate.
+- For Opentrons-specific features (temperature module control, built-in app integration), use the `opentrons` Python SDK instead; for multi-vendor portability use PyLabRobot.
 
 ## Prerequisites
 

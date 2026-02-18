@@ -20,6 +20,7 @@ RDKit is the standard open-source cheminformatics library for Python, providing 
 - Enumerate chemical libraries using reaction SMARTS (combinatorial chemistry)
 - Cluster compounds by structural similarity for diversity analysis
 - Standardize and deduplicate molecular datasets (canonical SMILES, InChI)
+- Use `datamol-cheminformatics` instead for a higher-level RDKit wrapper with batching and error handling; use `openbabel` instead for multi-format conversion (MOL2, XYZ, PDB)
 
 ## Prerequisites
 

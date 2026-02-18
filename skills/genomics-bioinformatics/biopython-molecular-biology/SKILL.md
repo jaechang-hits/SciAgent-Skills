@@ -20,6 +20,7 @@ Biopython is the standard open-source Python library for computational molecular
 - Build and visualize phylogenetic trees from sequence alignments
 - Calculate sequence statistics (GC content, molecular weight, melting temperature)
 - Batch-process thousands of sequences with custom filtering logic
+- Use `pysam` instead for reading SAM/BAM/CRAM alignment files and working with mapped reads; use `scikit-bio` instead for advanced ecological diversity metrics
 
 ## Prerequisites
 
@@ -29,6 +30,25 @@ Biopython is the standard open-source Python library for computational molecular
 
 ```bash
 pip install biopython numpy matplotlib
+```
+
+## Quick Start
+
+```python
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqUtils import gc_fraction
+
+# Parse a FASTA file and compute basic statistics
+records = list(SeqIO.parse("sequences.fasta", "fasta"))
+print(f"Sequences loaded: {len(records)}")
+
+seq = records[0].seq
+print(f"ID: {records[0].id}")
+print(f"Length: {len(seq)} bp")
+print(f"GC content: {gc_fraction(seq)*100:.1f}%")
+print(f"Reverse complement: {seq.reverse_complement()[:30]}...")
+print(f"Protein translation: {seq.translate()[:10]}...")
 ```
 
 ## Core API

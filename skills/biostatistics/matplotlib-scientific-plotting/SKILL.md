@@ -32,6 +32,30 @@ Matplotlib is Python's foundational visualization library for creating static, a
 pip install matplotlib numpy
 ```
 
+## Quick Start
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Publication-ready figure template: set size, plot, label, save as PDF
+fig, ax = plt.subplots(figsize=(6, 4))  # single-column journal width ≈ 6 cm → set here in inches
+
+x = np.linspace(0, 2 * np.pi, 200)
+ax.plot(x, np.sin(x), color="steelblue", lw=1.5, label="sin(x)")
+ax.plot(x, np.cos(x), color="coral",    lw=1.5, label="cos(x)", linestyle="--")
+
+ax.set_xlabel("x (radians)")
+ax.set_ylabel("Amplitude")
+ax.set_title("Sine and Cosine Waves")
+ax.legend(frameon=False)
+ax.spines[["top", "right"]].set_visible(False)  # clean axis style
+
+plt.tight_layout()
+plt.savefig("quickstart.pdf", bbox_inches="tight", dpi=300)
+print("Saved quickstart.pdf")
+```
+
 ## Core API
 
 ### Module 1: Figure and Axes Creation

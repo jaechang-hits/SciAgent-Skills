@@ -18,7 +18,7 @@ Adaptyv Bio is a protein expression and characterization platform accessed via a
 - Automating high-throughput protein characterization pipelines using the REST API
 - Integrating experimental affinity data (KD values) with computational models for Bayesian optimization of protein sequences
 - Validating ESM, AlphaFold, or docking predictions with experimental binding data
-- Use Benchling for LIMS-style sequence management alongside Adaptyv Bio for assay execution
+- Use `benchling-integration` for LIMS-style sequence and plasmid management; use Adaptyv Bio instead when you need automated cell-free expression and affinity characterization without wet-lab setup
 
 ## Prerequisites
 

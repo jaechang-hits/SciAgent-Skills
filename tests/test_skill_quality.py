@@ -394,6 +394,20 @@ DATABASE_ENTRIES = [e for e in ALL_ENTRIES if e.get("sub_type") == "database"]
 TOOLKIT_AND_DB_ENTRIES = [e for e in ALL_ENTRIES if e.get("sub_type") in {"database", "toolkit"}]
 
 
+def _count_modules(text: str) -> int:
+    """Count numbered module/query subsections (### Module N or ### Query N)."""
+    return len(re.findall(r"^### (?:Module|Query) \d", text, re.MULTILINE))
+
+
+# Toolkits with 6+ Core API modules
+LARGE_TOOLKIT_ENTRIES = [
+    e for e in TOOLKIT_ENTRIES
+    if _count_modules((ROOT / e["path"]).read_text(encoding="utf-8"))
+    >= 6
+    if (ROOT / e["path"]).exists()
+]
+
+
 class TestDatabaseAndToolkitStructure:
     """Verify database and toolkit specific structural requirements."""
 
@@ -423,4 +437,48 @@ class TestDatabaseAndToolkitStructure:
         assert has_workflows or has_recipes, (
             f"[{entry['name']}] Missing both '## Common Workflows' and '## Common Recipes'; "
             "at least one is required for database/toolkit entries"
+        )
+
+    @pytest.mark.parametrize("entry", LARGE_TOOLKIT_ENTRIES, ids=entry_id)
+    def test_large_toolkit_has_quick_start(self, entry):
+        """Toolkit entries with 6+ Core API modules must have a '## Quick Start' section."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+        n_modules = _count_modules(text)
+        assert "## Quick Start" in text, (
+            f"[{entry['name']}] Toolkit has {n_modules} modules but is missing '## Quick Start' "
+            "(required for toolkits with 6+ Core API modules)"
+        )
+
+    @pytest.mark.parametrize("entry", TOOLKIT_ENTRIES, ids=entry_id)
+    def test_toolkit_when_to_use_has_alternative_comparison(self, entry):
+        """Toolkit 'When to Use' must mention at least one alternative tool (routing guidance)."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+
+        wtu_match = re.search(
+            r"^## When to Use\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        if not wtu_match:
+            pytest.fail(f"[{entry['name']}] Missing '## When to Use' section")
+
+        wtu_text = wtu_match.group(1)
+        # Accept any of these routing patterns (within a single line):
+        # "use X instead", "prefer X", "For [condition] use Y", "→ use X",
+        # "use X when", "Alternatives:", "instead of"
+        has_alternative = bool(re.search(
+            r"instead|alternative|prefer (?!to )|"  # "instead", "alternatives", "prefer "
+            r"→ use |"                               # arrow shorthand "→ use X"
+            r"\bfor\b.{1,250}\buse\b|"              # "For [condition], use [tool]"
+            r"\buse\b.{1,250}\bwhen\b",             # "Use [tool] when [condition]"
+            wtu_text,
+            re.IGNORECASE,
+        ))
+        assert has_alternative, (
+            f"[{entry['name']}] '## When to Use' does not mention any alternative tool. "
+            "Add a bullet like: '- Use `other-tool` instead when [condition]'"
         )

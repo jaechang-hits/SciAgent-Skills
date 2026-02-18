@@ -16,14 +16,19 @@ Brief description of the toolkit (2-3 sentences). What domain does it cover? Wha
 ## When to Use
 
 <!-- 5+ items. Write from the USER'S TASK perspective.
-     Include 1-2 comparison notes: "For X use Y instead" to help agents route correctly. -->
+     REQUIRED: include 1-2 alternative tool comparison bullets using one of these patterns:
+       "Use `alt-tool` instead when [condition]"
+       "For [condition], use `alt-tool` instead"
+       "Use `alt-tool` when [you need X]; use this toolkit when [you need Y]"
+     This helps agents route to the right tool without loading the full skill. -->
 
 - Use case 1: description
 - Use case 2: description
 - Use case 3: description
 - Use case 4: description
 - Use case 5: description
-- For [alternative use-case], use `alternative-tool` instead
+- Use `alternative-tool` instead when [condition where alternative is better]
+- For [different task], use `other-tool`; this toolkit is for [specific scope]
 
 ## Prerequisites
 
