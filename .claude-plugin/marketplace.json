@@ -1,0 +1,33 @@
+{
+  "name": "scicraft",
+  "owner": {
+    "name": "jaechang-hits"
+  },
+  "metadata": {
+    "description": "176 validated life sciences skills for Claude Code",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "scicraft",
+      "source": "./",
+      "description": "176 validated life sciences skills — genomics, proteomics, drug discovery, biostatistics, scientific computing",
+      "version": "1.0.0",
+      "author": {
+        "name": "jaechang-hits"
+      },
+      "homepage": "https://github.com/jaechang-hits/scicraft",
+      "repository": "https://github.com/jaechang-hits/scicraft",
+      "license": "CC-BY-4.0",
+      "keywords": [
+        "life-sciences",
+        "bioinformatics",
+        "drug-discovery",
+        "genomics",
+        "scientific-computing"
+      ],
+      "category": "scientific-research",
+      "tags": ["science", "biology", "chemistry", "ai-scientist"]
+    }
+  ]
+}

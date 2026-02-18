@@ -1,0 +1,173 @@
+% ==============================================================================
+% Research Poster Template - baposter
+% Structured 3-column portrait grid with automatic spacing (A0)
+% Compile: pdflatex poster.tex
+% ==============================================================================
+
+\documentclass[a0paper,portrait,fontscale=0.285]{baposter}
+
+% Packages
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{qrcode}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\setlist{nosep}
+
+\begin{document}
+
+\begin{poster}{
+  % Grid and columns
+  grid=false,
+  columns=3,
+  colspacing=1.5em,
+
+  % Background
+  background=plain,
+  bgColorOne=white,
+
+  % Borders
+  borderColor=blue!50!black,
+  linewidth=2pt,
+
+  % Header
+  headerColorOne=blue!70!black,
+  headerColorTwo=blue!60!black,
+  headerFontColor=white,
+  headerheight=0.12\textheight,
+  headershape=roundedright,
+  headershade=plain,
+  headerborder=closed,
+  headerfont=\Large\sf\bf,
+
+  % Boxes
+  boxColorOne=white,
+  boxshade=plain,
+  textborder=roundedleft,
+
+  eyecatcher=true
+}
+% Eye Catcher (Left Logo)
+{\includegraphics[height=6em]{logo1.pdf}}
+% Title
+{\sf\bf Your Research Title: Concise and Descriptive}
+% Authors
+{
+  \vspace{0.3em}
+  Author One\textsuperscript{1}, Author Two\textsuperscript{2}, \underline{Presenting Author}\textsuperscript{1}\\[0.3em]
+  {\small
+  \textsuperscript{1}Department, University Name\\
+  \textsuperscript{2}Research Institute Name}
+}
+% Right Logo
+{\includegraphics[height=6em]{logo2.pdf}}
+
+% LEFT COLUMN
+\headerbox{Introduction}{name=intro,column=0,row=0}{
+  \textbf{Background}
+
+  Brief context (1-2 sentences).
+
+  \vspace{0.3cm}
+
+  \textbf{Problem}
+
+  Research gap (1-2 sentences).
+
+  \vspace{0.3cm}
+
+  \textbf{Objective}
+
+  Research goal (1 sentence).
+}
+
+\headerbox{Methods}{name=methods,column=0,below=intro}{
+  \begin{itemize}
+    \item Experimental approach
+    \item Sample: n = X
+    \item Key procedures
+    \item Statistical methods
+  \end{itemize}
+
+  \begin{center}
+    \includegraphics[width=0.9\linewidth]{methods_flowchart.pdf}
+  \end{center}
+}
+
+% MIDDLE + RIGHT: Main result spans 2 columns
+\headerbox{Results: Main Finding}{name=results1,column=1,row=0,span=2}{
+  Brief description of primary result.
+
+  \begin{center}
+    \includegraphics[width=0.95\linewidth]{figure1.pdf}
+  \end{center}
+
+  \textbf{Figure 1:} Caption with statistics (n=X, p<0.01).
+}
+
+\headerbox{Results: Finding 2}{name=results2,column=1,below=results1}{
+  \begin{center}
+    \includegraphics[width=0.9\linewidth]{figure2.pdf}
+  \end{center}
+  \textbf{Figure 2:} Caption.
+}
+
+\headerbox{Results: Finding 3}{name=results3,column=2,below=results1}{
+  \begin{center}
+    \includegraphics[width=0.9\linewidth]{figure3.pdf}
+  \end{center}
+  \textbf{Figure 3:} Caption.
+}
+
+% BOTTOM ROW
+\headerbox{Conclusions}{name=conclusions,column=0,span=2,above=bottom}{
+  \begin{multicols}{2}
+    \textbf{Key Findings}
+    \begin{itemize}
+      \item Main conclusion 1
+      \item Main conclusion 2
+      \item Main conclusion 3
+    \end{itemize}
+
+    \columnbreak
+
+    \textbf{Future Directions}
+    \begin{itemize}
+      \item Next steps
+      \item Broader applications
+    \end{itemize}
+  \end{multicols}
+}
+
+\headerbox{Scan for More}{name=qr,column=2,above=bottom}{
+  \begin{center}
+    \qrcode[height=4cm]{https://doi.org/10.1234/your-paper}\\
+    \vspace{0.3cm}
+    \small Full paper, code \& data
+  \end{center}
+}
+
+\headerbox{}{name=footer,column=0,span=3,above=bottom,below=conclusions}{
+  \footnotesize
+  \begin{multicols}{2}
+    \textbf{References}
+    \begin{enumerate}
+      \item Author A et al. (2024). Title. \textit{Journal}, 10(2), 123-145.
+      \item Author B et al. (2025). Title. \textit{Conference}.
+    \end{enumerate}
+
+    \columnbreak
+
+    \textbf{Acknowledgments:} Funded by Grant Agency (\#12345).
+
+    \vspace{0.3cm}
+    \textbf{Contact:} presenter@university.edu
+  \end{multicols}
+}
+
+\end{poster}
+
+\end{document}

@@ -1,0 +1,309 @@
+% ==============================================================================
+% Scientific Slides — Academic Seminar Template (45–60 min)
+% LaTeX Beamer, 16:9, Madrid theme with custom colors
+% Compile: pdflatex seminar.tex
+% ==============================================================================
+
+\documentclass[aspectratio=169,11pt]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usetheme{Madrid}
+\usecolortheme{dolphin}
+\setbeamertemplate{navigation symbols}{}
+
+% Section divider pages
+\AtBeginSection[]{
+  \begin{frame}
+    \vfill
+    \centering
+    \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+      \usebeamerfont{title}\insertsectionhead\par%
+    \end{beamercolorbox}
+    \vfill
+  \end{frame}
+}
+
+\usepackage{graphicx}
+\graphicspath{{./figures/}}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage[style=authoryear,maxcitenames=2,backend=biber]{biblatex}
+\addbibresource{references.bib}
+\renewcommand*{\bibfont}{\tiny}
+
+% Custom colors
+\definecolor{darkblue}{RGB}{0,75,135}
+\definecolor{lightblue}{RGB}{100,150,200}
+\setbeamercolor{structure}{fg=darkblue}
+\setbeamercolor{title}{fg=darkblue}
+\setbeamercolor{frametitle}{fg=darkblue}
+
+% Title
+\title[Short Title]{Full Title of Your Research:\\Comprehensive and Descriptive}
+\subtitle{Research Seminar Presentation}
+\author[Your Name]{Your Name, PhD Candidate\\
+  Advisor: Prof.\ Advisor Name}
+\institute[University]{
+  Department of Your Field\\
+  University Name\\
+  \texttt{yourname@university.edu}
+}
+\date{\today}
+
+\begin{document}
+
+% --- TITLE ---
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+% ============================
+% INTRODUCTION (8–10 min)
+% ============================
+\section{Introduction}
+
+\begin{frame}{Motivation}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{The Big Picture:}
+      \begin{itemize}
+        \item Why this research area matters
+        \item Real-world impact and applications
+        \item Current challenges in the field
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      % \includegraphics[width=\textwidth]{motivation.pdf}
+      \framebox[0.9\textwidth][c]{[Motivating Figure]}
+    \end{column}
+  \end{columns}
+  \vspace{0.5cm}
+  \begin{block}{Central Question}
+    How can we address this challenge using novel approach X?
+  \end{block}
+\end{frame}
+
+\begin{frame}{Prior Work}
+  \textbf{Historical Development:}
+  \begin{itemize}
+    \item Early work established foundation \cite{foundational}
+    \item Key advances in 2000s \cite{advance2005}
+    \item Recent developments \cite{recent2022}
+  \end{itemize}
+  \vspace{0.5cm}
+  \textbf{Current State:}
+  \begin{enumerate}
+    \item Known: X affects Y
+    \item Evidence: mechanism involves Z
+    \item Unknown: questions remain about W
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Knowledge Gap}
+  \begin{columns}[c]
+    \begin{column}{0.6\textwidth}
+      \textbf{What We Know:}
+      \begin{itemize}
+        \item Established finding 1
+        \item Replicated result 2
+        \item General consensus 3
+      \end{itemize}
+      \vspace{0.3cm}
+      \textbf{What Remains Unknown:}
+      \begin{itemize}
+        \item \alert{Gap 1:} Critical unknown
+        \item \alert{Gap 2:} Methodological limitation
+        \item \alert{Gap 3:} Unexplored context
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.4\textwidth}
+      \begin{alertblock}{The Problem}
+        Existing approaches fail to account for X, limiting understanding of Y.
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Research Objectives}
+  \begin{exampleblock}{Overall Goal}
+    To investigate how X influences Y under conditions Z.
+  \end{exampleblock}
+  \vspace{0.5cm}
+  \textbf{Specific Aims:}
+  \begin{enumerate}
+    \item \textbf{Aim 1:} Characterize X–Y relationship
+    \item \textbf{Aim 2:} Identify mechanism W
+    \item \textbf{Aim 3:} Test generalizability to context Z
+  \end{enumerate}
+\end{frame}
+
+% ============================
+% METHODS (8–10 min)
+% ============================
+\section{Methods}
+
+\begin{frame}{Study Design}
+  \begin{figure}
+    \centering
+    % \includegraphics[width=0.85\textwidth]{study_design.pdf}
+    \framebox[0.8\textwidth][c]{[Study Design Schematic]}
+    \caption{Multi-phase experimental design}
+  \end{figure}
+  \begin{itemize}
+    \item \textbf{Phase 1:} Observational ($n = 150$)
+    \item \textbf{Phase 2:} Controlled experiment ($n = 80$)
+    \item \textbf{Phase 3:} Validation ($n = 120$)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Analysis Plan}
+  \textbf{Primary Analyses:}
+  \begin{itemize}
+    \item \textbf{Aim 1:} Linear regression: $Y = \beta_0 + \beta_1 X + \epsilon$
+    \item \textbf{Aim 2:} Mediation analysis (bootstrap, 5000 iterations)
+    \item \textbf{Aim 3:} Mixed-effects model for context effects
+  \end{itemize}
+  \vspace{0.5cm}
+  \begin{block}{Software}
+    R 4.x (lme4, lavaan); Python 3.x (scikit-learn)
+  \end{block}
+\end{frame}
+
+% ============================
+% RESULTS (18–22 min)
+% ============================
+\section{Results}
+
+\begin{frame}{Aim 1: X Predicts Y}
+  \begin{columns}[c]
+    \begin{column}{0.6\textwidth}
+      \begin{figure}
+        % \includegraphics[width=\textwidth]{aim1.pdf}
+        \framebox[0.9\textwidth][c]{[Regression Plot]}
+        \caption{$R^2 = 0.29$, $p < .001$}
+      \end{figure}
+    \end{column}
+    \begin{column}{0.4\textwidth}
+      \begin{table}
+        \centering\tiny
+        \begin{tabular}{lccc}
+          \toprule
+          \textbf{Predictor} & $\beta$ & SE & $p$ \\
+          \midrule
+          Intercept & 12.45 & 3.21 & <.001 \\
+          X & 0.54 & 0.08 & <.001 \\
+          \bottomrule
+        \end{tabular}
+      \end{table}
+      \begin{block}{Finding}
+        X significantly predicts Y, controlling for demographics.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Aim 2: Mediation by W}
+  \begin{figure}
+    % \includegraphics[width=0.75\textwidth]{mediation.pdf}
+    \framebox[0.7\textwidth][c]{[Mediation Diagram]}
+    \caption{W mediates X $\to$ Y}
+  \end{figure}
+  \begin{itemize}
+    \item \textbf{Direct effect:} $c' = 0.31$, $p = .021$
+    \item \textbf{Indirect effect:} $ab = 0.23$, 95\% CI [0.14, 0.35]
+    \item \textbf{Proportion mediated:} 43\%
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Aim 3: Generalization}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      % \includegraphics[width=\textwidth]{context1.pdf}
+      \framebox[0.9\textwidth][c]{[Context 1]}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      % \includegraphics[width=\textwidth]{context2.pdf}
+      \framebox[0.9\textwidth][c]{[Context 2]}
+    \end{column}
+  \end{columns}
+  \vspace{0.5cm}
+  \begin{itemize}
+    \item Main effect of X: $\beta = 0.51$, $p < .001$
+    \item Context $\times$ X interaction: ns ($p = .23$)
+    \item \alert{Effect generalizes across contexts}
+  \end{itemize}
+\end{frame}
+
+% ============================
+% DISCUSSION (10–12 min)
+% ============================
+\section{Discussion}
+
+\begin{frame}{Key Results and Interpretation}
+  \begin{exampleblock}{Summary}
+    \begin{enumerate}
+      \item X predicts Y ($\beta = 0.54$, 29\% variance)
+      \item W mediates 43\% of effect
+      \item Generalizes across contexts
+    \end{enumerate}
+  \end{exampleblock}
+  \vspace{0.5cm}
+  \textbf{Relation to prior work:}
+  \begin{itemize}
+    \item Consistent with \cite{jones2020}
+    \item Extends beyond prior scope
+    \item Resolves contradictions in literature
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Limitations and Future Directions}
+  \textbf{Limitations:}
+  \begin{enumerate}
+    \item Cross-sectional design $\to$ future longitudinal
+    \item University sample $\to$ community samples
+    \item Self-report measures $\to$ objective measures
+  \end{enumerate}
+  \vspace{0.5cm}
+  \begin{block}{Next Steps}
+    \begin{itemize}
+      \item Replicate in independent sample
+      \item Develop intervention targeting W
+      \item Investigate neural mechanisms
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+% ============================
+% CONCLUSION
+% ============================
+\section{Conclusion}
+
+\begin{frame}[plain]
+  \begin{center}
+    {\LARGE \textbf{Thank You}}\\[1cm]
+    {\Large Questions \& Discussion}\\[1.5cm]
+    Your Name\\
+    Department, University\\
+    \texttt{yourname@university.edu}\\[1cm]
+    {\footnotesize Funded by Grant Agency (\#12345)}
+  \end{center}
+\end{frame}
+
+% --- BACKUP ---
+\appendix
+
+\begin{frame}{Backup: Full Regression Table}
+  \framebox[\textwidth][c]{[Complete regression results with all covariates]}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{References}
+  \printbibliography
+\end{frame}
+
+\end{document}

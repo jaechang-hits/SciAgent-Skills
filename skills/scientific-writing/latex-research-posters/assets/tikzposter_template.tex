@@ -1,0 +1,177 @@
+% ==============================================================================
+% Research Poster Template - tikzposter
+% Modern block-based design with Denmark color style (A0 portrait)
+% Compile: pdflatex poster.tex
+% ==============================================================================
+
+\documentclass[
+  25pt,                      % Font scaling
+  a0paper,                   % Paper size
+  portrait,                  % Orientation
+  margin=10mm,               % Outer margins
+  innermargin=15mm,          % Space inside blocks
+  blockverticalspace=15mm,   % Space between blocks
+  colspace=15mm,             % Space between columns
+  subcolspace=8mm            % Space between subcolumns
+]{tikzposter}
+
+% Packages
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{qrcode}
+\usepackage{hyperref}
+
+% Theme and color (uncomment alternatives as needed)
+\usetheme{Rays}
+% \usetheme{Wave}
+% \usetheme{Default}
+
+\usecolorstyle{Denmark}
+% \usecolorstyle{Australia}
+% \usecolorstyle{Sweden}
+
+% ==============================================================================
+% POSTER CONTENT - CUSTOMIZE BELOW
+% ==============================================================================
+
+\title{Your Research Title: Concise and Descriptive}
+\author{Author One\textsuperscript{1}, Author Two\textsuperscript{2}, \underline{Presenting Author}\textsuperscript{1}}
+\institute{
+  \textsuperscript{1}Department, University Name, City, Country\\
+  \textsuperscript{2}Research Institute Name, City, Country
+}
+\titlegraphic{
+  \includegraphics[width=0.1\textwidth]{logo1.pdf}
+  \hspace{3cm}
+  \includegraphics[width=0.1\textwidth]{logo2.pdf}
+}
+
+\begin{document}
+
+\maketitle
+
+% MAIN CONTENT - 3 COLUMN LAYOUT
+\begin{columns}
+
+  % LEFT COLUMN
+  \column{0.33}
+
+  \block{Introduction}{
+    \textbf{Background}
+
+    Brief context about your research area (1-2 sentences).
+
+    \vspace{0.5cm}
+
+    \textbf{Problem Statement}
+
+    What gap does your work address? (1-2 sentences)
+
+    \vspace{0.5cm}
+
+    \textbf{Research Objective}
+
+    Clear statement of what you set out to do.
+  }
+
+  \block{Methods}{
+    \begin{itemize}
+      \item Experimental approach
+      \item Sample: n = X
+      \item Key procedures
+      \item Statistical methods
+    \end{itemize}
+
+    \begin{tikzfigure}
+      \includegraphics[width=0.9\linewidth]{methods_diagram.pdf}
+    \end{tikzfigure}
+  }
+
+  % MIDDLE COLUMN
+  \column{0.33}
+
+  \block{Results: Finding 1}{
+    Brief description of primary result.
+
+    \begin{tikzfigure}
+      \includegraphics[width=0.95\linewidth]{figure1.pdf}
+    \end{tikzfigure}
+
+    \textbf{Figure 1:} Caption with key statistics (n=X, p<0.01).
+  }
+
+  \block{Results: Finding 2}{
+    Brief description of second result.
+
+    \begin{tikzfigure}
+      \includegraphics[width=0.95\linewidth]{figure2.pdf}
+    \end{tikzfigure}
+
+    \textbf{Figure 2:} Caption.
+  }
+
+  % RIGHT COLUMN
+  \column{0.33}
+
+  \block{Results: Finding 3}{
+    Brief description of third result.
+
+    \begin{tikzfigure}
+      \includegraphics[width=0.95\linewidth]{figure3.pdf}
+    \end{tikzfigure}
+
+    \textbf{Figure 3:} Caption.
+  }
+
+  \block{Conclusions}{
+    \textbf{Key Findings}
+    \begin{itemize}
+      \item Main conclusion 1
+      \item Main conclusion 2
+      \item Main conclusion 3
+    \end{itemize}
+
+    \vspace{0.5cm}
+
+    \textbf{Future Directions}
+    \begin{itemize}
+      \item Next steps
+      \item Broader applications
+    \end{itemize}
+  }
+
+  \block{Scan for More}{
+    \begin{center}
+      \qrcode[height=5cm]{https://doi.org/10.1234/your-paper}\\
+      \vspace{0.5cm}
+      \large Full paper, code, and data
+    \end{center}
+  }
+
+\end{columns}
+
+% FOOTER
+\block[width=1.0\linewidth]{}{
+  \footnotesize
+  \begin{minipage}{0.7\textwidth}
+    \textbf{References}
+    \begin{enumerate}
+      \item Author A et al. (2024). Title. \textit{Journal}, 10(2), 123-145.
+      \item Author B et al. (2025). Title. \textit{Conference}.
+    \end{enumerate}
+    \vspace{0.3cm}
+    \textbf{Acknowledgments:} Funded by Grant Agency (\#12345).
+    \vspace{0.3cm}
+    \textbf{Contact:} presenter@university.edu
+  \end{minipage}%
+  \hfill
+  \begin{minipage}{0.25\textwidth}
+    \raggedleft
+    Conference Name 2025\\
+    Location, Dates\\
+    Poster \#XXX
+  \end{minipage}
+}
+
+\end{document}
