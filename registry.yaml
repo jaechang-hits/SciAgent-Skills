@@ -987,3 +987,19 @@ entries:
     path: "skills/genomics-bioinformatics/plink2-gwas-analysis/SKILL.md"
     description: "Genome-wide association study (GWAS) and population genetics analysis tool. Processes PLINK (.bed/.bim/.fam), VCF, and BGEN files; performs QC (MAF, HWE, missingness), identity-by-descent estimation, principal component analysis, and linear/logistic regression GWAS. Outputs Manhattan-plot-ready summary statistics. Use regenie or SAIGE instead for very large biobanks (>100k samples) with mixed models."
     date_added: "2026-02-18"
+
+  - name: "gatk-variant-calling"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/gatk-variant-calling/SKILL.md"
+    description: "GATK Best Practices pipeline for germline SNP and indel variant calling from WGS/WES BAM files. Runs HaplotypeCaller in GVCF mode per sample, consolidates with GenomicsDBImport, joint-genotypes with GenotypeGVCFs, and applies VQSR or hard filters. Requires BWA-MEM2-aligned, markdup, and BQSR-processed BAMs. Use DeepVariant instead for a faster deep-learning alternative; GATK is the ENCODE/NIH standard for research and clinical genomics."
+    date_added: "2026-02-18"
+
+  - name: "opencv-bioimage-analysis"
+    type: skill
+    sub_type: toolkit
+    category: "cell-biology"
+    path: "skills/cell-biology/opencv-bioimage-analysis/SKILL.md"
+    description: "Computer vision library for bio-image preprocessing, feature detection, and real-time microscopy analysis. Performs color space conversion, morphological operations, contour/blob detection, template matching, and optical flow on fluorescence and brightfield images. 10-100× faster than pure Python implementations using optimized C++ kernels. Use scikit-image for scientific morphometry and regionprops; use OpenCV for real-time processing, video, and classical feature extraction pipelines."
+    date_added: "2026-02-18"
