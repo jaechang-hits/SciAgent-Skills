@@ -1082,3 +1082,19 @@ entries:
     path: "skills/systems-biology-multiomics/cellchat-cell-communication/SKILL.md"
     description: "Infer, analyze, and visualize intercellular communication from scRNA-seq data using CellChat (R). Pipeline: create CellChat object → subset CellChatDB ligand-receptor database → identify over-expressed genes per cell group → compute pairwise communication probabilities → aggregate to pathway level → analyze network centrality (senders, receivers, influencers, mediators) → visualize with chord diagrams, heatmaps, and bubble plots → compare signaling across conditions. Human and mouse supported via CellChatDB. Use liana for a pure-Python equivalent."
     date_added: "2026-02-18"
+
+  - name: "harmony-batch-correction"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/harmony-batch-correction/SKILL.md"
+    description: "Batch correction for single-cell RNA-seq (and other omics) with Harmony. Removes technical batch effects from PCA embeddings while preserving biological variation. Use after PCA, before UMAP/neighbors. Fast and scalable to millions of cells. Python (harmonypy, scanpy integration) and R (Seurat) APIs."
+    date_added: "2026-02-18"
+
+  - name: "deseq2-differential-expression"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/deseq2-differential-expression/SKILL.md"
+    description: "R/Bioconductor DESeq2 differential expression for bulk RNA-seq. Negative binomial GLM with empirical Bayes shrinkage, Wald and LRT tests, multi-factor designs, interaction terms, Salmon tximeta import, apeglm LFC shrinkage, MA/volcano/heatmap visualization. R gold standard with native Bioconductor integration. Use pydeseq2-differential-expression for Python; use edgeR for TMM normalization."
+    date_added: "2026-02-18"

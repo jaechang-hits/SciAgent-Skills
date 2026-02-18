@@ -375,6 +375,19 @@ class TestContentDepth:
             f"[{entry['name']}] '## Troubleshooting' has {n_data} data rows, minimum is 5"
         )
 
+    @pytest.mark.parametrize("entry", ALL_ENTRIES, ids=entry_id)
+    def test_description_length(self, entry):
+        """Frontmatter description must be ≤ 1024 characters."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        fm = parse_frontmatter(path)
+        desc = fm.get("description", "")
+        assert len(desc) <= 1024, (
+            f"[{entry['name']}] description is {len(desc)} chars (max 1024): "
+            f"{desc[:80]}..."
+        )
+
     @pytest.mark.parametrize("entry", PIPELINE_ENTRIES, ids=entry_id)
     def test_pipeline_has_expected_outputs(self, entry):
         """Pipeline entries must have '## Expected Outputs' section."""
