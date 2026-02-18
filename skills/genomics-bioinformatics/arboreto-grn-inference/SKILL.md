@@ -395,7 +395,7 @@ if __name__ == '__main__':
 
 This entry is fully self-contained with no `references/` directory.
 
-**Original reference file dispositions** (from `claude-scientific-skills/scientific-skills/arboreto/`):
+**Original reference file dispositions**:
 
 - **references/algorithms.md** (139 lines) -- Algorithm comparison, parameter details, custom regressor kwargs. Consolidated into Key Concepts (Algorithm Selection Guide table) and Key Parameters. Custom regressor kwargs (`regressor_type`, `regressor_kwargs`) omitted: advanced tuning rarely needed; users can pass scikit-learn kwargs directly per the arboreto API docs.
 - **references/basic_inference.md** (152 lines) -- Input formats, TF loading, basic workflow, output format. Fully consolidated into Workflow Steps 1-2, Key Concepts (Output Format table), and Quick Start.

@@ -510,7 +510,7 @@ for p in paths:
 
 ## Bundled Resources
 
-Migrated from original `claude-scientific-skills/scientific-skills/networkx/` (STUB: 436-line main file + 2,014 lines across 5 reference files, main/total = 17.8%).
+Migrated from original entry (STUB: 436-line main file + 2,014 lines across 5 reference files, main/total = 17.8%).
 
 ### references/algorithms_generators.md
 

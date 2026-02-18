@@ -170,7 +170,7 @@ Save as `{original_filename}_eda_report.md`.
 
 - `references/file_format_reference.md` — Quick-reference catalog of the most common scientific file formats across all 6 categories (bioinformatics, chemistry, microscopy, spectroscopy, proteomics/metabolomics, general), with extension, description, Python library, and key EDA approach for each format
 
-Not migrated from original: The 6 category-specific format catalog files (3,616 lines total) contained detailed entries for 200+ formats. The bundled reference consolidates the ~50 most commonly encountered formats. For rare or vendor-specific formats, consult official library documentation or the original claude-scientific-skills entry.
+Not migrated from original: The 6 category-specific format catalog files (3,616 lines total) contained detailed entries for 200+ formats. The bundled reference consolidates the ~50 most commonly encountered formats. For rare or vendor-specific formats, consult official library documentation.
 
 ## Further Reading
 

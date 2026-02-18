@@ -200,4 +200,3 @@ CC-BY-4.0 for original content. Individual skills note the license of their unde
 
 This project builds on 50+ open-source scientific Python packages. If you find a skill useful, consider starring the underlying tool's repository and supporting its maintainers.
 
-Inspired by [claude-scientific-skills](https://github.com/K-Dense-AI/claude-scientific-skills) by K-Dense.
