@@ -827,3 +827,27 @@ entries:
     path: "skills/scientific-computing/neuropixels-analysis/SKILL.md"
     description: "Pipeline for analyzing Neuropixels extracellular electrophysiology recordings. Covers probe geometry loading (ProbeInterface), spike sorting with Kilosort via SpikeInterface, quality metrics computation, unit curation (ISI violations, firing rate, signal-to-noise), and post-sort analysis (PSTH, tuning curves, population decoding) using pandas and matplotlib. Designed for acute and chronic Neuropixels 1.0/2.0/Ultra recordings from rodent and primate experiments."
     date_added: "2026-02-18"
+
+  - name: "adaptyv-bio"
+    type: skill
+    sub_type: toolkit
+    category: "proteomics-protein-engineering"
+    path: "skills/proteomics-protein-engineering/adaptyv-bio/SKILL.md"
+    description: "Adaptyv Bio provides an API and Python SDK for ordering and managing cell-free protein expression and binding assay experiments. Use it to submit protein sequences for expression (scale 10–100 µg), characterize binding affinity (KD) against target proteins, track experiment status, and retrieve results — all programmatically without wet-lab setup. Designed for protein engineers, ML-guided directed evolution, and antibody/nanobody optimization workflows. Requires an Adaptyv Bio account and API key."
+    date_added: "2026-02-18"
+
+  - name: "scientific-schematics"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/scientific-schematics/SKILL.md"
+    description: "Guide for designing and creating scientific schematics, diagrams, and graphical abstracts. Covers tool selection (BioRender, Inkscape, Affinity Designer, PowerPoint), design principles for biological pathway diagrams, molecular mechanism schematics, experimental workflow diagrams, and graphical abstracts for journal submissions. Includes composition rules, icon sourcing, color usage for biological entities, and accessibility considerations. Use when planning or creating a scientific figure that is primarily illustrative rather than data-driven."
+    date_added: "2026-02-18"
+
+  - name: "pyhealth"
+    type: skill
+    sub_type: toolkit
+    category: "biostatistics"
+    path: "skills/biostatistics/pyhealth/SKILL.md"
+    description: "PyHealth is a Python library for healthcare machine learning. Build clinical prediction models from EHR (Electronic Health Record) data: process MIMIC-III/IV, eICU, and OMOP-CDM datasets, encode medical codes (ICD, ATC, NDC), construct patient-level datasets, and train models (Transformer, RETAIN, GRASP, MedBERT) for tasks including mortality prediction, drug recommendation, readmission, and diagnosis prediction. Alternatives: FIDDLE (EHR preprocessing only), clinical-longformer (NLP on clinical notes only), ehr-ml (EHR embedding only)."
+    date_added: "2026-02-18"
