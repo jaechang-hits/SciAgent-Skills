@@ -444,6 +444,54 @@ if pmids:
 | Stale history server | Session expired (8h inactivity) | Re-run ESearch with `usehistory=y` to get new WebEnv |
 | Truncated results | Default `retmax=20` | Set `retmax=100` or higher (max 10,000) |
 
+## Common Recipes
+
+### Recipe: Download Abstracts for a Gene Set
+
+```python
+import requests
+import time
+
+def fetch_abstracts(gene_list, max_per_gene=5):
+    """Retrieve PubMed abstracts for each gene in a list."""
+    base = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+    records = []
+    for gene in gene_list:
+        r = requests.get(f"{base}/esearch.fcgi",
+                         params={"db": "pubmed", "term": f"{gene}[gene] AND Homo sapiens[orgn]",
+                                 "retmax": max_per_gene, "retmode": "json"})
+        ids = r.json()["esearchresult"]["idlist"]
+        if ids:
+            fetch = requests.get(f"{base}/efetch.fcgi",
+                                 params={"db": "pubmed", "id": ",".join(ids), "rettype": "abstract"})
+            records.append({"gene": gene, "pmids": ids, "text": fetch.text[:500]})
+        time.sleep(0.34)
+    return records
+
+results = fetch_abstracts(["BRCA1", "TP53", "EGFR"])
+for r in results:
+    print(f"{r['gene']}: {r['pmids']}")
+```
+
+### Recipe: Track New Publications via Date Filter
+
+```python
+import requests
+from datetime import date, timedelta
+
+# Find papers published in the last 7 days on a topic
+week_ago = (date.today() - timedelta(days=7)).strftime("%Y/%m/%d")
+today = date.today().strftime("%Y/%m/%d")
+
+resp = requests.get("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
+                    params={"db": "pubmed", "term": "CRISPR AND cancer",
+                            "datetype": "pdat", "mindate": week_ago, "maxdate": today,
+                            "retmax": 20, "retmode": "json"})
+data = resp.json()["esearchresult"]
+print(f"New CRISPR+cancer papers this week: {data['count']}")
+print("PMIDs:", data["idlist"])
+```
+
 ## Bundled Resources
 
 - `references/search_syntax.md` — Complete field tag reference, Boolean/wildcard/proximity syntax, automatic term mapping rules, all filter types (age groups, species, languages), and clinical query filters

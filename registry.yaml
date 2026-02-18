@@ -1074,3 +1074,11 @@ entries:
     path: "skills/cell-biology/pyimagej-fiji-bridge/SKILL.md"
     description: "Python bridge to ImageJ2/Fiji for macro execution, plugin calls (Bio-Formats, TrackMate, Analyze Particles), bidirectional NumPy↔ImagePlus/ImgLib2 data exchange, and ImageJ Ops from Python. Use for automating Fiji-specific workflows headlessly. Use scikit-image for pure Python pipelines without Fiji plugins; use napari for interactive visualization."
     date_added: "2026-02-18"
+
+  - name: "cellchat-cell-communication"
+    type: skill
+    sub_type: pipeline
+    category: "systems-biology-multiomics"
+    path: "skills/systems-biology-multiomics/cellchat-cell-communication/SKILL.md"
+    description: "Infer, analyze, and visualize intercellular communication from scRNA-seq data using CellChat (R). Pipeline: create CellChat object → subset CellChatDB ligand-receptor database → identify over-expressed genes per cell group → compute pairwise communication probabilities → aggregate to pathway level → analyze network centrality (senders, receivers, influencers, mediators) → visualize with chord diagrams, heatmaps, and bubble plots → compare signaling across conditions. Human and mouse supported via CellChatDB. Use liana for a pure-Python equivalent."
+    date_added: "2026-02-18"
