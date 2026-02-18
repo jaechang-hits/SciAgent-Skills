@@ -779,3 +779,27 @@ entries:
     path: "skills/structural-biology-drug-discovery/torchdrug/SKILL.md"
     description: "TorchDrug is a PyTorch-based machine learning platform for drug discovery. Use it for graph-based molecular representation learning, molecular property prediction (ADMET, activity), retrosynthesis prediction, drug-target interaction (DTI) modeling, and pretraining on large molecular datasets. Provides GNN layers (GraphConv, GAT, MPNN), pretrained models, and benchmark datasets in a unified PyTorch-compatible API."
     date_added: "2026-02-18"
+
+  - name: "pymoo"
+    type: skill
+    sub_type: toolkit
+    category: "scientific-computing"
+    path: "skills/scientific-computing/pymoo/SKILL.md"
+    description: "pymoo is a Python framework for single- and multi-objective optimization using evolutionary algorithms. Define problems as vectorized objective functions and constraints, then solve with NSGA-II, NSGA-III, MOEA/D, genetic algorithms, or differential evolution. Analyze Pareto fronts, visualize trade-off surfaces, and customize operators and callbacks. Ideal for engineering design, hyperparameter search, process optimization, and any problem with multiple conflicting objectives. Alternatives: scipy.optimize (single-objective, gradient-based), platypus (fewer algorithms), jMetalPy (Java-based, more algorithms)."
+    date_added: "2026-02-18"
+
+  - name: "pymatgen"
+    type: skill
+    sub_type: toolkit
+    category: "scientific-computing"
+    path: "skills/scientific-computing/pymatgen/SKILL.md"
+    description: "pymatgen (Python Materials Genomics) is a materials science Python library for structure analysis, thermodynamics, and electronic property calculation. Parse and create crystal structures (CIF, POSCAR, CIF), query the Materials Project database for DFT-computed properties, analyze phase diagrams and pourbaix diagrams, compute X-ray diffraction patterns, and generate DFT input files for VASP, Quantum ESPRESSO, and CP2K. Alternatives: ASE (Atomic Simulation Environment) for MD/geometry; AFLOW for high-throughput; OVITO for visualization."
+    date_added: "2026-02-18"
+
+  - name: "neurokit2"
+    type: skill
+    sub_type: toolkit
+    category: "scientific-computing"
+    path: "skills/scientific-computing/neurokit2/SKILL.md"
+    description: "NeuroKit2 is a Python toolkit for neurophysiological signal processing. Process ECG (heart rate, HRV, R-peak detection), EEG (complexity, power spectral density), EMG (muscle activation onset), EDA/GSR (skin conductance, SCR decomposition), PPG (photoplethysmography), and RSP (respiration) signals. Simulate synthetic signals for testing. Alternatives: BioSPPy (older, less maintained), MNE (EEG/MEG specialist), heartpy (ECG only), scipy.signal (raw DSP without biosignal abstraction)."
+    date_added: "2026-02-18"
