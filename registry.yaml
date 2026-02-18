@@ -867,3 +867,19 @@ entries:
     path: "skills/genomics-bioinformatics/bedtools-genomic-intervals/SKILL.md"
     description: "Toolkit for genomic interval operations on BED, BAM, GFF, VCF files. Find overlapping regions, merge adjacent intervals, calculate coverage depth, extract FASTA sequences, find nearest features, and manipulate interval coordinates. Essential for ChIP-seq peak annotation, target region filtering, and genome arithmetic. Use tabix for indexed single-region queries; use deeptools for normalized bigWig coverage."
     date_added: "2026-02-18"
+
+  - name: "snakemake-workflow-engine"
+    type: skill
+    sub_type: toolkit
+    category: "scientific-computing"
+    path: "skills/scientific-computing/snakemake-workflow-engine/SKILL.md"
+    description: "Python-based workflow management system for reproducible, scalable pipelines. Define rules with file-based dependencies; Snakemake determines execution order and parallelism automatically. Supports local, SLURM, LSF, AWS, and Google Cloud execution via profiles; per-rule conda/Singularity environments. Use for bioinformatics NGS pipelines, ML training workflows, and any multi-step file-processing analysis. Use Nextflow instead for Groovy-based dataflow pipelines or nf-core ecosystem."
+    date_added: "2026-02-18"
+
+  - name: "bcftools-variant-manipulation"
+    type: skill
+    sub_type: toolkit
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/bcftools-variant-manipulation/SKILL.md"
+    description: "Command-line toolkit for VCF/BCF variant file manipulation. Filter, merge, annotate, query, normalize, and compute statistics on variant call files. Essential for post-variant-calling pipelines: quality filtering, multi-sample merging, rsID annotation, and genotype extraction. Companion to samtools in the HTSlib ecosystem. Use GATK instead for complex indel realignment; use VCFtools for population genetics statistics."
+    date_added: "2026-02-18"
