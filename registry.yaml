@@ -31,6 +31,13 @@ entries:
     path: "skills/genomics-bioinformatics/biopython-molecular-biology/SKILL.md"
     description: "Computational molecular biology toolkit: sequence manipulation, file I/O (FASTA/GenBank/PDB), NCBI Entrez access, BLAST, pairwise alignment, protein structure analysis, phylogenetics"
     date_added: "2026-02-16"
+  - name: "biopython-sequence-analysis"
+    type: skill
+    sub_type: toolkit
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/biopython-sequence-analysis/SKILL.md"
+    description: "Biopython sequence analysis workflows: SeqIO parsing (FASTA/FASTQ/GenBank/GFF), Entrez NCBI queries (esearch/efetch/elink), remote and local BLAST with result parsing, PairwiseAligner with substitution matrices, multiple sequence alignment (MUSCLE/ClustalW), and Phylo tree parsing/visualization. For PCR, restriction digestion, and cloning use biopython-molecular-biology."
+    date_added: "2026-02-18"
   - name: "rdkit-cheminformatics"
     type: skill
     sub_type: pipeline
@@ -1058,4 +1065,12 @@ entries:
     category: "systems-biology-multiomics"
     path: "skills/systems-biology-multiomics/muon-multiomics-singlecell/SKILL.md"
     description: "Multi-modal single-cell analysis with muon and MuData. Joint RNA+ATAC (10x Multiome), CITE-seq (RNA+protein), and other multi-omics combinations. MuData container holds modality-specific AnnData objects with shared obs. Weighted Nearest Neighbor (WNN) graph for joint embedding, per-modality preprocessing, cross-modal factor analysis with MOFA. Use scanpy-scrna-seq for single-modality RNA analysis; use muon when combining two or more omics modalities from the same cells."
+    date_added: "2026-02-18"
+
+  - name: "pyimagej-fiji-bridge"
+    type: skill
+    sub_type: toolkit
+    category: "cell-biology"
+    path: "skills/cell-biology/pyimagej-fiji-bridge/SKILL.md"
+    description: "Python bridge to ImageJ2/Fiji for macro execution, plugin calls (Bio-Formats, TrackMate, Analyze Particles), bidirectional NumPy↔ImagePlus/ImgLib2 data exchange, and ImageJ Ops from Python. Use for automating Fiji-specific workflows headlessly. Use scikit-image for pure Python pipelines without Fiji plugins; use napari for interactive visualization."
     date_added: "2026-02-18"

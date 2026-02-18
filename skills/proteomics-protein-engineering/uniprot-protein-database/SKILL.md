@@ -196,7 +196,44 @@ def stream_query(query, format="fasta"):
 #     print(chunk[:200])
 ```
 
-### 5. Field Selection and Annotations
+### 5. Pagination and Cursor-Based Iteration
+
+Handle large result sets with pagination using the `Link` header cursor.
+
+```python
+import requests
+
+def paginate_search(query, fields=None, page_size=500):
+    """Iterate all pages of a UniProt search using cursor pagination."""
+    params = {"query": query, "format": "tsv", "size": page_size}
+    if fields:
+        params["fields"] = ",".join(fields)
+    url = "https://rest.uniprot.org/uniprotkb/search"
+    rows = []
+    header = None
+    while url:
+        resp = requests.get(url, params=params)
+        resp.raise_for_status()
+        params = {}  # cursor is embedded in the next URL
+        lines = resp.text.strip().split("\n")
+        if header is None:
+            header = lines[0]
+        rows.extend(lines[1:])
+        # Follow Link header for next page
+        link = resp.headers.get("Link", "")
+        url = link.split("<")[1].split(">")[0] if "<" in link else None
+    return header, rows
+
+header, rows = paginate_search(
+    "kinase AND organism_id:9606 AND reviewed:true",
+    fields=["accession", "gene_names", "length"]
+)
+print(f"Retrieved {len(rows)} proteins")
+print(header)
+print("\n".join(rows[:3]))
+```
+
+### 6. Field Selection and Annotations
 
 Customize which data fields to retrieve.
 
@@ -269,6 +306,27 @@ resp = requests.get(url, params=params)
 df = pd.read_csv(StringIO(resp.text), sep="\t")
 print(f"Human kinases (Swiss-Prot): {len(df)}")
 print(df.head())
+```
+
+### Recipe: Extract GO Annotations for a Gene Set
+
+```python
+import requests
+import pandas as pd
+from io import StringIO
+
+gene_list = ["BRCA1", "BRCA2", "TP53", "ATM", "CHEK2"]
+query = " OR ".join(f"gene:{g}" for g in gene_list)
+query += " AND organism_id:9606 AND reviewed:true"
+
+params = {
+    "query": query,
+    "format": "tsv",
+    "fields": "accession,gene_names,go_p,go_f,go_c",
+}
+resp = requests.get("https://rest.uniprot.org/uniprotkb/search", params=params)
+df = pd.read_csv(StringIO(resp.text), sep="\t")
+print(df[["Accession", "Gene Names", "Gene Ontology (biological process)"]].head())
 ```
 
 ### Recipe: Cross-Reference UniProt to PDB Structures
