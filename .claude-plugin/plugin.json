@@ -1,0 +1,10 @@
+{
+  "name": "scicraft",
+  "description": "Life sciences computational skills for scientific AI agents — 60+ skills covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing",
+  "version": "0.1.0",
+  "author": {
+    "name": "jaechang-hits"
+  },
+  "repository": "https://github.com/jaechang-hits/scicraft",
+  "license": "CC-BY-4.0"
+}

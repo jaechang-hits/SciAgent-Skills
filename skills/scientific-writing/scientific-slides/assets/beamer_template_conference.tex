@@ -1,0 +1,190 @@
+% ==============================================================================
+% Scientific Slides — Conference Talk Template (15 min)
+% LaTeX Beamer, 16:9, Madrid theme
+% Compile: pdflatex conference_talk.tex
+% ==============================================================================
+
+\documentclass[aspectratio=169,11pt]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usetheme{Madrid}
+\usecolortheme{dolphin}
+\setbeamertemplate{navigation symbols}{}
+
+% Section divider pages
+\AtBeginSection[]{
+  \begin{frame}
+    \vfill
+    \centering
+    \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+      \usebeamerfont{title}\insertsectionhead\par%
+    \end{beamercolorbox}
+    \vfill
+  \end{frame}
+}
+
+\usepackage{graphicx}
+\graphicspath{{./figures/}}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage[style=authoryear,maxcitenames=2,backend=biber]{biblatex}
+\addbibresource{references.bib}
+\renewcommand*{\bibfont}{\tiny}
+
+% Custom colors
+\definecolor{primaryblue}{RGB}{0,75,135}
+\setbeamercolor{structure}{fg=primaryblue}
+\setbeamercolor{title}{fg=primaryblue}
+\setbeamercolor{frametitle}{fg=primaryblue}
+
+% Title
+\title[Short Title]{Full Title of Your Research}
+\subtitle{Conference Name — Session}
+\author[Your Name]{Your Name\textsuperscript{1}, Co-Author\textsuperscript{2}}
+\institute[Affiliation]{
+  \textsuperscript{1}Department, University\\
+  \textsuperscript{2}Department, Institution\\
+  \texttt{email@university.edu}
+}
+\date{\today}
+
+\begin{document}
+
+% --- TITLE ---
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+% --- INTRODUCTION (2–3 min, 2–3 slides) ---
+\section{Introduction}
+
+\begin{frame}{Motivation and Background}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \textbf{Why this matters:}
+      \begin{itemize}
+        \item Context statement 1
+        \item Context statement 2
+        \item Current limitation or gap
+      \end{itemize}
+      \vspace{0.5cm}
+      \begin{block}{Research Question}
+        What is the specific question you address?
+      \end{block}
+    \end{column}
+    \begin{column}{0.45\textwidth}
+      % \includegraphics[width=\textwidth]{motivation.pdf}
+      \framebox[0.9\textwidth][c]{\parbox{0.8\textwidth}{\centering [Motivating Figure]}}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% --- METHODS (2–3 min, 2–3 slides) ---
+\section{Methods}
+
+\begin{frame}{Approach}
+  \begin{figure}
+    \centering
+    % \includegraphics[width=0.85\textwidth]{methods_schematic.pdf}
+    \framebox[0.8\textwidth][c]{[Methods Schematic / Workflow Diagram]}
+    \caption{Overview of experimental design}
+  \end{figure}
+  \begin{itemize}
+    \item Key methodological point 1
+    \item Key methodological point 2
+  \end{itemize}
+\end{frame}
+
+% --- RESULTS (6–7 min, 6–8 slides) ---
+\section{Results}
+
+\begin{frame}{Main Finding}
+  \begin{columns}[c]
+    \begin{column}{0.6\textwidth}
+      \begin{figure}
+        % \includegraphics[width=\textwidth]{result1.pdf}
+        \framebox[0.9\textwidth][c]{[Key Result Figure]}
+        \caption{Description ($p < 0.001$, $n = X$)}
+      \end{figure}
+    \end{column}
+    \begin{column}{0.4\textwidth}
+      \textbf{Key Observation:}
+      \begin{itemize}
+        \item Interpretation point 1
+        \item Interpretation point 2
+      \end{itemize}
+      \begin{block}{Takeaway}
+        One-sentence summary of this finding.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Supporting Evidence}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \begin{figure}
+        % \includegraphics[width=\textwidth]{result2a.pdf}
+        \framebox[0.9\textwidth][c]{[Figure A]}
+        \caption{Supporting result A}
+      \end{figure}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{figure}
+        % \includegraphics[width=\textwidth]{result2b.pdf}
+        \framebox[0.9\textwidth][c]{[Figure B]}
+        \caption{Supporting result B}
+      \end{figure}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% --- DISCUSSION (2–3 min, 3–4 slides) ---
+\section{Discussion}
+
+\begin{frame}{Implications}
+  \textbf{What this means:}
+  \begin{itemize}
+    \item Implication for the field
+    \item Comparison to prior work \cite{prior2023}
+    \item Practical applications
+  \end{itemize}
+  \vspace{0.5cm}
+  \textbf{Limitations:}
+  \begin{itemize}
+    \item Key limitation and mitigation
+  \end{itemize}
+\end{frame}
+
+% --- CONCLUSION (1 min, 1–2 slides) ---
+\section{Conclusion}
+
+\begin{frame}{Summary}
+  \begin{exampleblock}{Key Takeaways}
+    \begin{enumerate}
+      \item Main conclusion 1
+      \item Main conclusion 2
+      \item Future direction
+    \end{enumerate}
+  \end{exampleblock}
+  \vspace{0.5cm}
+  \centering
+  \textbf{Thank you — Questions?}\\
+  \texttt{email@university.edu}\\[0.3cm]
+  {\footnotesize Funded by Grant Agency (\#12345)}
+\end{frame}
+
+% --- BACKUP SLIDES ---
+\appendix
+
+\begin{frame}{Backup: Additional Data}
+  % Extra figures, tables, or analyses for Q&A
+  \framebox[\textwidth][c]{[Additional analysis or full regression table]}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{References}
+  \printbibliography
+\end{frame}
+
+\end{document}

@@ -1,0 +1,17 @@
+[project]
+name = "scicraft"
+version = "0.1.0"
+description = "Life sciences computational skills for scientific AI agents"
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "osx-64", "linux-64"]
+
+[dependencies]
+python = ">=3.12"
+
+[pypi-dependencies]
+pyyaml = ">=6.0"
+pytest = ">=8.0"
+
+[tasks]
+validate = "python scripts/validate_registry.py"
+test = "pytest tests/ -v"
