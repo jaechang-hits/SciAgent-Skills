@@ -1043,3 +1043,19 @@ entries:
     path: "skills/data-visualization/seaborn-statistical-plots/SKILL.md"
     description: "Statistical visualization library built on matplotlib with native pandas DataFrame support. Automatic aggregation, confidence intervals, and grouping for distribution plots (histplot, kdeplot), categorical comparisons (boxplot, violinplot, stripplot), relational plots (scatterplot, lineplot), regression plots (regplot, lmplot), matrix plots (heatmap, clustermap), and multi-variable grids (pairplot, jointplot, FacetGrid). Use seaborn for statistical summaries with minimal code; use matplotlib for fine-grained figure control; use plotly for interactive HTML output."
     date_added: "2026-02-18"
+
+  - name: "Plotly Interactive Plots"
+    type: skill
+    sub_type: toolkit
+    category: "data-visualization"
+    path: "skills/data-visualization/plotly-interactive-plots/SKILL.md"
+    description: "Interactive scientific visualization with Plotly. Two-layer API: plotly.express (px) for one-liner DataFrame plots and plotly.graph_objects (go) for full trace-level control. 40+ chart types with hover, zoom, pan, and animation. Exports to interactive HTML or static PNG/SVG/PDF via kaleido. Use for interactive web figures, volcano plots with gene hover info, dose-response dashboards, gene expression heatmaps, and 3D molecular visualizations. Use seaborn for statistical summaries with automatic aggregation; use matplotlib for fine-grained publication figures; use plotly for interactive or web-embedded output."
+    date_added: "2026-02-18"
+
+  - name: "muon-multiomics-singlecell"
+    type: skill
+    sub_type: toolkit
+    category: "systems-biology-multiomics"
+    path: "skills/systems-biology-multiomics/muon-multiomics-singlecell/SKILL.md"
+    description: "Multi-modal single-cell analysis with muon and MuData. Joint RNA+ATAC (10x Multiome), CITE-seq (RNA+protein), and other multi-omics combinations. MuData container holds modality-specific AnnData objects with shared obs. Weighted Nearest Neighbor (WNN) graph for joint embedding, per-modality preprocessing, cross-modal factor analysis with MOFA. Use scanpy-scrna-seq for single-modality RNA analysis; use muon when combining two or more omics modalities from the same cells."
+    date_added: "2026-02-18"
