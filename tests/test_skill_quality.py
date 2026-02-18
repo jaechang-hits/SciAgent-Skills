@@ -614,7 +614,8 @@ class TestDatabaseAndToolkitStructure:
         has_routing = bool(re.search(
             r"instead|alternative|prefer |"
             r"\bfor\b.{1,250}\buse\b|"
-            r"\buse\b.{1,250}\binstead\b",
+            r"\buse\b.{1,250}\binstead\b|"
+            r"\buse\b\s+\*{0,2}\w[\w\-]+\w\*{0,2}\s+(?:instead\s+)?when\b",
             wtu_text,
             re.IGNORECASE,
         ))
