@@ -351,6 +351,47 @@ print(f"Buildings near roads: {len(buildings_near_roads)}/{len(buildings)}")
 7. **Set max_distance in sjoin_nearest** — unbounded nearest-neighbor search is slow on large datasets
 8. **Use `.copy()` when modifying geometry** — avoid unintended side effects on original GeoDataFrame
 
+## Common Recipes
+
+### Recipe: Count Points in Polygons
+
+When to use: Aggregate point observations (sample sites, observations) by region (county, watershed).
+
+```python
+import geopandas as gpd
+
+regions = gpd.read_file("regions.geojson")
+points = gpd.read_file("observations.geojson").to_crs(regions.crs)
+
+joined = gpd.sjoin(points, regions, how="inner", predicate="within")
+counts = joined.groupby("index_right").size().rename("point_count")
+regions_with_counts = regions.join(counts).fillna(0)
+regions_with_counts["point_count"] = regions_with_counts["point_count"].astype(int)
+print(regions_with_counts[["name", "point_count"]].sort_values("point_count", ascending=False).head())
+```
+
+### Recipe: Buffer Around Points and Dissolve Overlaps
+
+When to use: Create service areas or catchment zones from point locations.
+
+```python
+import geopandas as gpd
+
+facilities = gpd.read_file("facilities.geojson")
+utm_crs = facilities.estimate_utm_crs()   # Project to meters
+facilities_m = facilities.to_crs(utm_crs)
+
+# 1 km buffer
+buffers = facilities_m.copy()
+buffers["geometry"] = facilities_m.geometry.buffer(1000)
+
+# Dissolve overlapping buffers into single polygon
+service_area = buffers.dissolve()
+service_area_wgs84 = service_area.to_crs("EPSG:4326")
+service_area_wgs84.to_file("service_area.geojson", driver="GeoJSON")
+print(f"Service area: {service_area_wgs84.geometry.area.sum():.0f} sq degrees")
+```
+
 ## Troubleshooting
 
 | Problem | Cause | Solution |

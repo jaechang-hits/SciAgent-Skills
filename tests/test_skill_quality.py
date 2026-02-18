@@ -482,3 +482,24 @@ class TestDatabaseAndToolkitStructure:
             f"[{entry['name']}] '## When to Use' does not mention any alternative tool. "
             "Add a bullet like: '- Use `other-tool` instead when [condition]'"
         )
+
+    @pytest.mark.parametrize("entry", TOOLKIT_ENTRIES, ids=entry_id)
+    def test_toolkit_has_common_recipes(self, entry):
+        """Toolkit entries must have a '## Common Recipes' section with at least 2 recipes."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+
+        match = re.search(
+            r"^## Common Recipes\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        assert match, (
+            f"[{entry['name']}] Missing '## Common Recipes' section (required for toolkit entries)"
+        )
+
+        # Count recipe subsections: ### Recipe or ### Recipe N: or ### Recipe: or similar
+        recipes = re.findall(r"^### Recipe", match.group(1), re.MULTILINE)
+        assert len(recipes) >= 2, (
+            f"[{entry['name']}] '## Common Recipes' has {len(recipes)} recipe(s), minimum is 2"
+        )

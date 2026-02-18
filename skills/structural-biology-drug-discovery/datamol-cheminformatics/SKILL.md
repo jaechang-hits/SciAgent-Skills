@@ -396,6 +396,46 @@ for scaffold, group in sar_df.groupby('scaffold'):
 6. **Use scaffold splitting for ML** — random splits leak similar structures into train/test. Always use scaffold-based splitting for molecular property prediction models
 7. **Leverage fsspec for cloud data** — all I/O functions accept S3, GCS, and HTTP paths directly. Install `s3fs` or `gcsfs` for cloud support
 
+## Common Recipes
+
+### Recipe: Batch SMILES Validation and Standardization
+
+When to use: Clean a list of SMILES strings before any downstream analysis.
+
+```python
+import datamol as dm
+
+smiles_list = ["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "invalid_smiles", "CC(N)C(=O)O"]
+mols = [dm.to_mol(s) for s in smiles_list]
+valid = [(s, m) for s, m in zip(smiles_list, mols) if m is not None]
+standardized = [(s, dm.standardize_mol(m)) for s, m in valid]
+print(f"Valid: {len(valid)}/{len(smiles_list)}")
+for orig, mol in standardized:
+    print(f"  {orig} → {dm.to_smiles(mol)}")
+```
+
+### Recipe: Pairwise Similarity Matrix
+
+When to use: Compare a small compound set against each other or a reference library.
+
+```python
+import datamol as dm
+import numpy as np
+
+smiles = ["CC(=O)Oc1ccccc1C(=O)O", "c1ccc(cc1)C(=O)O", "CC(N)C(=O)O", "c1ccccc1"]
+mols = [dm.to_mol(s) for s in smiles]
+fps = [dm.to_fp(m) for m in mols]
+
+# Pairwise Tanimoto similarity
+n = len(fps)
+sim_matrix = np.zeros((n, n))
+for i in range(n):
+    for j in range(n):
+        sim_matrix[i, j] = dm.similarity.tanimoto(fps[i], fps[j])
+print(f"Similarity matrix shape: {sim_matrix.shape}")
+print(f"Most similar pair: {np.unravel_index(np.argsort(sim_matrix.ravel())[-3], (n, n))}")
+```
+
 ## Troubleshooting
 
 | Problem | Cause | Solution |

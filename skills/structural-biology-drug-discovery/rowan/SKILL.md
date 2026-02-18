@@ -345,6 +345,60 @@ print(f"More stable form: {'enol' if delta_e_kcal < 0 else 'keto'}")
 - `result.conformers` — list of conformer objects with individual energies
 - `result.torsion_scan` — list of (angle, energy) scan points
 
+## Common Recipes
+
+### Recipe: Quick Single-Point Energy
+
+When to use: Compare relative energies of two conformers or reaction intermediates in one call.
+
+```python
+import rowan
+
+client = rowan.Client()
+
+smiles_list = ["CC(=O)O", "C(=O)(O)C"]  # Acetic acid, two representations
+jobs = []
+for smi in smiles_list:
+    job = client.compute(
+        molecule=rowan.Molecule.from_smiles(smi),
+        theory_level="gfn2-xtb",
+        task="single_point",
+    )
+    jobs.append(job)
+
+# Collect energies
+for smi, job in zip(smiles_list, jobs):
+    result = client.wait(job)
+    print(f"{smi}: energy = {result.energy:.6f} Hartree")
+```
+
+### Recipe: Check Running Job Status
+
+When to use: Monitor a long-running optimization or conformer search without blocking.
+
+```python
+import rowan, time
+
+client = rowan.Client()
+job = client.compute(
+    molecule=rowan.Molecule.from_smiles("c1ccccc1"),
+    theory_level="gfn2-xtb",
+    task="optimize",
+)
+print(f"Job ID: {job.id}")
+
+# Poll every 10 seconds (non-blocking)
+for _ in range(30):
+    status = client.status(job)
+    print(f"Status: {status}")
+    if status in ("completed", "failed"):
+        break
+    time.sleep(10)
+
+result = client.get(job)
+print(f"Final energy: {result.energy:.6f} Hartree")
+```
+
 ## Troubleshooting
 
 | Problem | Cause | Solution |
