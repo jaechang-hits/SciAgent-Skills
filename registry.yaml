@@ -947,3 +947,19 @@ entries:
     path: "skills/genomics-bioinformatics/bwa-mem2-dna-aligner/SKILL.md"
     description: "Fast short-read DNA aligner for whole-genome, whole-exome, and ChIP-seq alignment to a reference genome. BWA-MEM2 is the 2× faster successor to BWA-MEM; outputs SAM/BAM with read group headers required by GATK. Produces primary alignments with supplementary records for chimeric reads. Use STAR instead for RNA-seq splice-aware alignment; use Bowtie2 as an alternative with comparable accuracy."
     date_added: "2026-02-18"
+
+  - name: "napari-image-viewer"
+    type: skill
+    sub_type: toolkit
+    category: "cell-biology"
+    path: "skills/cell-biology/napari-image-viewer/SKILL.md"
+    description: "Interactive multi-dimensional image viewer for scientific microscopy data. Napari displays 2D/3D/4D arrays as Image, Labels, Points, Shapes, and Tracks layers; supports real-time annotation, plugin-based analysis, and headless screenshot export. Core visualization tool for bioimage analysis workflows. Use ImageJ/FIJI for macro-based processing; use napari for Python-native interactive visualization and plugin-based deep learning segmentation review."
+    date_added: "2026-02-18"
+
+  - name: "fastp-fastq-preprocessing"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/fastp-fastq-preprocessing/SKILL.md"
+    description: "All-in-one FASTQ quality control and adapter trimming tool. Automatically detects and removes Illumina adapters, filters low-quality reads, corrects paired-end overlaps, and generates HTML+JSON QC reports in a single fast pass. 3-10× faster than Trim Galore/Trimmomatic. Use as the first step before STAR, BWA-MEM2, or Salmon alignment in any NGS pipeline."
+    date_added: "2026-02-18"
