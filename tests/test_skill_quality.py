@@ -544,6 +544,33 @@ class TestDatabaseAndToolkitStructure:
             "Add a bullet like: '- Use `other-tool` instead when [condition]'"
         )
 
+    @pytest.mark.parametrize("entry", PIPELINE_ENTRIES, ids=entry_id)
+    def test_pipeline_when_to_use_has_routing_guidance(self, entry):
+        """Pipeline 'When to Use' must mention at least one alternative tool for routing."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+
+        wtu_match = re.search(
+            r"^## When to Use\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        if not wtu_match:
+            pytest.fail(f"[{entry['name']}] Missing '## When to Use' section")
+
+        wtu_text = wtu_match.group(1)
+        has_routing = bool(re.search(
+            r"instead|alternative|prefer |"
+            r"\bfor\b.{1,250}\buse\b|"
+            r"\buse\b.{1,250}\binstead\b",
+            wtu_text,
+            re.IGNORECASE,
+        ))
+        assert has_routing, (
+            f"[{entry['name']}] '## When to Use' lacks routing guidance. "
+            "Add a bullet like: '- Use `other-tool` instead when [condition]'"
+        )
+
     @pytest.mark.parametrize("entry", TOOLKIT_ENTRIES, ids=entry_id)
     def test_toolkit_has_common_recipes(self, entry):
         """Toolkit entries must have a '## Common Recipes' section with at least 2 recipes."""

@@ -21,6 +21,7 @@ Scanpy is a scalable Python toolkit for analyzing single-cell RNA-seq data built
 - Conducting trajectory inference and pseudotime analysis (PAGA, diffusion pseudotime)
 - Generating publication-quality single-cell plots (dot plots, heatmaps, stacked violins)
 - Comparing gene expression across experimental conditions within cell types
+- Use **Seurat** (R/Bioconductor) instead for scRNA-seq analysis in an existing R workflow or when Seurat-specific assay types are required
 
 ## Prerequisites
 

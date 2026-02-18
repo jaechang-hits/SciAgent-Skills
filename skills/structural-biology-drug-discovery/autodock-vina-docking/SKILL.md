@@ -19,6 +19,7 @@ AutoDock Vina is one of the fastest and most widely used open-source molecular d
 - Preparing docking inputs from SMILES strings without intermediate files
 - Comparing binding modes of analogs in a structure-activity relationship study
 - Generating starting poses for molecular dynamics simulations
+- Use **DiffDock** instead for blind docking when the binding site is unknown; use **GNINA** as an alternative with CNN scoring
 
 ## Prerequisites
 

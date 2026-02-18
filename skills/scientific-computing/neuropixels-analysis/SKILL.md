@@ -19,6 +19,7 @@ Neuropixels probes record extracellular voltage from 384 (NP 1.0) or 192 (NP 2.0
 - Converting sorted data to NWB (Neurodata Without Borders) format for sharing
 - Comparing multiple spike sorters on the same dataset for method validation
 - Visualizing unit waveforms, auto-correlograms, and spatial distribution across probe channels
+- Use **SpikeInterface** instead for a unified framework that supports 10+ spike sorters with a common API and comparison tools
 
 ## Prerequisites
 

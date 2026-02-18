@@ -19,6 +19,7 @@ PyDESeq2 is a Python reimplementation of the R DESeq2 package for differential g
 - Generating volcano plots, MA plots, and heatmaps from differential expression results
 - Converting R-based DESeq2 workflows to a pure Python environment
 - Integrating DE analysis into larger Python bioinformatics pipelines (e.g., with scanpy, pandas)
+- Use **DESeq2** (R/Bioconductor) or **edgeR** instead for the reference R implementations with the broadest method support and community validation
 
 ## Prerequisites
 

@@ -20,6 +20,7 @@ PyMC is a Python library for Bayesian statistical modeling and probabilistic pro
 - Handling missing data or measurement error as latent parameters
 - Modeling time series with autoregressive or random walk priors
 - Generating posterior predictions for new observations with uncertainty bounds
+- Use **Stan/PyStan** instead for compiled, more scalable Bayesian inference on large models; use **statsmodels** for frequentist statistical tests
 
 ## Prerequisites
 

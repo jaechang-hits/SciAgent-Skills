@@ -19,6 +19,7 @@ DiffDock uses a diffusion generative model to predict protein-ligand binding pos
 - **Fragment screening hypothesis generation**: Identifying plausible binding sites for fragment molecules.
 - For known binding sites with rigid protein assumptions, AutoDock Vina or GNINA may be faster and equally accurate.
 - For large-scale virtual screening (>10,000 compounds), consider GNINA or DiffDock-L (the large-scale version) rather than standard DiffDock.
+- Use **AutoDock Vina** instead when the binding pocket is well-defined and faster throughput is needed for large compound libraries
 
 ## Prerequisites
 

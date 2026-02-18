@@ -963,3 +963,11 @@ entries:
     path: "skills/genomics-bioinformatics/fastp-fastq-preprocessing/SKILL.md"
     description: "All-in-one FASTQ quality control and adapter trimming tool. Automatically detects and removes Illumina adapters, filters low-quality reads, corrects paired-end overlaps, and generates HTML+JSON QC reports in a single fast pass. 3-10× faster than Trim Galore/Trimmomatic. Use as the first step before STAR, BWA-MEM2, or Salmon alignment in any NGS pipeline."
     date_added: "2026-02-18"
+
+  - name: "featurecounts-rna-counting"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/featurecounts-rna-counting/SKILL.md"
+    description: "Counts aligned RNA-seq reads overlapping gene features in a GTF annotation. Takes sorted BAM files from STAR alignment and a GTF file; outputs a tab-delimited count matrix per gene across all samples. Handles strandedness (0=unstranded, 1=stranded, 2=reverse-stranded), paired-end, and multi-sample batch counting in a single command. Use Salmon instead for alignment-free quantification; use featureCounts when STAR BAMs already exist and a gene-level count matrix is needed."
+    date_added: "2026-02-18"
