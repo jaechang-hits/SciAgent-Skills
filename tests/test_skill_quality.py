@@ -336,6 +336,55 @@ class TestContentDepth:
             f"[{entry['name']}] '## Troubleshooting' has {n_data} data rows, minimum is 5"
         )
 
+    @pytest.mark.parametrize("entry", PIPELINE_ENTRIES, ids=entry_id)
+    def test_pipeline_has_expected_outputs(self, entry):
+        """Pipeline entries must have '## Expected Outputs' section."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+        assert "## Expected Outputs" in text, (
+            f"[{entry['name']}] Missing '## Expected Outputs' section (required for pipeline)"
+        )
+
+    @pytest.mark.parametrize("entry", GUIDE_ENTRIES, ids=entry_id)
+    def test_guide_best_practices_minimum_items(self, entry):
+        """Guide Best Practices must have at least 5 items."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+
+        match = re.search(
+            r"^## Best Practices\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        if not match:
+            pytest.fail(f"[{entry['name']}] Missing '## Best Practices' section")
+
+        items = re.findall(r"^\s*\d+\.\s+\S|^\s*[-*]\s+\S", match.group(1), re.MULTILINE)
+        assert len(items) >= 5, (
+            f"[{entry['name']}] '## Best Practices' has {len(items)} items, minimum is 5"
+        )
+
+    @pytest.mark.parametrize("entry", GUIDE_ENTRIES, ids=entry_id)
+    def test_guide_common_pitfalls_minimum_items(self, entry):
+        """Guide Common Pitfalls must have at least 5 items."""
+        path = ROOT / entry["path"]
+        if not path.exists():
+            pytest.skip(f"SKILL.md not found: {entry['path']}")
+        text = path.read_text(encoding="utf-8")
+
+        match = re.search(
+            r"^## Common Pitfalls\s*\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL
+        )
+        if not match:
+            pytest.fail(f"[{entry['name']}] Missing '## Common Pitfalls' section")
+
+        items = re.findall(r"^\s*\d+\.\s+\S|^\s*[-*]\s+\S", match.group(1), re.MULTILINE)
+        assert len(items) >= 5, (
+            f"[{entry['name']}] '## Common Pitfalls' has {len(items)} items, minimum is 5"
+        )
+
 
 # ---------------------------------------------------------------------------
 # TestDatabaseAndToolkitStructure

@@ -295,6 +295,17 @@ with mlflow.start_run():
         mlflow.log_metric(f"shap_{feat}", imp)
 ```
 
+## Expected Outputs
+
+| Output | Type | Description |
+|--------|------|-------------|
+| `shap_values` | `shap.Explanation` | Object with `.values` `(n_samples, n_features)`, `.base_values` (baseline), `.data` (input features) |
+| Waterfall plot | matplotlib figure | Single-instance explanation showing feature contributions from base value to prediction |
+| Beeswarm plot | matplotlib figure | Global summary: feature importance × direction for all samples |
+| Bar plot | matplotlib figure | Mean absolute SHAP values per feature (global importance ranking) |
+| Force plot | HTML/matplotlib | Interactive or static visualization of a single prediction |
+| `mean_abs_shap` | `pd.Series` | Per-feature mean absolute SHAP value for ranking and reporting |
+
 ## Troubleshooting
 
 | Problem | Cause | Solution |
