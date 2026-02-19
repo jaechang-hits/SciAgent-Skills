@@ -1,9 +1,9 @@
 # SciCraft
 
-**176 validated scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and more.
+**140 validated scientific skills for AI coding agents** — domain-specific knowledge Claude doesn't already have: genomics pipelines, drug discovery databases, proteomics tools, and more.
 
 [![License: CC-BY-4.0](https://img.shields.io/badge/License-CC--BY--4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
-[![Skills](https://img.shields.io/badge/Skills-176-brightgreen.svg)](#whats-inside)
+[![Skills](https://img.shields.io/badge/Skills-140-brightgreen.svg)](#whats-inside)
 [![Works with](https://img.shields.io/badge/Works_with-Claude_Code-blueviolet.svg)](https://docs.anthropic.com/en/docs/claude-code)
 [![CI](https://img.shields.io/github/actions/workflow/status/jaechang-hits/scicraft/validate.yml?label=CI)](https://github.com/jaechang-hits/scicraft/actions)
 
@@ -54,16 +54,15 @@ The same workflow works for external contributors: clone the repo, describe your
 
 | Category | Skills | Examples |
 |----------|:------:|----------|
-| Genomics & Bioinformatics | 60 | Scanpy, DESeq2, gnomAD, ENCODE, UCSC, CellTypist, popV, cBioPortal |
-| Scientific Computing | 24 | Polars, Dask, NetworkX, SymPy, UMAP, PyG, Zarr, SimPy |
+| Genomics & Bioinformatics | 59 | Scanpy, DESeq2, gnomAD, ENCODE, UCSC, CellTypist, popV, cBioPortal |
 | Structural Biology & Drug Discovery | 25 | RDKit, AutoDock Vina, ChEMBL, DailyMed, DDInter, UniChem, GtoPdb, EMDB |
-| Cell Biology | 14 | napari, Cellpose, SimpleITK, nnU-Net, pydicom, histolab, FlowIO |
-| Scientific Writing | 11 | Manuscript writing, peer review, LaTeX posters, slides |
-| Biostatistics | 10 | scikit-learn, statsmodels, PyMC, SHAP, survival analysis |
-| Proteomics & Protein Engineering | 10 | ESM2, UniProt, InterPro, PRIDE, PyOpenMS, MaxQuant, matchms |
+| Cell Biology | 12 | napari, Cellpose, SimpleITK, nnU-Net, pydicom, histolab, FlowIO |
+| Scientific Computing | 11 | Snakemake, Nextflow, PyMatGen, NeuroKit2, aeon, pymoo |
+| Proteomics & Protein Engineering | 10 | ESM, UniProt, InterPro, PRIDE, PyOpenMS, MaxQuant, matchms |
 | Systems Biology & Multi-omics | 9 | COBRApy, LaminDB, Reactome, STRING, libSBML |
-| Data Visualization | 5 | Plotly, Seaborn, matplotlib |
-| Lab Automation | 5 | Opentrons, Benchling |
+| Biostatistics | 4 | PyMC, scikit-survival, pyhealth, clinical-decision-support |
+| Lab Automation | 4 | Opentrons, Benchling, PyLabRobot, protocols.io |
+| Scientific Writing | 3 | LaTeX posters, openalex, bioRxiv |
 | Molecular Biology | 3 | ViennaRNA, pLannotate, sgRNA design guide |
 
 **Skill types:** pipeline, toolkit, database connector, guide
@@ -141,7 +140,7 @@ Uses: `anndata-data-structure` → `scanpy-scrna-seq` → `celltypist-cell-annot
 **Bayesian Biostatistics**
 > "Fit a hierarchical Bayesian model to this clinical trial data with patient-level random effects"
 
-Uses: `pymc-bayesian-modeling` → `matplotlib-scientific-plotting`
+Uses: `pymc-bayesian-modeling`
 
 **Protein Structure Analysis**
 > "Get the AlphaFold structure for UniProt P04637, assess confidence, find high-confidence binding regions"
@@ -195,7 +194,7 @@ scicraft/
 │   ├── workflows/
 │   │   └── validate.yml    # CI: runs pixi run test on push/PR
 │   └── ISSUE_TEMPLATE/
-├── skills/                  # 176 skills organized by category
+├── skills/                  # 140 skills organized by category
 │   ├── genomics-bioinformatics/
 │   ├── structural-biology-drug-discovery/
 │   ├── biostatistics/
@@ -211,7 +210,7 @@ scicraft/
 │   ├── SKILL_TEMPLATE.md         # Pipeline skills
 │   ├── SKILL_TEMPLATE_TOOLKIT.md # Toolkit skills
 │   └── SKILL_TEMPLATE_PROSE.md   # Guide skills
-├── registry.yaml            # Index of all 176 skills
+├── registry.yaml            # Index of all 140 skills
 ├── CLAUDE.md                # 6-step skill authoring workflow
 └── tests/                   # Validation test suite
 ```
@@ -221,7 +220,7 @@ scicraft/
 ## Full Skill Index
 
 <details>
-<summary>Genomics & Bioinformatics (60 skills)</summary>
+<summary>Genomics & Bioinformatics (59 skills)</summary>
 
 | Skill | Type | Description |
 |-------|------|-------------|
@@ -230,8 +229,7 @@ scicraft/
 | archs4-database | database | ARCHS4 uniformly processed RNA-seq expression profiles |
 | bcftools-variant-manipulation | toolkit | VCF/BCF variant file operations |
 | bedtools-genomic-intervals | toolkit | Genomic interval arithmetic |
-| biopython-molecular-biology | toolkit | BioPython core molecular biology tools |
-| biopython-sequence-analysis | pipeline | Sequence alignment and analysis |
+| biopython-sequence-analysis | toolkit | BioPython sequence I/O, BLAST, alignment, phylogenetics |
 | bioservices-multi-database | toolkit | Multi-database API client |
 | bwa-mem2-dna-aligner | pipeline | Ultrafast DNA short-read aligner |
 | cbioportal-database | database | cBioPortal cancer genomics (TCGA, mutations, CNA) |
@@ -251,9 +249,12 @@ scicraft/
 | featurecounts-rna-counting | pipeline | RNA-seq read counting |
 | gatk-variant-calling | pipeline | GATK variant discovery pipeline |
 | gget-genomic-databases | toolkit | Gene info retrieval toolkit |
+| gene-database | database | NCBI Gene database |
 | geo-database | database | NCBI GEO expression database |
+| geniml | toolkit | Genomic interval ML embeddings |
 | gnomad-database | database | gnomAD population variant database |
 | gseapy-gene-enrichment | pipeline | Gene set enrichment analysis |
+| gtars | toolkit | Fast BED file processing and tokenization |
 | gwas-database | database | GWAS Catalog association database |
 | harmony-batch-correction | pipeline | Single-cell batch correction |
 | homer-motif-analysis | pipeline | Motif discovery and ChIP-seq analysis |
@@ -275,12 +276,13 @@ scicraft/
 | salmon-rna-quantification | pipeline | RNA-seq transcript quantification |
 | samtools-bam-processing | toolkit | SAM/BAM utilities |
 | scanpy-scrna-seq | pipeline | Single-cell RNA-seq analysis |
-| scvi-tools-single-cell | pipeline | Deep learning for single-cell omics |
+| scikit-bio | toolkit | Biological data analysis and diversity metrics |
+| scvi-tools-single-cell | toolkit | Deep generative models for single-cell omics |
 | single-cell-annotation-guide | guide | Cell type annotation strategy guide |
 | snpeff-variant-annotation | pipeline | Variant functional annotation |
 | star-rna-seq-aligner | pipeline | RNA-seq splice-aware aligner |
 | ucsc-genome-browser | database | UCSC Genome Browser data access |
-| (+ 5 more) | | See registry.yaml |
+| etetoolkit | toolkit | Phylogenetic tree analysis and visualization |
 
 </details>
 
@@ -303,32 +305,37 @@ scicraft/
 | fda-database | database | FDA drug approval database |
 | gtopdb-database | database | Guide to Pharmacology receptor/ligand data |
 | mdanalysis-trajectory | toolkit | Molecular dynamics trajectory analysis |
+| medchem | toolkit | Medicinal chemistry filters and drug-likeness rules |
+| molfeat-molecular-featurization | toolkit | Molecular featurization for ML |
 | opentargets-database | database | OpenTargets drug-target evidence |
 | pdb-database | database | Protein Data Bank structure database |
 | pubchem-compound-search | database | PubChem compound database |
+| pytdc-therapeutics-data-commons | database | AI-ready drug discovery datasets |
 | rdkit-cheminformatics | toolkit | Cheminformatics and molecular analysis |
+| rowan | toolkit | Cloud quantum chemistry calculations |
+| torchdrug | toolkit | PyTorch drug discovery ML platform |
 | unichem-database | database | UniChem cross-database compound IDs |
 | zinc-database | database | ZINC purchasable compound database |
-| (+ 5 more) | | See registry.yaml |
 
 </details>
 
 <details>
-<summary>Cell Biology (14 skills)</summary>
+<summary>Cell Biology (12 skills)</summary>
 
 | Skill | Type | Description |
 |-------|------|-------------|
 | cellpose-cell-segmentation | pipeline | Deep learning cell segmentation |
+| flowio-flow-cytometry | toolkit | FCS file parsing for flow cytometry |
+| histolab-wsi-processing | toolkit | Whole slide image processing |
+| imaging-data-commons | database | NCI cancer imaging dataset access |
 | napari-image-viewer | toolkit | Multi-dimensional image viewer |
 | nnunet-segmentation | pipeline | Self-configuring medical image segmentation |
-| opencv-bioimage-analysis | toolkit | Computer vision for bioimage analysis |
-| pathml | toolkit | Computational pathology toolkit |
+| omero-integration | toolkit | OMERO biological image data management |
+| pathml | pipeline | Computational pathology toolkit |
 | pydicom-medical-imaging | toolkit | DICOM medical imaging |
 | pyimagej-fiji-bridge | toolkit | ImageJ/Fiji Python bridge |
-| scikit-image-processing | toolkit | Scientific image processing |
 | simpleitk-image-registration | toolkit | Medical image registration and segmentation |
 | trackpy-particle-tracking | toolkit | Particle tracking in microscopy |
-| (+ 4 more) | | See registry.yaml |
 
 </details>
 
@@ -337,14 +344,16 @@ scicraft/
 
 | Skill | Type | Description |
 |-------|------|-------------|
+| adaptyv-bio | toolkit | Cell-free protein expression API |
 | esm-protein-language-model | toolkit | ESM protein language models |
+| hmdb-database | database | Human Metabolome Database |
 | interpro-database | database | InterPro protein domain database |
 | matchms-spectral-matching | toolkit | Mass spectra similarity matching |
 | maxquant-proteomics | pipeline | MaxQuant mass spectrometry analysis |
+| metabolomics-workbench-database | database | Metabolomics Workbench REST API |
 | pride-database | database | PRIDE proteomics data archive |
 | pyopenms-mass-spectrometry | toolkit | OpenMS Python mass spectrometry |
 | uniprot-protein-database | database | UniProt protein database |
-| (+ 3 more) | | See registry.yaml |
 
 </details>
 
@@ -353,7 +362,8 @@ scicraft/
 
 | Skill | Type | Description |
 |-------|------|-------------|
-| cellchat-cell-communication | toolkit | Cell-cell communication inference |
+| brenda-database | database | BRENDA enzyme kinetics database |
+| cellchat-cell-communication | pipeline | Cell-cell communication inference |
 | cobrapy-metabolic-modeling | toolkit | Constraint-based metabolic modeling |
 | lamindb-data-management | toolkit | Biological data management |
 | libsbml-network-modeling | toolkit | SBML biological network modeling |
@@ -361,7 +371,60 @@ scicraft/
 | muon-multiomics-singlecell | toolkit | Multi-modal single-cell analysis |
 | reactome-database | database | Reactome pathway database |
 | string-database-ppi | database | STRING protein interaction network |
-| (+ 1 more) | | See registry.yaml |
+
+</details>
+
+<details>
+<summary>Scientific Computing (11 skills)</summary>
+
+| Skill | Type | Description |
+|-------|------|-------------|
+| aeon | toolkit | Time series ML and data mining |
+| hypogenic-hypothesis-generation | pipeline | LLM-driven hypothesis generation |
+| matlab-scientific-computing | toolkit | MATLAB/Octave numerical computing |
+| neurokit2 | toolkit | Neurophysiological signal processing |
+| nextflow-workflow-engine | toolkit | Dataflow scientific workflow engine |
+| neuropixels-analysis | pipeline | Neuropixels electrophysiology analysis |
+| pymoo | toolkit | Multi-objective evolutionary optimization |
+| pymatgen | toolkit | Materials science structure analysis |
+| snakemake-workflow-engine | toolkit | Rule-based scientific workflow engine |
+| spikeinterface-electrophysiology | toolkit | Extracellular electrophysiology framework |
+| uspto-database | database | USPTO patent data access |
+
+</details>
+
+<details>
+<summary>Biostatistics (4 skills)</summary>
+
+| Skill | Type | Description |
+|-------|------|-------------|
+| clinical-decision-support-documents | guide | Clinical decision support document guidelines |
+| pyhealth | toolkit | Healthcare ML from EHR data |
+| pymc-bayesian-modeling | pipeline | Bayesian statistical modeling |
+| scikit-survival-analysis | toolkit | Survival analysis and time-to-event modeling |
+
+</details>
+
+<details>
+<summary>Lab Automation (4 skills)</summary>
+
+| Skill | Type | Description |
+|-------|------|-------------|
+| benchling-integration | toolkit | Benchling R&D platform SDK |
+| opentrons-protocol-api | toolkit | Opentrons liquid handling robot API |
+| protocolsio-integration | database | protocols.io experimental protocol access |
+| pylabrobot | toolkit | Hardware-agnostic liquid handling automation |
+
+</details>
+
+<details>
+<summary>Scientific Writing (3 skills)</summary>
+
+| Skill | Type | Description |
+|-------|------|-------------|
+| biorxiv-database | database | bioRxiv/medRxiv preprint search |
+| latex-research-posters | guide | LaTeX research poster templates |
+| openalex-database | database | OpenAlex scholarly literature API |
 
 </details>
 
@@ -376,12 +439,7 @@ scicraft/
 
 </details>
 
-<details>
-<summary>All other categories (Scientific Computing, Biostatistics, Scientific Writing, Data Visualization, Lab Automation)</summary>
-
-See [`registry.yaml`](registry.yaml) for the complete index of all 176 skills with names, types, categories, and descriptions.
-
-</details>
+See [`registry.yaml`](registry.yaml) for the complete index of all 140 skills with names, types, categories, and descriptions.
 
 ---
 

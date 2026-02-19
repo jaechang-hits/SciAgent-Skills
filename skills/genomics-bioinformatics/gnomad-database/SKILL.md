@@ -1,5 +1,5 @@
 ---
-name: "gnomAD Database"
+name: "gnomad-database"
 description: "Query gnomAD v4 population variant frequencies via GraphQL API. Retrieve allele counts and frequencies stratified by ancestry group (AFR, AMR, EAS, NFE, SAS, FIN, ASJ, MID), gene-level constraint metrics (pLI, LOEUF, missense z-score), and read depth coverage. Identify variants with low population frequency or under evolutionary constraint. For clinical pathogenicity classifications use clinvar-database; for GWAS associations use gwas-database."
 license: "ODbL-1.0"
 ---

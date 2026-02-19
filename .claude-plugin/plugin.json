@@ -1,7 +1,7 @@
 {
   "name": "scicraft",
-  "description": "176 validated life sciences skills for scientific AI agents — AI-native authoring via CLAUDE.md workflow, CI-validated, covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and more",
-  "version": "0.1.0",
+  "description": "140 validated life sciences skills for scientific AI agents — domain-specific knowledge Claude doesn't already have: genomics pipelines, drug discovery databases, proteomics tools, and more",
+  "version": "1.0.0",
   "author": {
     "name": "jaechang-hits"
   },

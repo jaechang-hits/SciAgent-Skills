@@ -24,13 +24,6 @@ entries:
     path: "skills/genomics-bioinformatics/pydeseq2-differential-expression/SKILL.md"
     description: "Bulk RNA-seq differential expression analysis with PyDESeq2: normalization, Wald test, FDR correction, LFC shrinkage, volcano/MA plots"
     date_added: "2026-02-16"
-  - name: "biopython-molecular-biology"
-    type: skill
-    sub_type: toolkit
-    category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/biopython-molecular-biology/SKILL.md"
-    description: "Computational molecular biology toolkit: sequence manipulation, file I/O (FASTA/GenBank/PDB), NCBI Entrez access, BLAST, pairwise alignment, protein structure analysis, phylogenetics"
-    date_added: "2026-02-16"
   - name: "biopython-sequence-analysis"
     type: skill
     sub_type: toolkit
@@ -52,40 +45,12 @@ entries:
     path: "skills/genomics-bioinformatics/gget-genomic-databases/SKILL.md"
     description: "Unified CLI/Python interface to 20+ genomic databases: gene lookups, BLAST, AlphaFold, enrichment, disease/drug associations, single-cell data"
     date_added: "2026-02-16"
-  - name: "scikit-learn-machine-learning"
-    type: skill
-    sub_type: toolkit
-    category: "biostatistics"
-    path: "skills/biostatistics/scikit-learn-machine-learning/SKILL.md"
-    description: "Classical ML: classification, regression, clustering, dimensionality reduction, preprocessing pipelines, model evaluation, hyperparameter tuning"
-    date_added: "2026-02-16"
   - name: "pubchem-compound-search"
     type: skill
     sub_type: database
     category: "structural-biology-drug-discovery"
     path: "skills/structural-biology-drug-discovery/pubchem-compound-search/SKILL.md"
     description: "Query PubChem (110M+ compounds) via PubChemPy: search by name/SMILES/CID, molecular properties, similarity/substructure search, bioactivity data"
-    date_added: "2026-02-16"
-  - name: "scientific-manuscript-writing"
-    type: skill
-    sub_type: guide
-    category: "scientific-writing"
-    path: "skills/scientific-writing/scientific-manuscript-writing/SKILL.md"
-    description: "Scientific manuscript guidelines: IMRAD structure, citation styles, reporting guidelines (CONSORT/STROBE/PRISMA), field-specific terminology"
-    date_added: "2026-02-16"
-  - name: "matplotlib-scientific-plotting"
-    type: skill
-    sub_type: toolkit
-    category: "biostatistics"
-    path: "skills/biostatistics/matplotlib-scientific-plotting/SKILL.md"
-    description: "Low-level Python plotting for publication-quality scientific figures: line, scatter, bar, heatmap, 3D, multi-panel layouts, export to PNG/PDF/SVG"
-    date_added: "2026-02-16"
-  - name: "statsmodels-statistical-modeling"
-    type: skill
-    sub_type: toolkit
-    category: "biostatistics"
-    path: "skills/biostatistics/statsmodels-statistical-modeling/SKILL.md"
-    description: "Statistical modeling: OLS, GLM, Logit, Poisson, ARIMA, SARIMAX with diagnostics, hypothesis tests, and rigorous inference"
     date_added: "2026-02-16"
   - name: "anndata-data-structure"
     type: skill
@@ -108,20 +73,6 @@ entries:
     path: "skills/biostatistics/clinical-decision-support-documents/SKILL.md"
     description: "Guidelines for clinical decision support documents: patient cohort analyses (biomarker-stratified outcomes) and treatment recommendation reports (GRADE-graded evidence). Document structure, evidence grading, statistical reporting."
     date_added: "2026-02-17"
-  - name: "hypothesis-generation"
-    type: skill
-    sub_type: guide
-    category: "biostatistics"
-    path: "skills/biostatistics/hypothesis-generation/SKILL.md"
-    description: "Structured hypothesis formulation from observations: competing hypotheses, quality criteria (testability, falsifiability, parsimony), experimental design, testable predictions. Follows scientific method framework."
-    date_added: "2026-02-17"
-  - name: "plotly-interactive-visualization"
-    type: skill
-    sub_type: toolkit
-    category: "data-visualization"
-    path: "skills/data-visualization/plotly-interactive-visualization/SKILL.md"
-    description: "Interactive visualization with Plotly. 40+ chart types with hover, zoom, pan. Plotly Express (quick, DataFrame-oriented) and Graph Objects (fine-grained control). HTML, PNG/PDF/SVG export."
-    date_added: "2026-02-17"
   - name: "esm-protein-language-model"
     type: skill
     sub_type: toolkit
@@ -135,13 +86,6 @@ entries:
     category: "genomics-bioinformatics"
     path: "skills/genomics-bioinformatics/cellxgene-census/SKILL.md"
     description: "Query CELLxGENE Census (61M+ cells) programmatically. Search by cell type, tissue, disease. Expression matrices as AnnData, out-of-core streaming, PyTorch ML integration."
-    date_added: "2026-02-17"
-  - name: "seaborn-statistical-visualization"
-    type: skill
-    sub_type: toolkit
-    category: "data-visualization"
-    path: "skills/data-visualization/seaborn-statistical-visualization/SKILL.md"
-    description: "Statistical visualization with pandas integration. Distribution, categorical, relational, regression, and matrix plots with automatic aggregation and CI."
     date_added: "2026-02-17"
   - name: "pysam-genomic-files"
     type: skill
@@ -157,33 +101,12 @@ entries:
     path: "skills/biostatistics/pymc-bayesian-modeling/SKILL.md"
     description: "Bayesian modeling with PyMC 5. 8-step workflow: define model, set priors, define likelihood, sample (NUTS/ADVI), diagnose (R-hat, ESS, divergences), interpret posteriors, compare models (LOO/WAIC), predict. Hierarchical, logistic, GP model variants. Prior/posterior predictive checks."
     date_added: "2026-02-17"
-  - name: "networkx-graph-analysis"
-    type: skill
-    sub_type: toolkit
-    category: "scientific-computing"
-    path: "skills/scientific-computing/networkx-graph-analysis/SKILL.md"
-    description: "Graph and network analysis toolkit: create, manipulate, and analyze complex networks. Four graph types (directed, undirected, multi-edge), centrality measures, shortest paths, community detection, graph generators, I/O (GraphML, GML, edge list, pandas, NumPy), visualization with matplotlib. For large-scale graphs (100K+ nodes) use igraph or graph-tool; for graph neural networks use PyG."
-    date_added: "2026-02-17"
   - name: "uniprot-protein-database"
     type: skill
     sub_type: database
     category: "proteomics-protein-engineering"
     path: "skills/proteomics-protein-engineering/uniprot-protein-database/SKILL.md"
     description: "UniProt REST API: protein search, FASTA retrieval, ID mapping (Ensembl, PDB, RefSeq), Swiss-Prot annotations, batch retrieval, streaming."
-    date_added: "2026-02-17"
-  - name: "peer-review-methodology"
-    type: skill
-    sub_type: guide
-    category: "scientific-writing"
-    path: "skills/scientific-writing/peer-review-methodology/SKILL.md"
-    description: "Structured peer review of scientific manuscripts and grants. 7-stage evaluation workflow, CONSORT/STROBE/PRISMA compliance, review report structure (major/minor comments). For evidence evaluation use scientific-critical-thinking."
-    date_added: "2026-02-17"
-  - name: "opentrons-integration"
-    type: skill
-    sub_type: toolkit
-    category: "lab-automation"
-    path: "skills/lab-automation/opentrons-integration/SKILL.md"
-    description: "Opentrons Protocol API v2 for OT-2 and Flex liquid handling robots. Automated pipetting, serial dilutions, PCR setup, plate replication. Hardware module control (thermocycler, heater-shaker, magnetic, temperature)."
     date_added: "2026-02-17"
   - name: "scvi-tools-single-cell"
     type: skill
@@ -234,13 +157,6 @@ entries:
     path: "skills/systems-biology-multiomics/lamindb-data-management/SKILL.md"
     description: "Open-source biological data framework: queryable, traceable, FAIR data management. Version artifacts, track lineage, validate with biological ontologies (Bionty). Integrates with Nextflow, Snakemake, W&B."
     date_added: "2026-02-17"
-  - name: "sympy-symbolic-math"
-    type: skill
-    sub_type: toolkit
-    category: "scientific-computing"
-    path: "skills/scientific-computing/sympy-symbolic-math/SKILL.md"
-    description: "Symbolic mathematics in Python: exact algebra, calculus, equation solving, symbolic matrices, ODEs, code generation (lambdify, C/Fortran, LaTeX). Use for exact results, not numerical approximations."
-    date_added: "2026-02-17"
   - name: "kegg-database"
     type: skill
     sub_type: database
@@ -255,64 +171,12 @@ entries:
     path: "skills/scientific-writing/latex-research-posters/SKILL.md"
     description: "Create professional research posters in LaTeX using beamerposter, tikzposter, or baposter. Layout design, typography, color schemes, figure integration, accessibility, QC for print/digital. Includes ready-to-use templates."
     date_added: "2026-02-17"
-  - name: "zarr-python"
-    type: skill
-    sub_type: toolkit
-    category: "scientific-computing"
-    path: "skills/scientific-computing/zarr-python/SKILL.md"
-    description: "Chunked, compressed N-dimensional array storage with Zarr. Create, read, write arrays with configurable chunking and compression. Cloud storage (S3, GCS, Azure), Dask parallel computing, Xarray integration. Format library for large scientific datasets."
-    date_added: "2026-02-17"
-  - name: "scientific-slides"
-    type: skill
-    sub_type: guide
-    category: "scientific-writing"
-    path: "skills/scientific-writing/scientific-slides/SKILL.md"
-    description: "Create effective scientific presentations for conferences, seminars, thesis defenses, and grant pitches. Slide design principles, talk structure, timing, data visualization for slides, quality assurance. Works with PowerPoint and LaTeX Beamer."
-    date_added: "2026-02-17"
-  - name: "polars-dataframes"
-    type: skill
-    sub_type: toolkit
-    category: "scientific-computing"
-    path: "skills/scientific-computing/polars-dataframes/SKILL.md"
-    description: "Fast in-memory DataFrame library with lazy evaluation, parallel execution, and Apache Arrow backend. Expression-based API for select, filter, group_by, joins, pivots, window functions. CSV, Parquet, JSON, Excel, database, cloud I/O."
-    date_added: "2026-02-17"
-  - name: "statistical-analysis"
-    type: skill
-    sub_type: guide
-    category: "biostatistics"
-    path: "skills/biostatistics/statistical-analysis/SKILL.md"
-    description: "Guided statistical analysis: test selection, assumption checking, effect sizes, power analysis, APA reporting. Frequentist (t-test, ANOVA, chi-square, regression) and Bayesian alternatives. For implementing specific models use statsmodels or pymc."
-    date_added: "2026-02-17"
-
-  - name: "exploratory-data-analysis"
-    type: skill
-    sub_type: guide
-    category: "scientific-computing"
-    path: "skills/scientific-computing/exploratory-data-analysis/SKILL.md"
-    description: "EDA methodology for scientific data files across 200+ formats. Decision framework for choosing analysis approaches by data type (tabular, sequence, image, spectral, structural, omics). Quality assessment, format detection, report generation."
-    date_added: "2026-02-17"
   - name: "datamol-cheminformatics"
     type: skill
     sub_type: toolkit
     category: "structural-biology-drug-discovery"
     path: "skills/structural-biology-drug-discovery/datamol-cheminformatics/SKILL.md"
     description: "Pythonic RDKit wrapper for drug discovery. SMILES parsing, standardization, descriptors, fingerprints, similarity, Butina clustering, diversity selection, Murcko scaffolds, BRICS/RECAP fragmentation, 3D conformers, visualization. Prefer over raw RDKit for standard workflows."
-    date_added: "2026-02-17"
-
-  - name: "shap-model-explainability"
-    type: skill
-    sub_type: pipeline
-    category: "biostatistics"
-    path: "skills/biostatistics/shap-model-explainability/SKILL.md"
-    description: "Model interpretability using SHAP. Explainer selection (Tree, Deep, Linear, Kernel), feature attributions, visualization (waterfall, beeswarm, bar, scatter, force, heatmap). Model debugging, fairness analysis, feature importance comparison. Works with tree-based, deep learning, linear, and black-box models."
-    date_added: "2026-02-17"
-
-  - name: "geopandas-geospatial"
-    type: skill
-    sub_type: toolkit
-    category: "scientific-computing"
-    path: "skills/scientific-computing/geopandas-geospatial/SKILL.md"
-    description: "Geospatial vector data analysis extending pandas. Reading/writing Shapefile, GeoJSON, GeoPackage, Parquet, PostGIS. CRS management, geometric operations (buffer, simplify, centroid, affine), spatial joins, overlays, dissolve, clipping, distance. Choropleth maps, interactive maps with folium, basemaps."
     date_added: "2026-02-17"
 
   - name: "scikit-bio"
@@ -337,46 +201,6 @@ entries:
     category: "structural-biology-drug-discovery"
     path: "skills/structural-biology-drug-discovery/medchem/SKILL.md"
     description: "Medicinal chemistry filters for drug discovery. Drug-likeness rules (Lipinski, Veber, Oprea, CNS, leadlike, REOS, Golden Triangle, Ro3), structural alerts (PAINS, NIBR, Lilly Demerits), chemical groups (hinge binders, Michael acceptors), complexity metrics, property constraints, query language. Built on RDKit/datamol."
-    date_added: "2026-02-17"
-
-  - name: "umap-learn"
-    type: skill
-    sub_type: toolkit
-    category: "scientific-computing"
-    path: "skills/scientific-computing/umap-learn/SKILL.md"
-    description: "UMAP dimensionality reduction for visualization, clustering preprocessing (HDBSCAN), and ML feature engineering. Standard, supervised/semi-supervised, Parametric (TensorFlow), DensMAP, AlignedUMAP. 15+ distance metrics, custom Numba metrics, scikit-learn Pipeline compatible."
-    date_added: "2026-02-17"
-
-  - name: "dask-parallel-computing"
-    type: skill
-    sub_type: toolkit
-    category: "scientific-computing"
-    path: "skills/scientific-computing/dask-parallel-computing/SKILL.md"
-    description: "Distributed and parallel computing for larger-than-RAM datasets. Five components: DataFrames (parallel pandas), Arrays (parallel NumPy), Bags (unstructured data), Futures (task-based parallelism), Schedulers (threads/processes/distributed). Scales from laptops to HPC clusters. For in-memory speed use polars; for out-of-core single-machine use vaex."
-    date_added: "2026-02-17"
-
-  - name: "astropy-astronomy"
-    type: skill
-    sub_type: toolkit
-    category: "scientific-computing"
-    path: "skills/scientific-computing/astropy-astronomy/SKILL.md"
-    description: "Core Python library for astronomy and astrophysics. Units & quantities with dimensional analysis, celestial coordinate transformations (ICRS/Galactic/AltAz), FITS file handling, table operations, cosmological calculations (Planck18), precise time handling (UTC/TAI/TDB, barycentric corrections), WCS pixel-world mapping, model fitting, image visualization."
-    date_added: "2026-02-17"
-
-  - name: "simpy-discrete-event-simulation"
-    type: skill
-    sub_type: toolkit
-    category: "scientific-computing"
-    path: "skills/scientific-computing/simpy-discrete-event-simulation/SKILL.md"
-    description: "Process-based discrete-event simulation framework. Model systems with queues, shared resources, and time-based events: manufacturing lines, service operations, network traffic, logistics. Processes are Python generators that yield events. Resource types include capacity-limited (Resource, PriorityResource, PreemptiveResource), bulk material (Container), and object storage (Store, FilterStore). For continuous simulation use SciPy ODE solvers; for agent-based modeling use Mesa."
-    date_added: "2026-02-17"
-
-  - name: "torch-geometric-graph-neural-networks"
-    type: skill
-    sub_type: toolkit
-    category: "scientific-computing"
-    path: "skills/scientific-computing/torch-geometric-graph-neural-networks/SKILL.md"
-    description: "PyTorch Geometric (PyG) for graph neural networks. Node classification, graph classification, link prediction with GCN, GAT, GraphSAGE, GIN layers. Message passing framework, mini-batch processing, heterogeneous graphs, neighbor sampling for large-scale learning, model explainability. Supports molecular property prediction (QM9, MoleculeNet), social networks, knowledge graphs, 3D point clouds. For non-graph deep learning use PyTorch directly; for traditional graph algorithms use NetworkX."
     date_added: "2026-02-17"
 
   - name: "alphafold-database-access"
@@ -459,14 +283,6 @@ entries:
     description: "Whole slide image processing for digital pathology. Tissue detection, tile extraction (random, grid, score-based), filter pipelines for H&E/IHC preprocessing. Use for dataset preparation, tile-based deep learning, and slide quality assessment. For advanced spatial proteomics or multiplexed imaging use pathml."
     date_added: "2026-02-17"
 
-  - name: "vaex-dataframes"
-    type: skill
-    sub_type: toolkit
-    category: "scientific-computing"
-    path: "skills/scientific-computing/vaex-dataframes/SKILL.md"
-    description: "Out-of-core DataFrame library for billion-row datasets using lazy evaluation and memory-mapped files. Use when data exceeds available RAM (10 GB to terabytes) and needs fast aggregation, filtering, virtual columns, and visualization without loading into memory. Supports HDF5, Apache Arrow, Parquet, CSV I/O with cloud storage (S3, GCS, Azure). Built-in ML transformers (scaling, encoding, PCA, K-means) with scikit-learn bridge. For in-memory speed use polars; for distributed computing use dask."
-    date_added: "2026-02-17"
-
   - name: "drugbank-database-access"
     type: skill
     sub_type: database
@@ -497,14 +313,6 @@ entries:
     category: "structural-biology-drug-discovery"
     path: "skills/structural-biology-drug-discovery/pdb-database/SKILL.md"
     description: "Query RCSB PDB (200K+ experimental structures) via rcsb-api Python SDK. Text, attribute, sequence, and structure similarity search. Fetch metadata via Schema or GraphQL. Download PDB/mmCIF coordinate files. For AlphaFold predicted structures use alphafold-database-access."
-    date_added: "2026-02-17"
-
-  - name: "scientific-brainstorming"
-    type: skill
-    sub_type: guide
-    category: "scientific-writing"
-    path: "skills/scientific-writing/scientific-brainstorming/SKILL.md"
-    description: "Structured ideation methods for scientific research: SCAMPER, Six Thinking Hats, Morphological Analysis, TRIZ, Biomimicry, Provocation, Random Input, Reverse Assumptions, Future Backwards. Decision framework for method selection by challenge type. 5-phase brainstorming workflow."
     date_added: "2026-02-17"
 
   - name: "hypogenic-hypothesis-generation"
@@ -691,14 +499,6 @@ entries:
     description: "PathML is an open-source toolkit for computational pathology. Use it to process whole-slide images (WSIs): load slides, extract tiles, apply stain normalization and nuclear segmentation preprocessing, extract features, and train machine learning models. Supports H&E and multiplex imaging. Ideal for building end-to-end digital pathology pipelines from raw WSI files to quantitative outputs."
     date_added: "2026-02-18"
 
-  - name: "scientific-visualization"
-    type: skill
-    sub_type: guide
-    category: "data-visualization"
-    path: "skills/data-visualization/scientific-visualization/SKILL.md"
-    description: "Guide for choosing and creating scientific visualizations for publications and presentations. Covers selecting chart types for different data structures, color theory for accessibility and print, figure composition, journal-specific formatting requirements (Nature, Cell, ACS), and common pitfalls that undermine scientific credibility. Consult this guide when deciding how to visualize your data or preparing figures for submission."
-    date_added: "2026-02-18"
-
   - name: "etetoolkit"
     type: skill
     sub_type: toolkit
@@ -737,30 +537,6 @@ entries:
     category: "scientific-computing"
     path: "skills/scientific-computing/uspto-database/SKILL.md"
     description: "Access US Patent and Trademark Office (USPTO) patent data via the PatentsView REST API and Google Patents Public Data (BigQuery). Use it to search patents by inventor, assignee, CPC classification, or keywords; download full patent metadata and claims; analyze patent portfolios; and track technology trends. Ideal for IP landscape analysis, competitor monitoring, prior art searches, and technology forecasting in life sciences and biotech."
-    date_added: "2026-02-18"
-
-  - name: "citation-management"
-    type: skill
-    sub_type: guide
-    category: "scientific-writing"
-    path: "skills/scientific-writing/citation-management/SKILL.md"
-    description: "Guide for selecting a reference manager, organizing citations, and applying citation styles in scientific writing. Covers Zotero, Mendeley, EndNote, and Paperpile comparison; APA, Vancouver, ACS, and Nature citation styles; DOI management; citation tracking; and integration with Word, Google Docs, and LaTeX. Use when setting up a reference workflow, switching tools, or troubleshooting citation formatting."
-    date_added: "2026-02-18"
-
-  - name: "literature-review"
-    type: skill
-    sub_type: guide
-    category: "scientific-writing"
-    path: "skills/scientific-writing/literature-review/SKILL.md"
-    description: "Guide for conducting systematic, scoping, and narrative literature reviews. Covers PRISMA and PRISMA-ScR protocols, structured search strategy design (Boolean operators, MeSH terms), database selection (PubMed, Scopus, Web of Science, Embase), title/abstract/full-text screening, data extraction templates, evidence synthesis (narrative, meta-analysis, thematic), and reporting standards. Use when planning or executing a formal literature review."
-    date_added: "2026-02-18"
-
-  - name: "scientific-critical-thinking"
-    type: skill
-    sub_type: guide
-    category: "scientific-writing"
-    path: "skills/scientific-writing/scientific-critical-thinking/SKILL.md"
-    description: "Guide for evaluating scientific evidence and claims. Covers study design hierarchy (RCT to expert opinion), effect size interpretation (OR, RR, NNT, Cohen's d), confounding identification, p-value limitations vs clinical significance, GRADE evidence quality assessment, reproducibility, and bias types (selection, information, confounding, reporting). Use when reading a paper, evaluating a preprint, or assessing claims in a literature review."
     date_added: "2026-02-18"
 
   - name: "diffdock"
@@ -819,14 +595,6 @@ entries:
     description: "aeon is a scikit-learn compatible Python toolkit for time series machine learning and data mining. Classify, cluster, regress, segment, and transform time series using 30+ algorithms including ROCKET, InceptionTime, KNN-DTW, HIVE-COTE, and WEASEL. Supports panel (multi-instance), multivariate, and unequal-length time series. Designed as the maintained successor to sktime. Alternatives: sktime (older, larger ecosystem), tslearn (less algorithms), catch22 (feature extraction only)."
     date_added: "2026-02-18"
 
-  - name: "transformers-bio-nlp"
-    type: skill
-    sub_type: toolkit
-    category: "scientific-computing"
-    path: "skills/scientific-computing/transformers-bio-nlp/SKILL.md"
-    description: "Use HuggingFace Transformers with biomedical language models for scientific NLP tasks. Load BioBERT, PubMedBERT, BioGPT, and BioMedLM for named entity recognition (genes, diseases, chemicals), relation extraction, question answering on biomedical literature, text classification, and abstract summarization. Covers model loading, tokenization of biomedical text, inference pipelines, and fine-tuning on domain-specific datasets. Alternatives: spaCy with en_core_sci_lg (rule-based NER), Stanza (Stanford NLP, biomedical models), NLTK (classical NLP)."
-    date_added: "2026-02-18"
-
   - name: "neuropixels-analysis"
     type: skill
     sub_type: pipeline
@@ -841,14 +609,6 @@ entries:
     category: "proteomics-protein-engineering"
     path: "skills/proteomics-protein-engineering/adaptyv-bio/SKILL.md"
     description: "Adaptyv Bio provides an API and Python SDK for ordering and managing cell-free protein expression and binding assay experiments. Use it to submit protein sequences for expression (scale 10–100 µg), characterize binding affinity (KD) against target proteins, track experiment status, and retrieve results — all programmatically without wet-lab setup. Designed for protein engineers, ML-guided directed evolution, and antibody/nanobody optimization workflows. Requires an Adaptyv Bio account and API key."
-    date_added: "2026-02-18"
-
-  - name: "scientific-schematics"
-    type: skill
-    sub_type: guide
-    category: "scientific-writing"
-    path: "skills/scientific-writing/scientific-schematics/SKILL.md"
-    description: "Guide for designing and creating scientific schematics, diagrams, and graphical abstracts. Covers tool selection (BioRender, Inkscape, Affinity Designer, PowerPoint), design principles for biological pathway diagrams, molecular mechanism schematics, experimental workflow diagrams, and graphical abstracts for journal submissions. Includes composition rules, icon sourcing, color usage for biological entities, and accessibility considerations. Use when planning or creating a scientific figure that is primarily illustrative rather than data-driven."
     date_added: "2026-02-18"
 
   - name: "pyhealth"
@@ -897,14 +657,6 @@ entries:
     category: "genomics-bioinformatics"
     path: "skills/genomics-bioinformatics/multiqc-qc-reports/SKILL.md"
     description: "Aggregates QC outputs from 150+ bioinformatics tools into a single interactive HTML report. Scans directories for FastQC, samtools, STAR, HISAT2, Trim Galore, featureCounts, Kallisto, Salmon, Picard, and GATK logs; merges statistics across samples with interactive plots. Essential for NGS pipeline QC review. Use FastQC directly for single-sample initial assessment; MultiQC is for multi-sample pipeline-wide reporting."
-    date_added: "2026-02-18"
-
-  - name: "scikit-image-processing"
-    type: skill
-    sub_type: toolkit
-    category: "cell-biology"
-    path: "skills/cell-biology/scikit-image-processing/SKILL.md"
-    description: "Python image processing library for scientific microscopy and bioimage analysis. Read/write multi-format images, apply filters (Gaussian, median, LoG), segment objects (thresholding, watershed, active contours), measure region properties (area, intensity, shape), and detect features. Part of the SciPy ecosystem. Use OpenCV for real-time video processing; use CellPose for deep-learning cell segmentation; use napari for interactive visualization."
     date_added: "2026-02-18"
 
   - name: "star-rna-seq-aligner"
@@ -1003,14 +755,6 @@ entries:
     description: "GATK Best Practices pipeline for germline SNP and indel variant calling from WGS/WES BAM files. Runs HaplotypeCaller in GVCF mode per sample, consolidates with GenomicsDBImport, joint-genotypes with GenotypeGVCFs, and applies VQSR or hard filters. Requires BWA-MEM2-aligned, markdup, and BQSR-processed BAMs. Use DeepVariant instead for a faster deep-learning alternative; GATK is the ENCODE/NIH standard for research and clinical genomics."
     date_added: "2026-02-18"
 
-  - name: "opencv-bioimage-analysis"
-    type: skill
-    sub_type: toolkit
-    category: "cell-biology"
-    path: "skills/cell-biology/opencv-bioimage-analysis/SKILL.md"
-    description: "Computer vision library for bio-image preprocessing, feature detection, and real-time microscopy analysis. Performs color space conversion, morphological operations, contour/blob detection, template matching, and optical flow on fluorescence and brightfield images. 10-100× faster than pure Python implementations using optimized C++ kernels. Use scikit-image for scientific morphometry and regionprops; use OpenCV for real-time processing, video, and classical feature extraction pipelines."
-    date_added: "2026-02-18"
-
   - name: "nextflow-workflow-engine"
     type: skill
     sub_type: toolkit
@@ -1041,22 +785,6 @@ entries:
     category: "scientific-computing"
     path: "skills/scientific-computing/spikeinterface-electrophysiology/SKILL.md"
     description: "Unified Python framework for extracellular electrophysiology. Load recordings from 20+ formats (SpikeGLX, OpenEphys, NWB, Intan, Maxwell, Blackrock), preprocess signals, run 10+ spike sorters (Kilosort4, SpykingCircus2, Tridesclous, MountainSort5) with a single API, compute quality metrics (SNR, ISI violations, firing rate, amplitude cutoff), compare sorter outputs, and export to NWB or Phy. Use for format-agnostic and multi-sorter workflows. For Neuropixels-specific Kilosort4 workflows use neuropixels-analysis."
-    date_added: "2026-02-18"
-
-  - name: "seaborn-statistical-plots"
-    type: skill
-    sub_type: toolkit
-    category: "data-visualization"
-    path: "skills/data-visualization/seaborn-statistical-plots/SKILL.md"
-    description: "Statistical visualization library built on matplotlib with native pandas DataFrame support. Automatic aggregation, confidence intervals, and grouping for distribution plots (histplot, kdeplot), categorical comparisons (boxplot, violinplot, stripplot), relational plots (scatterplot, lineplot), regression plots (regplot, lmplot), matrix plots (heatmap, clustermap), and multi-variable grids (pairplot, jointplot, FacetGrid). Use seaborn for statistical summaries with minimal code; use matplotlib for fine-grained figure control; use plotly for interactive HTML output."
-    date_added: "2026-02-18"
-
-  - name: "Plotly Interactive Plots"
-    type: skill
-    sub_type: toolkit
-    category: "data-visualization"
-    path: "skills/data-visualization/plotly-interactive-plots/SKILL.md"
-    description: "Interactive scientific visualization with Plotly. Two-layer API: plotly.express (px) for one-liner DataFrame plots and plotly.graph_objects (go) for full trace-level control. 40+ chart types with hover, zoom, pan, and animation. Exports to interactive HTML or static PNG/SVG/PDF via kaleido. Use for interactive web figures, volcano plots with gene hover info, dose-response dashboards, gene expression heatmaps, and 3D molecular visualizations. Use seaborn for statistical summaries with automatic aggregation; use matplotlib for fine-grained publication figures; use plotly for interactive or web-embedded output."
     date_added: "2026-02-18"
 
   - name: "muon-multiomics-singlecell"
@@ -1131,7 +859,7 @@ entries:
     description: "De novo motif discovery and known TF motif enrichment in ChIP-seq and ATAC-seq peak sets using HOMER. findMotifsGenome.pl searches for over-represented sequence patterns against a background; annotatePeaks.pl assigns genomic context (TSS distance, gene, repeat). Use after MACS3 peak calling to identify which transcription factors are enriched in your peaks, annotate peaks with nearest genes, and validate ChIP-seq quality by checking the target TF's own motif."
     date_added: "2026-02-18"
 
-  - name: "gnomAD Database"
+  - name: "gnomad-database"
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
@@ -1139,7 +867,7 @@ entries:
     description: "Query gnomAD v4 population variant frequencies via GraphQL API. Retrieve allele counts and frequencies stratified by ancestry group (AFR, AMR, EAS, NFE, SAS, FIN, ASJ, MID), gene-level constraint metrics (pLI, LOEUF, missense z-score), and read depth coverage. Identify variants with low population frequency or under evolutionary constraint. For clinical pathogenicity classifications use clinvar-database; for GWAS associations use gwas-database."
     date_added: "2026-02-18"
 
-  - name: "dbSNP Database"
+  - name: "dbsnp-database"
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
