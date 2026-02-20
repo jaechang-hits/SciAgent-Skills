@@ -17,6 +17,24 @@
 
 ---
 
+## Why SciCraft Exists: Blind Test Results
+
+> **TL;DR** — We tested Claude on 140 life sciences tools *without* SciCraft loaded. It scored 0/5 on 109 of them. That's why this library exists.
+
+Before building SciCraft, we ran a blind validation: ask Claude questions about each tool's API without providing any documentation, then score the answers. The results confirmed the core problem:
+
+| Result | Skills | What it means |
+|--------|:------:|---------------|
+| Score 0/5 — "no answer found" | 109 / 140 | Claude has no usable knowledge of the tool |
+| Score 1–2/5 — partial/hallucinated | 27 / 140 | Claude guesses plausible-but-wrong API names |
+| Score 3–5/5 | 4 / 140 | Claude already knows the tool well |
+
+**Low scores are the point.** A score of 0 means Claude said "I don't know" rather than hallucinate — and every one of those tools is now covered by a SciCraft skill. The recommendation column in [`blind_test_results.csv`](blind_test_results.csv) reads `MUST_KEEP` for all 140 entries: these are tools Claude cannot reliably use without grounded documentation.
+
+With a SciCraft skill loaded, the agent reads verified API signatures, parameter tables, and runnable examples — instead of guessing.
+
+---
+
 ## How It Works: AI-Native Skill Authoring
 
 SciCraft isn't just a collection of skills — it's a **skill factory**.
