@@ -1122,3 +1122,43 @@ entries:
     path: "skills/lab-automation/opentrons-protocol-api/SKILL.md"
     description: "Python Protocol API v2 for Opentrons OT-2 and Flex liquid handling robots. Deck setup, pipette operations (aspirate/dispense/transfer/distribute/consolidate), labware and liquid tracking, hardware module control (thermocycler, heater-shaker, magnetic, temperature). Simulate locally with opentrons_simulate before uploading. Use PyLabRobot for multi-vendor (Hamilton, Tecan) portability."
     date_added: "2026-02-18"
+
+  - name: "opentrons-lab-controller"
+    type: skill
+    sub_type: toolkit
+    category: "lab-automation"
+    path: "skills/lab-automation/opentrons-lab-controller/SKILL.md"
+    description: "OT-2 protocol design and simulation guide for the Lab Controller agent. Covers simulation mode, protocol structure, pipette selection, serial dilution, hardware module loading (heater-shaker, temperature module, thermocycler), and deck conflict validation."
+    date_added: "2026-03-08"
+
+  - name: "hamilton-star-pylabrobot"
+    type: skill
+    sub_type: toolkit
+    category: "lab-automation"
+    path: "skills/lab-automation/hamilton-star-pylabrobot/SKILL.md"
+    description: "Hamilton STAR liquid handler automation via PyLabRobot async API. Covers STAR backend setup, 55-rail deck layout, 8-channel independent pipetting (0.5-1000 uL), 96-head plate operations, CO-RE gripper plate transport, and anti-droplet control."
+    date_added: "2026-03-08"
+
+  - name: "thermo-multidrop"
+    type: skill
+    sub_type: toolkit
+    category: "lab-automation"
+    path: "skills/lab-automation/thermo-multidrop/SKILL.md"
+    description: "Script generation for Thermo Fisher Multidrop Combi bulk reagent dispenser. Covers cassette selection, volume calibration (0.5-2500 uL), priming protocols, and multi-plate dispensing sequences for HTS plate preparation."
+    date_added: "2026-03-08"
+
+  - name: "thermo-plate-reader"
+    type: skill
+    sub_type: toolkit
+    category: "lab-automation"
+    path: "skills/lab-automation/thermo-plate-reader/SKILL.md"
+    description: "SkanIt macro script generation for Thermo Fisher Varioskan LUX multimode plate reader. Covers absorbance, fluorescence, luminescence measurements, kinetic read protocols, and temperature control for endpoint and kinetic assay readouts."
+    date_added: "2026-03-08"
+
+  - name: "beckman-biomek"
+    type: skill
+    sub_type: toolkit
+    category: "lab-automation"
+    path: "skills/lab-automation/beckman-biomek/SKILL.md"
+    description: "Method script generation for Beckman Coulter Biomek i7 automated workstation. Covers 96-channel head operations, Span-8 independent pipetting, gripper plate transport, and on-deck integration for NGS library prep and plate reformatting."
+    date_added: "2026-03-08"
