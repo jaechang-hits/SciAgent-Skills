@@ -1,5 +1,5 @@
 {
-  "name": "scicraft",
+  "name": "sciagent-skills",
   "owner": {
     "name": "jaechang-hits"
   },
@@ -9,15 +9,15 @@
   },
   "plugins": [
     {
-      "name": "scicraft",
+      "name": "sciagent-skills",
       "source": "./",
       "description": "140 validated life sciences skills — genomics, proteomics, drug discovery, biostatistics, scientific computing",
       "version": "1.0.0",
       "author": {
         "name": "jaechang-hits"
       },
-      "homepage": "https://github.com/jaechang-hits/scicraft",
-      "repository": "https://github.com/jaechang-hits/scicraft",
+      "homepage": "https://github.com/jaechang-hits/SciAgent-Skills",
+      "repository": "https://github.com/jaechang-hits/SciAgent-Skills",
       "license": "CC-BY-4.0",
       "keywords": [
         "life-sciences",

@@ -1,4 +1,4 @@
-# SciCraft
+# SciAgent-Skills
 
 **74 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
 
@@ -32,28 +32,28 @@ Each skill is a self-contained SKILL.md file with runnable code examples, key pa
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/jaechang-hits/scicraft.git
-cd scicraft
+git clone https://github.com/jaechang-hits/SciAgent-Skills.git
+cd SciAgent-Skills
 ```
 
 ### Step 2: Choose Your Setup Method
 
 #### Method A: Claude Code Plugin (Recommended)
 
-Load SciCraft as a Claude Code plugin for the current session:
+Load SciAgent-Skills as a Claude Code plugin for the current session:
 
 ```bash
-claude --plugin-dir /path/to/scicraft
+claude --plugin-dir /path/to/SciAgent-Skills
 ```
 
-To verify the plugin loaded, run `/plugin` inside Claude Code and check that `scicraft` appears in the Installed tab.
+To verify the plugin loaded, run `/plugin` inside Claude Code and check that `sciagent-skills` appears in the Installed tab.
 
-Skills become available as `/scicraft:<skill-name>`:
+Skills become available as `/sciagent-skills:<skill-name>`:
 
 ```
-/scicraft:scanpy-scrna-seq
-/scicraft:rdkit-cheminformatics
-/scicraft:pymc-bayesian-modeling
+/sciagent-skills:scanpy-scrna-seq
+/sciagent-skills:rdkit-cheminformatics
+/sciagent-skills:pymc-bayesian-modeling
 ```
 
 Or just describe your task — the agent finds the relevant skill automatically:
@@ -63,8 +63,8 @@ Or just describe your task — the agent finds the relevant skill automatically:
 **Persistent installation** — to load the plugin automatically in every session, use the plugin install command inside Claude Code:
 
 ```
-/plugin marketplace add jaechang-hits/scicraft
-/plugin install scicraft
+/plugin marketplace add jaechang-hits/SciAgent-Skills
+/plugin install sciagent-skills
 ```
 
 #### Method B: Project-Level Integration
@@ -73,21 +73,21 @@ Clone into your project directory so Claude Code picks up skills via `CLAUDE.md`
 
 ```bash
 cd your-project
-git clone https://github.com/jaechang-hits/scicraft.git .scicraft
+git clone https://github.com/jaechang-hits/SciAgent-Skills.git .sciagent-skills
 ```
 
 Add to your project's `CLAUDE.md`:
 
 ```markdown
 ## Scientific Skills
-Reference skills in `.scicraft/skills/` for domain-specific analysis.
-Registry: `.scicraft/registry.yaml`
+Reference skills in `.sciagent-skills/skills/` for domain-specific analysis.
+Registry: `.sciagent-skills/registry.yaml`
 ```
 
 ### Step 3: Install Dependencies
 
 ```bash
-cd scicraft
+cd SciAgent-Skills
 pixi install
 ```
 
@@ -124,7 +124,7 @@ The agent reads only the `description` field during planning. Full skill content
 ## Directory Structure
 
 ```
-scicraft/
+SciAgent-Skills/
 ├── .claude-plugin/
 │   └── plugin.json        # Claude Code plugin manifest
 ├── skills/                 # All 74 skills organized by category

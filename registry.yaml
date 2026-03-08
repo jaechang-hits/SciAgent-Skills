@@ -1123,42 +1123,251 @@ entries:
     description: "Python Protocol API v2 for Opentrons OT-2 and Flex liquid handling robots. Deck setup, pipette operations (aspirate/dispense/transfer/distribute/consolidate), labware and liquid tracking, hardware module control (thermocycler, heater-shaker, magnetic, temperature). Simulate locally with opentrons_simulate before uploading. Use PyLabRobot for multi-vendor (Hamilton, Tecan) portability."
     date_added: "2026-02-18"
 
-  - name: "opentrons-lab-controller"
+  - name: "viennarna-structure-prediction"
     type: skill
-    sub_type: toolkit
-    category: "lab-automation"
-    path: "skills/lab-automation/opentrons-lab-controller/SKILL.md"
-    description: "OT-2 protocol design and simulation guide for the Lab Controller agent. Covers simulation mode, protocol structure, pipette selection, serial dilution, hardware module loading (heater-shaker, temperature module, thermocycler), and deck conflict validation."
+    sub_type: pipeline
+    category: "molecular-biology"
+    path: "skills/molecular-biology/viennarna-structure-prediction/SKILL.md"
+    description: "Predict RNA secondary structure, minimum free energy (MFE) folding, base pair probabilities, and RNA-RNA interactions using ViennaRNA Python bindings. Pipeline: load sequence → compute MFE structure → calculate partition function and base pair probability matrix → visualize dot-bracket notation → assess RNA-RNA duplex formation. Use for siRNA/sgRNA targeting, ribozyme design, and RNA accessibility analysis. Use mfold or RNAfold CLI directly for batch command-line use without Python."
     date_added: "2026-03-08"
 
-  - name: "hamilton-star-pylabrobot"
+  - name: "popv-cell-annotation"
     type: skill
     sub_type: toolkit
-    category: "lab-automation"
-    path: "skills/lab-automation/hamilton-star-pylabrobot/SKILL.md"
-    description: "Hamilton STAR liquid handler automation via PyLabRobot async API. Covers STAR backend setup, 55-rail deck layout, 8-channel independent pipetting (0.5-1000 uL), 96-head plate operations, CO-RE gripper plate transport, and anti-droplet control."
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/popv-cell-annotation/SKILL.md"
+    description: "Consensus cell type annotation by running 10+ algorithms (KNN-Harmony, KNN-BBKNN, KNN-Scanorama, KNN-scVI, CellTypist, ONCLASS, Random Forest, SCANVI, SVM, XGBoost) on a labeled reference and transferring labels to a query dataset via majority voting. popV produces per-method labels, an overall consensus prediction, and an agreement score quantifying confidence across methods. Use when single-method annotation is insufficient or when you need ensemble uncertainty estimates for novel cell states."
     date_added: "2026-03-08"
 
-  - name: "thermo-multidrop"
+  - name: "sgrna-design-guide"
     type: skill
-    sub_type: toolkit
-    category: "lab-automation"
-    path: "skills/lab-automation/thermo-multidrop/SKILL.md"
-    description: "Script generation for Thermo Fisher Multidrop Combi bulk reagent dispenser. Covers cassette selection, volume calibration (0.5-2500 uL), priming protocols, and multi-plate dispensing sequences for HTS plate preparation."
+    sub_type: guide
+    category: "molecular-biology"
+    path: "skills/molecular-biology/sgrna-design-guide/SKILL.md"
+    description: "Decision guide for finding or designing sgRNAs using a three-tiered strategy: (1) validated sequences from Addgene or literature, (2) pre-computed designs from the Broad Institute CRISPick database, (3) de novo design with CRISPOR/Benchling as a last resort. Covers PAM requirements for SpCas9, SaCas9, AsCas12a, and enAsCas12a; sgRNA quality metrics; application-specific targeting rules for knockout, CRISPRa, CRISPRi, base editing, and prime editing; and computational filtering criteria. Use when planning any CRISPR experiment and unsure which sgRNA source or design approach to use."
     date_added: "2026-03-08"
 
-  - name: "thermo-plate-reader"
+  - name: "cnvkit-copy-number"
     type: skill
-    sub_type: toolkit
-    category: "lab-automation"
-    path: "skills/lab-automation/thermo-plate-reader/SKILL.md"
-    description: "SkanIt macro script generation for Thermo Fisher Varioskan LUX multimode plate reader. Covers absorbance, fluorescence, luminescence measurements, kinetic read protocols, and temperature control for endpoint and kinetic assay readouts."
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/cnvkit-copy-number/SKILL.md"
+    description: "Detect somatic copy number variants (CNVs) from WES, WGS, or targeted sequencing BAM files with CNVkit v0.9.x. Pipeline: calculate bin-level coverage in target/antitarget regions, normalize against a reference, segment copy ratios with CBS or HMM, call amplifications and deletions, generate scatter/diagram plots, estimate tumor purity and ploidy, and export to VCF/SEG. Both CLI and Python API (cnvlib) shown. Use GATK CNV instead for deep WGS with population-scale controls; use CNVkit for targeted or exome sequencing where antitarget bins are critical."
     date_added: "2026-03-08"
 
-  - name: "beckman-biomek"
+  - name: "plannotate-plasmid-annotation"
+    type: skill
+    sub_type: pipeline
+    category: "molecular-biology"
+    path: "skills/molecular-biology/plannotate-plasmid-annotation/SKILL.md"
+    description: "Automatically annotate plasmid sequences with functional features (promoters, terminators, resistance genes, origins of replication, tags, fluorescent proteins) using BLAST-based detection against curated databases (Addgene, fpbase, SnapGene). Accepts FASTA or raw sequence; outputs annotated GenBank files, interactive HTML maps, and CSV feature tables. Handles circular topology correctly. Use for verifying synthetic plasmid construction, preparing Addgene submissions, sharing plasmid maps, or batch-annotating a cloning library."
+    date_added: "2026-03-08"
+
+  - name: "remap-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/remap-database/SKILL.md"
+    description: "Query the ReMap 2022 TF ChIP-seq binding peak database via REST API and BED file downloads. Retrieve all TF binding peaks overlapping a genomic region (chr:start-end), find TF peaks near a gene by name, list TFs available for a species, filter peaks by regulatory biotype (promoter, enhancer), and download peak BED files for a TF-cell type pair. Use for TF co-occupancy analysis, regulatory region annotation, and building TF binding atlases. For JASPAR motif matrices use jaspar-database; for ENCODE regulatory tracks use encode-database."
+    date_added: "2026-03-08"
+
+  - name: "interpro-database"
+    type: skill
+    sub_type: database
+    category: "proteomics-protein-engineering"
+    path: "skills/proteomics-protein-engineering/interpro-database/SKILL.md"
+    description: "Query the InterPro REST API for protein domain architecture, family classification, and member database integration. Search InterPro entries by name or accession, retrieve all domains in a protein (domain architecture), list proteins in a family, get taxonomic distribution, and link to PDB structures. Integrates Pfam, PANTHER, PIRSF, PRINTS, PROSITE, SMART, CDD, and NCBIfam into a unified hierarchy. For protein sequence and Swiss-Prot annotations use uniprot-protein-database; for experimental 3D structures use pdb-database."
+    date_added: "2026-03-08"
+
+  - name: "prokka-genome-annotation"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/prokka-genome-annotation/SKILL.md"
+    description: "Annotate prokaryotic genome assemblies (bacteria, archaea, viruses) with Prokka's BLAST/HMM-based pipeline. Identifies CDS, rRNA, tRNA, tmRNA, and signal peptides against Pfam, TIGRFAMs, and RefSeq databases. Produces GFF3, GenBank, protein FASTA, and TSV outputs. Use PGAP instead when submitting to NCBI GenBank; use Bakta for faster annotation with NCBI-compatible outputs on modern assemblies."
+    date_added: "2026-03-08"
+
+  - name: "simpleitk-image-registration"
     type: skill
     sub_type: toolkit
-    category: "lab-automation"
-    path: "skills/lab-automation/beckman-biomek/SKILL.md"
-    description: "Method script generation for Beckman Coulter Biomek i7 automated workstation. Covers 96-channel head operations, Span-8 independent pipetting, gripper plate transport, and on-deck integration for NGS library prep and plate reformatting."
+    category: "cell-biology"
+    path: "skills/cell-biology/simpleitk-image-registration/SKILL.md"
+    description: "Register, segment, filter, and resample 3D medical images (MRI, CT, microscopy) using SimpleITK's Python API with support for DICOM, NIfTI, and multi-modal image analysis. Provides rigid/affine/deformable registration, threshold and region-growing segmentation, Gaussian and morphological filtering, label statistics, and format conversion. Use when aligning volumetric images across timepoints or modalities, automating segmentation of fluorescence microscopy, or converting DICOM series to NIfTI for analysis pipelines."
     date_added: "2026-03-08"
+
+  - name: "celltypist-cell-annotation"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/celltypist-cell-annotation/SKILL.md"
+    description: "Automated cell type annotation for scRNA-seq data using pre-trained logistic regression models. CellTypist ships 45+ models covering immune cells, gut, lung, brain, fetal tissues, and cancer microenvironments. Inputs a normalized AnnData; outputs per-cell predicted labels, majority-vote cluster labels, and confidence scores. Use when you want fast, reproducible, reference-model-backed annotation without manual marker inspection."
+    date_added: "2026-03-08"
+
+  - name: "single-cell-annotation-guide"
+    type: skill
+    sub_type: guide
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/single-cell-annotation-guide/SKILL.md"
+    description: "Decision framework for choosing between manual marker-based, automated (CellTypist), and reference-based (popV) cell type annotation strategies in single-cell RNA-seq analysis. Covers a three-tier strategy: Tier 1 (manual canonical markers), Tier 2 (CellTypist pre-trained models), and Tier 3 (popV ensemble label transfer). Use when planning or troubleshooting cell type annotation in any scRNA-seq project."
+    date_added: "2026-03-08"
+
+  - name: "homer-motif-analysis"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/homer-motif-analysis/SKILL.md"
+    description: "De novo motif discovery and known TF motif enrichment in ChIP-seq and ATAC-seq peak sets using HOMER. findMotifsGenome.pl searches for over-represented sequence patterns against a background; annotatePeaks.pl assigns genomic context (TSS distance, gene, repeat). Use after MACS3 peak calling to identify which transcription factors are enriched in your peaks, annotate peaks with nearest genes, and validate ChIP-seq quality by checking the target TF's own motif."
+    date_added: "2026-03-08"
+
+  - name: "emdb-database"
+    type: skill
+    sub_type: database
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/emdb-database/SKILL.md"
+    description: "Search and retrieve cryo-EM density maps, fitted atomic models, and metadata from the Electron Microscopy Data Bank (EMDB) REST API. Query by keyword, resolution, method, or organism; fetch entry details, map download URLs, associated PDB models, and publications. No authentication required. For experimental atomic coordinates use pdb-database; for AlphaFold predicted structures use alphafold-database-access."
+    date_added: "2026-03-08"
+
+  - name: "mouse-phenome-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/mouse-phenome-database/SKILL.md"
+    description: "Retrieve quantitative phenotype measurements across inbred mouse strains from the Mouse Phenome Database (MPD) for metabolic, behavioral, and physiological traits. Query strain means and raw individual measurements for body weight, glucose, blood pressure, behavioral assays, and 40+ additional procedures. Use for QTL analysis support, cross-strain phenotype comparison, and identifying mouse models for metabolic or behavioral traits. For mouse gene-disease-phenotype associations use monarch-database; for mouse genome annotations use ensembl-database."
+    date_added: "2026-03-08"
+
+  - name: "nnunet-segmentation"
+    type: skill
+    sub_type: pipeline
+    category: "cell-biology"
+    path: "skills/cell-biology/nnunet-segmentation/SKILL.md"
+    description: "Train and deploy automated medical image segmentation models using nnU-Net's self-configuring framework that auto-selects optimal architecture, preprocessing, and training for any modality. Supports CT, MRI, microscopy, and ultrasound with 2D, 3D full-res, 3D low-res, and cascade configurations. Pipeline: convert dataset → plan and preprocess → train (5-fold cross-validation) → find best configuration → predict → ensemble. Use when classical segmentation fails and annotated training data is available."
+    date_added: "2026-03-08"
+
+  - name: "jaspar-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/jaspar-database/SKILL.md"
+    description: "Query the JASPAR 2024 TF binding profile database via REST API and pyJASPAR. Retrieve position frequency matrices (PFMs) and position weight matrices (PWMs) by TF name, JASPAR ID, species, or structural class. Scan DNA sequences for transcription factor binding sites (TFBS). Browse profiles by taxon (Homo sapiens, Mus musculus) or TF family (bHLH, zinc finger). Use for motif enrichment input, TFBS scanning, and regulatory sequence analysis. For ChIP-seq peak-based motif discovery use homer-motif-analysis; for regulatory variant scoring use regulomedb-database."
+    date_added: "2026-03-08"
+
+  - name: "libsbml-network-modeling"
+    type: skill
+    sub_type: toolkit
+    category: "systems-biology-multiomics"
+    path: "skills/systems-biology-multiomics/libsbml-network-modeling/SKILL.md"
+    description: "Build, read, validate, and modify SBML biological network models using libSBML Python API. Supports all SBML Levels (1–3), reactions with kinetic laws, species/compartments, rules (assignment/rate/algebraic), the FBC extension for flux balance analysis models, and model conversion utilities. Integrates with COBRApy, Tellurium/RoadRunner, and COPASI for simulation. Use when programmatically constructing ODE-based or constraint-based metabolic/signaling models in the standard SBML format."
+    date_added: "2026-03-08"
+
+  - name: "ddinter-database"
+    type: skill
+    sub_type: database
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/ddinter-database/SKILL.md"
+    description: "Query drug-drug interaction (DDI) data from DDInter via REST API. Search interactions by drug name or ID, retrieve severity levels (major/moderate/minor), interaction mechanisms, and clinical recommendations for drug pairs. Covers 1.7M+ interactions across 2,400+ drugs. No authentication required. For FDA drug labeling use dailymed-database; for pharmacogenomics use clinpgx-database."
+    date_added: "2026-03-08"
+
+  - name: "dailymed-database"
+    type: skill
+    sub_type: database
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/dailymed-database/SKILL.md"
+    description: "Query FDA-approved drug labeling from DailyMed (NLM) via REST API. Search structured product labels (SPLs) by drug name, NDC code, set ID, or RxCUI. Retrieve indications, contraindications, dosage, warnings, adverse reactions, and packaging information. No authentication required. For adverse event reports use fda-database; for drug-drug interactions use ddinter-database."
+    date_added: "2026-03-08"
+
+  - name: "gtopdb-database"
+    type: skill
+    sub_type: database
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/gtopdb-database/SKILL.md"
+    description: "Query the IUPHAR/BPS Guide to Pharmacology (GtoPdb) REST API for receptor-ligand interaction data, target pharmacology, and quantitative affinity metrics. Retrieve pKi/pIC50/pEC50 values, ligand classifications (approved drugs, biologics, natural products), target families (GPCRs, ion channels, nuclear receptors, kinases), and selectivity profiles across the pharmacological target space."
+    date_added: "2026-03-08"
+
+  - name: "pride-database"
+    type: skill
+    sub_type: database
+    category: "proteomics-protein-engineering"
+    path: "skills/proteomics-protein-engineering/pride-database/SKILL.md"
+    description: "Search and retrieve proteomics datasets, peptide identifications, and mass spectrometry raw data files from the PRIDE Archive REST API. Find experiments by organism, tissue, disease, or instrument; download RAW/mzML files; retrieve peptide and PSM identifications; access protein-level evidence. For protein domain architecture use interpro-database; for protein sequences and annotations use uniprot-protein-database."
+    date_added: "2026-03-08"
+
+  - name: "gnomad-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/gnomad-database/SKILL.md"
+    description: "Query gnomAD v4 population variant frequencies via GraphQL API. Retrieve allele counts and frequencies stratified by ancestry group (AFR, AMR, EAS, NFE, SAS, FIN, ASJ, MID), gene-level constraint metrics (pLI, LOEUF, missense z-score), and read depth coverage. Identify variants with low population frequency or under evolutionary constraint. For clinical pathogenicity classifications use clinvar-database; for GWAS associations use gwas-database."
+    date_added: "2026-03-08"
+
+  - name: "quickgo-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/quickgo-database/SKILL.md"
+    description: "Query the EBI QuickGO REST API for Gene Ontology terms and protein GO annotations. Fetch GO term metadata by ID, search terms by keyword, retrieve ancestor/descendant hierarchies, and download GO annotations filtered by taxon ID, evidence code, and GO aspect. Use for GO term resolution, ontology traversal, and annotation-set retrieval before enrichment analysis. For enrichment analysis itself use gseapy-gene-enrichment; for protein function annotations use uniprot-protein-database."
+    date_added: "2026-03-08"
+
+  - name: "regulomedb-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/regulomedb-database/SKILL.md"
+    description: "Query RegulomeDB v2 REST API to score genetic variants for regulatory function and retrieve overlapping regulatory evidence (TF binding sites, histone marks, DNase-seq peaks, eQTLs, motifs). Score a single rsID or genomic position, batch-score variant lists, search regions for all regulatory variants, and retrieve full annotation details. Scores range from 1a (strongest: eQTL + TF + DNase + motif) to 7 (no known regulatory function). Use for GWAS hit prioritization, regulatory variant annotation, and cis-regulatory element discovery. For clinical pathogenicity use clinvar-database; for GWAS associations use gwas-database."
+    date_added: "2026-03-08"
+
+  - name: "encode-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/encode-database/SKILL.md"
+    description: "Query the ENCODE Portal REST API for regulatory genomics data: TF ChIP-seq experiments, ATAC-seq/DNase-seq accessibility peaks, histone mark tracks, and RNA-seq datasets across 1000+ cell types and tissues. Search experiments by assay, biosample, or target protein; download BED/bigWig files; retrieve candidate cis-regulatory elements (cCREs) from ENCODE SCREEN by genomic region or gene. Use for finding regulatory tracks to annotate variants, identifying open chromatin in a cell type of interest, and downloading peak files for ChIP-seq or ATAC-seq analysis. For regulatory variant scoring use regulomedb-database; for GWAS associations use gwas-database."
+    date_added: "2026-03-08"
+
+  - name: "cbioportal-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/cbioportal-database/SKILL.md"
+    description: "Access TCGA and other cancer genomics datasets via cBioPortal REST API. Retrieve somatic mutations, copy number alterations, gene expression profiles, and clinical data (survival, stage, treatment) for thousands of cancer studies. Use for tumor mutation burden analysis, oncoprint queries, and survival analysis. For population variant frequencies use gnomad-database; for drug-gene interactions use dgidb-database."
+    date_added: "2026-03-08"
+
+  - name: "archs4-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/archs4-database/SKILL.md"
+    description: "Query uniformly processed RNA-seq gene expression profiles, tissue-specific expression patterns, and co-expression networks from the ARCHS4 database REST API. Retrieve z-score normalized expression across 1M+ human and mouse samples, find co-expressed genes, search samples by metadata, and download HDF5 expression matrices. For variant-level population genetics use gnomad-database; for pathway enrichment from gene lists use gget-genomic-databases (Enrichr)."
+    date_added: "2026-03-08"
+
+  - name: "dbsnp-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/dbsnp-database/SKILL.md"
+    description: "Query NCBI dbSNP for SNP records by rsID, gene, or genomic region via E-utilities (esearch, efetch, epost) and NCBI Variation Services REST API. Retrieve allele data, minor allele frequency, variant class (SNV, indel, MNV), clinical significance links, and cross-database IDs (ClinVar, dbVar, 1000G). Free access; 3 req/sec without API key, 10 req/sec with key. For clinical pathogenicity classifications use clinvar-database; for population frequencies use gnomad-database."
+    date_added: "2026-03-08"
+
+  - name: "monarch-database"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/monarch-database/SKILL.md"
+    description: "Query disease-gene-phenotype associations, entity details, and cross-species orthology from the Monarch Initiative knowledge graph REST API. Retrieve MONDO disease-to-gene and disease-to-phenotype mappings, HP phenotype profiles, and cross-species phenotype comparisons. Use for rare disease gene prioritization, phenotype-based candidate gene ranking, and building disease-phenotype networks. For GWAS associations use gwas-database; for clinical pathogenicity use clinvar-database."
+    date_added: "2026-03-08"
+
+  - name: "unichem-database"
+    type: skill
+    sub_type: database
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/unichem-database/SKILL.md"
+    description: "Cross-reference chemical compound identifiers across 50+ databases (ChEMBL, DrugBank, PubChem, ChEBI, PDB, KEGG) using the UniChem REST API. Resolve InChIKeys to database-specific IDs, find all sources for a compound, discover related compounds by structural connectivity, and batch-translate compound lists between naming systems. No authentication required."
+    date_added: "2026-03-08"
+
+  - name: "ucsc-genome-browser"
+    type: skill
+    sub_type: database
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/ucsc-genome-browser/SKILL.md"
+    description: "Query the UCSC Genome Browser REST API for DNA sequences, track annotations, gene models, and conservation scores across 100+ genome assemblies. Retrieve sequence for any genomic region, list or fetch BED/bigWig track data, get chromosome sizes, query RefSeq/GENCODE gene structures, and access PhyloP/PhastCons conservation scores. Use for programmatic access to UCSC annotations; use Ensembl REST API instead for Ensembl-native gene IDs and VEP variant annotation."
+    date_added: "2026-03-08"
+
