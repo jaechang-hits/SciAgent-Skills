@@ -1,7 +1,7 @@
 {
   "name": "scicraft",
-  "description": "140 validated life sciences skills for scientific AI agents — domain-specific knowledge Claude doesn't already have: genomics pipelines, drug discovery databases, proteomics tools, and more",
-  "version": "1.0.0",
+  "description": "Life sciences computational skills for scientific AI agents — 60+ skills covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing",
+  "version": "0.1.0",
   "author": {
     "name": "jaechang-hits"
   },
@@ -17,7 +17,6 @@
     "./skills/scientific-computing/",
     "./skills/scientific-writing/",
     "./skills/structural-biology-drug-discovery/",
-    "./skills/systems-biology-multiomics/",
-    "./skills/molecular-biology/"
+    "./skills/systems-biology-multiomics/"
   ]
 }
