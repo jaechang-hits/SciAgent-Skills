@@ -1,6 +1,6 @@
 # SciAgent-Skills
 
-**74 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
+**187 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
 
 Each skill is a self-contained SKILL.md file with runnable code examples, key parameters, troubleshooting guides, and best practices. Designed for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but compatible with any agent that reads markdown skill files.
 
@@ -8,16 +8,17 @@ Each skill is a self-contained SKILL.md file with runnable code examples, key pa
 
 | Category | Skills | Examples |
 |----------|:------:|----------|
-| Genomics & Bioinformatics | 16 | Scanpy, BioPython, pysam, gget, KEGG, PubMed, scvi-tools |
-| Scientific Computing | 14 | Polars, Dask, NetworkX, SymPy, UMAP, PyG, Zarr, SimPy |
-| Structural Biology & Drug Discovery | 13 | RDKit, AutoDock Vina, ChEMBL, PDB, DeepChem, datamol |
-| Biostatistics | 9 | scikit-learn, statsmodels, PyMC, SHAP, survival analysis |
-| Proteomics & Protein Engineering | 6 | ESM, UniProt, PyOpenMS, matchms, HMDB |
-| Scientific Writing | 5 | Manuscript writing, peer review, LaTeX posters, slides |
-| Systems Biology & Multi-omics | 4 | COBRApy, LaminDB, Reactome, STRING |
-| Cell Biology | 3 | pydicom, histolab, FlowIO |
-| Lab Automation | 2 | Opentrons, Benchling |
-| Data Visualization | 2 | Plotly, Seaborn |
+| Genomics & Bioinformatics | 63 | Scanpy, BioPython, pysam, gget, KEGG, PubMed, scvi-tools |
+| Structural Biology & Drug Discovery | 26 | RDKit, AutoDock Vina, ChEMBL, PDB, DeepChem, datamol |
+| Scientific Computing | 24 | Polars, Dask, NetworkX, SymPy, UMAP, PyG, Zarr, SimPy |
+| Cell Biology | 15 | pydicom, histolab, FlowIO |
+| Biostatistics | 12 | scikit-learn, statsmodels, PyMC, SHAP, survival analysis |
+| Scientific Writing | 12 | Manuscript writing, peer review, LaTeX posters, slides |
+| Systems Biology & Multi-omics | 11 | COBRApy, LaminDB, Reactome, STRING |
+| Proteomics & Protein Engineering | 10 | ESM, UniProt, PyOpenMS, matchms, HMDB |
+| Lab Automation | 6 | Opentrons, Benchling |
+| Data Visualization | 5 | Plotly, Seaborn |
+| Molecular Biology | 3 | CRISPR sgRNA design, gene expression, cloning |
 
 **Skill types:** 39 toolkits, 19 database connectors, 9 guides, 7 pipelines
 
@@ -127,17 +128,18 @@ The agent reads only the `description` field during planning. Full skill content
 SciAgent-Skills/
 ├── .claude-plugin/
 │   └── plugin.json        # Claude Code plugin manifest
-├── skills/                 # All 74 skills organized by category
+├── skills/                 # All 187 skills organized by category
 │   ├── genomics-bioinformatics/
 │   ├── structural-biology-drug-discovery/
-│   ├── biostatistics/
 │   ├── scientific-computing/
-│   ├── proteomics-protein-engineering/
+│   ├── cell-biology/
+│   ├── biostatistics/
 │   ├── scientific-writing/
 │   ├── systems-biology-multiomics/
-│   ├── cell-biology/
+│   ├── proteomics-protein-engineering/
 │   ├── lab-automation/
-│   └── data-visualization/
+│   ├── data-visualization/
+│   └── molecular-biology/
 ├── templates/              # Skill authoring templates
 ├── registry.yaml           # Index of all skills
 ├── CLAUDE.md               # Skill authoring guide
