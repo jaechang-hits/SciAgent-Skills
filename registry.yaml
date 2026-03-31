@@ -1371,3 +1371,91 @@ entries:
     description: "Query the UCSC Genome Browser REST API for DNA sequences, track annotations, gene models, and conservation scores across 100+ genome assemblies. Retrieve sequence for any genomic region, list or fetch BED/bigWig track data, get chromosome sizes, query RefSeq/GENCODE gene structures, and access PhyloP/PhastCons conservation scores. Use for programmatic access to UCSC annotations; use Ensembl REST API instead for Ensembl-native gene IDs and VEP variant annotation."
     date_added: "2026-03-08"
 
+  - name: "degenerate-input-filtering"
+    type: skill
+    sub_type: guide
+    category: "biostatistics"
+    path: "skills/biostatistics/degenerate-input-filtering/SKILL.md"
+    description: "Mandatory filtering of degenerate and uninformative data points before statistical tests. Covers single-sequence alignments, empty files, constant-value features, zero-variance inputs, and all-NaN columns."
+    date_added: "2026-03-31"
+
+  - name: "nan-safe-correlation"
+    type: skill
+    sub_type: guide
+    category: "biostatistics"
+    path: "skills/biostatistics/nan-safe-correlation/SKILL.md"
+    description: "Per-feature NaN-safe Spearman/Pearson correlation computation. Covers why bulk matrix shortcuts fail with missing data, correct pairwise deletion, degenerate input filtering, and performance optimization for large datasets."
+    date_added: "2026-03-31"
+
+  - name: "single-cell-annotation"
+    type: skill
+    sub_type: guide
+    category: "cell-biology"
+    path: "skills/cell-biology/single-cell-annotation/SKILL.md"
+    description: "Guide to annotating cell types in single-cell RNA-seq data. Covers manual marker-based, automated (CellTypist, scAnnotate), and reference-based (scArches, Azimuth, SingleR) approaches with decision framework for tool selection."
+    date_added: "2026-03-31"
+
+  - name: "busco-status-interpretation"
+    type: skill
+    sub_type: guide
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/busco-status-interpretation/SKILL.md"
+    description: "Guide to correctly interpreting BUSCO completeness statuses. Covers why Duplicated BUSCOs count as complete, how to parse BUSCO output files, and how to compute and compare completeness across proteomes and genomes."
+    date_added: "2026-03-31"
+
+  - name: "depmap-crispr-essentiality"
+    type: skill
+    sub_type: guide
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/depmap-crispr-essentiality/SKILL.md"
+    description: "Guide to DepMap CRISPR gene effect (Chronos) data analysis. Covers the critical sign convention for essentiality interpretation, per-gene NaN-safe Spearman correlation computation, and data loading/alignment patterns."
+    date_added: "2026-03-31"
+
+  - name: "vcf-variant-filtering"
+    type: skill
+    sub_type: guide
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/vcf-variant-filtering/SKILL.md"
+    description: "Guide to mandatory quality filtering of raw/unfiltered VCF files before computing summary statistics such as Ts/Tv ratio, variant counts, or allele frequency distributions. Covers detection of raw VCFs, QUAL-based filtering with bcftools, and when NOT to filter."
+    date_added: "2026-03-31"
+
+  - name: "western-blot-quantification"
+    type: skill
+    sub_type: guide
+    category: "lab-automation"
+    path: "skills/lab-automation/western-blot-quantification/SKILL.md"
+    description: "Guide to quantitative Western blot analysis covering band detection, two-step normalization, fold change calculation, statistical aggregation across biological replicates, and publication-ready visualization."
+    date_added: "2026-03-31"
+
+  - name: "scientific-literature-search"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/scientific-literature-search/SKILL.md"
+    description: "Systematic strategies for searching, retrieving, and analyzing scientific literature across PubMed, arXiv, Google Scholar, and AI-assisted tools. Covers the PICO framework, three-tiered search strategy, PubMed field tags, and content extraction workflows."
+    date_added: "2026-03-31"
+
+  - name: "sar-analysis"
+    type: skill
+    sub_type: guide
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/sar-analysis/SKILL.md"
+    description: "Guide for performing Structure-Activity Relationship (SAR) analysis using RDKit. Covers core scaffold identification via MCS, R-group decomposition, molecular alignment for visualization, activity heatmap generation, and interpretive SAR text output."
+    date_added: "2026-03-31"
+
+  - name: "kegg-pathway-analysis"
+    type: skill
+    sub_type: guide
+    category: "systems-biology-multiomics"
+    path: "skills/systems-biology-multiomics/kegg-pathway-analysis/SKILL.md"
+    description: "Guide to KEGG pathway enrichment analysis for differential expression results. Covers ORA vs GSEA, mandatory directionality splitting, KEGG organism codes, API failure handling with offline fallbacks, and cross-condition pathway comparisons."
+    date_added: "2026-03-31"
+
+  - name: "omics-analysis-guide"
+    type: skill
+    sub_type: guide
+    category: "systems-biology-multiomics"
+    path: "skills/systems-biology-multiomics/omics-analysis-guide/SKILL.md"
+    description: "Comprehensive decision guide for analyzing omics data (transcriptomics, proteomics) using a three-tiered approach: validated pipelines first, standard workflows second, custom analysis last. Covers QC, normalization, imputation, statistical test selection, and visualization."
+    date_added: "2026-03-31"
+
