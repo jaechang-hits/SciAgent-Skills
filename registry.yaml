@@ -1459,3 +1459,67 @@ entries:
     description: "Comprehensive decision guide for analyzing omics data (transcriptomics, proteomics) using a three-tiered approach: validated pipelines first, standard workflows second, custom analysis last. Covers QC, normalization, imputation, statistical test selection, and visualization."
     date_added: "2026-03-31"
 
+  - name: "nature-figure-guide"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/nature-figure-guide/SKILL.md"
+    description: "Figure and image preparation guide for Nature journal. Covers resolution (300+ DPI), file formats (AI, EPS, TIFF), RGB color mode, Helvetica/Arial fonts, lowercase panel labels, and image integrity requirements."
+    date_added: "2026-04-01"
+
+  - name: "cell-figure-guide"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/cell-figure-guide/SKILL.md"
+    description: "Figure and image preparation guide for Cell (Cell Press) journal. Covers resolution (300-1000 DPI by type), file formats (TIFF, PDF), RGB color mode, Avenir/Arial fonts, uppercase panel labels, and strict image manipulation policies."
+    date_added: "2026-04-01"
+
+  - name: "science-figure-guide"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/science-figure-guide/SKILL.md"
+    description: "Figure and image preparation guide for Science (AAAS) journal. Covers resolution (150-300+ DPI), file formats (PDF, EPS, TIFF), RGB color mode, Myriad/Helvetica fonts, and strict image manipulation policies including gamma adjustment disclosure."
+    date_added: "2026-04-01"
+
+  - name: "pnas-figure-guide"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/pnas-figure-guide/SKILL.md"
+    description: "Figure and image preparation guide for PNAS. Covers resolution (300-1000 PPI by type), file formats (TIFF, EPS, PDF), strict RGB-only color mode, Arial/Helvetica fonts, italicized uppercase panel labels, and automated image screening."
+    date_added: "2026-04-01"
+
+  - name: "cancer-research-figure-guide"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/cancer-research-figure-guide/SKILL.md"
+    description: "Figure and image preparation guide for Cancer Research (AACR). Covers resolution (300-1200 DPI), file formats (EPS, TIFF, AI), hierarchical panel labeling (Ai, Aii, Bi), figure/table limits, and legend requirements including replicate counts."
+    date_added: "2026-04-01"
+
+  - name: "lancet-figure-guide"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/lancet-figure-guide/SKILL.md"
+    description: "Figure and image preparation guide for The Lancet. Covers resolution (300+ DPI at 120% size), file formats (PowerPoint, Word, SVG preferred), column widths (75/154 mm), Times New Roman font, and Lancet in-house redraw policy."
+    date_added: "2026-04-01"
+
+  - name: "nejm-figure-guide"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/nejm-figure-guide/SKILL.md"
+    description: "Figure and image preparation guide for the New England Journal of Medicine (NEJM). Covers resolution (300-1200 DPI), editable vector formats (AI, EPS, SVG), in-house medical illustration policy, and strict image integrity requirements."
+    date_added: "2026-04-01"
+
+  - name: "elife-figure-guide"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/elife-figure-guide/SKILL.md"
+    description: "Figure and image preparation guide for eLife. Covers file formats (TIFF, EPS, PDF), striking image requirements (1800x900 px), figure supplement naming conventions, and routine image screening policy where selective enhancement is treated as misconduct."
+    date_added: "2026-04-01"
+
