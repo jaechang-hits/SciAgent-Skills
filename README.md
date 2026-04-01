@@ -1,6 +1,6 @@
 # SciAgent-Skills
 
-**187 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
+**196 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
 
 Each skill is a self-contained SKILL.md file with runnable code examples, key parameters, troubleshooting guides, and best practices. Designed for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but compatible with any agent that reads markdown skill files.
 
@@ -13,14 +13,14 @@ Each skill is a self-contained SKILL.md file with runnable code examples, key pa
 | Scientific Computing | 24 | Polars, Dask, NetworkX, SymPy, UMAP, PyG, Zarr, SimPy |
 | Cell Biology | 15 | pydicom, histolab, FlowIO |
 | Biostatistics | 12 | scikit-learn, statsmodels, PyMC, SHAP, survival analysis |
-| Scientific Writing | 12 | Manuscript writing, peer review, LaTeX posters, slides |
+| Scientific Writing | 21 | Manuscript writing, peer review, LaTeX posters, slides, figure guides |
 | Systems Biology & Multi-omics | 11 | COBRApy, LaminDB, Reactome, STRING |
 | Proteomics & Protein Engineering | 10 | ESM, UniProt, PyOpenMS, matchms, HMDB |
 | Lab Automation | 6 | Opentrons, Benchling |
 | Data Visualization | 5 | Plotly, Seaborn |
 | Molecular Biology | 3 | CRISPR sgRNA design, gene expression, cloning |
 
-**Skill types:** 39 toolkits, 19 database connectors, 9 guides, 7 pipelines
+**Skill types:** 72 toolkits, 53 database connectors, 36 guides, 35 pipelines
 
 ## Installation
 
@@ -128,7 +128,7 @@ The agent reads only the `description` field during planning. Full skill content
 SciAgent-Skills/
 ├── .claude-plugin/
 │   └── plugin.json        # Claude Code plugin manifest
-├── skills/                 # All 187 skills organized by category
+├── skills/                 # All 196 skills organized by category
 │   ├── genomics-bioinformatics/
 │   ├── structural-biology-drug-discovery/
 │   ├── scientific-computing/
