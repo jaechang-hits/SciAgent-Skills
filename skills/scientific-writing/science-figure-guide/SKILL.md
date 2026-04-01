@@ -251,6 +251,66 @@ def validate_science_figure(image_path, stage='initial'):
 
 ---
 
+## Key Concepts
+
+### Two-Stage Submission Process
+
+Science uses different figure requirements for initial vs. revised manuscripts. Initial submissions accept 150-300 DPI figures embedded in the manuscript. Revised manuscripts require separate high-resolution files (300+ DPI) in publication-ready formats. This two-stage approach reduces upfront preparation burden while ensuring final quality.
+
+### Nonlinear Adjustment Disclosure
+
+Science uniquely requires explicit disclosure of nonlinear image adjustments (e.g., gamma corrections) in the figure caption. Linear adjustments (brightness, contrast) applied uniformly need no special disclosure. This distinction is critical — failure to disclose gamma changes can be flagged as data manipulation.
+
+### Figure Sizing Constraints
+
+Science enforces strict maximum dimensions: 6.5 x 8 inches (16.5 x 20 cm). Single-column figures are 3.4 inches wide; double-column figures are 7.0-7.3 inches. All figures must fit on standard letter (8.5 x 11 inch) or A4 paper.
+
+## Decision Framework
+
+```
+What submission stage are you at?
+├── Initial submission
+│   ├── Embed figures in manuscript (.docx or PDF)
+│   └── 150-300 DPI acceptable
+└── Revised manuscript
+    ├── Upload separate high-resolution files
+    ├── Vector figures (graphs, diagrams)
+    │   └── PDF, EPS, or AI format
+    └── Raster figures (photos, micrographs)
+        └── TIFF at 300+ DPI
+```
+
+| Scenario | Format | Resolution | Notes |
+|---|---|---|---|
+| Initial submission graph | Embedded in .docx | 150-300 DPI | Low bar for initial review |
+| Revised manuscript graph | PDF or EPS | Vector | Separate upload required |
+| Photograph (revised) | TIFF | 300+ DPI | Native resolution only |
+| Micrograph with gamma adjustment | TIFF | 300+ DPI | Disclose gamma in caption |
+| Diagram or schematic | AI or EPS | Vector | Embed all fonts |
+
+## Best Practices
+
+1. **Prepare high-resolution files from the start**: Even though initial submissions accept 150 DPI, creating figures at 300+ DPI from the beginning avoids rework during revision
+2. **Disclose all nonlinear adjustments in captions**: Gamma corrections and other nonlinear transforms must be explicitly noted in the figure caption, not just in Methods
+3. **Use Myriad Pro as primary font**: Science's preferred font is Myriad; Helvetica and Arial are acceptable alternatives. Consistent font usage across all figures is expected
+4. **Keep captions under 200 words**: Science enforces a ~200-word limit on individual figure captions. Move detailed methodology to the Methods section
+5. **Place titles in captions, not figures**: Figure titles belong at the beginning of the caption text, not rendered inside the figure itself
+6. **Label axes with parameter, units, and scale**: Science requires all axes to include the measured parameter, units in parentheses, and scale information
+7. **Use simple solid or open symbols**: Science recommends symbols that reproduce well at small sizes. Avoid complex or filled symbols that become indistinguishable when reduced
+
+## Common Pitfalls
+
+1. **Submitting low-resolution figures for revised manuscripts**: The 150 DPI floor only applies to initial submissions. Revised manuscripts require 300+ DPI
+   - *How to avoid*: Re-export all figures at 300+ DPI before submitting the revision
+2. **Failing to disclose gamma adjustments**: Nonlinear corrections not mentioned in the caption can trigger an image integrity investigation
+   - *How to avoid*: Add a sentence to the caption for any figure with gamma or nonlinear adjustments (e.g., "Gamma correction of 0.8 applied uniformly")
+3. **Exceeding figure dimension limits**: Figures wider than 7.3 inches or taller than 8 inches will be rejected
+   - *How to avoid*: Check dimensions before export; use the validation script to verify
+4. **Upsampling images to meet resolution requirements**: Artificially increasing DPI adds no real detail and may introduce artifacts
+   - *How to avoid*: Re-export from the original source at native high resolution
+5. **Using serif fonts in figures**: Science requires sans-serif fonts (Myriad, Helvetica, Arial). Serif fonts like Times New Roman are not acceptable
+   - *How to avoid*: Set sans-serif as the default in your plotting software before generating figures
+
 ## Pre-Submission Checklist
 
 Before submitting figures to Science, verify:
@@ -276,3 +336,4 @@ Before submitting figures to Science, verify:
 
 - Science Initial Manuscript Instructions: https://www.science.org/content/page/instructions-preparing-initial-manuscript
 - Science Revised Article Instructions: https://www.science.org/content/page/instructions-authors-revised-research-articles
+- Science Editorial Policies: https://www.science.org/content/page/science-journals-editorial-policies

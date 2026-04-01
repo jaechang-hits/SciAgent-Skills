@@ -215,6 +215,66 @@ def validate_lancet_figure(image_path, layout='single'):
 
 ---
 
+## Key Concepts
+
+### In-House Figure Redraw Policy
+
+The Lancet's most distinctive feature is that most submitted figures are redrawn by in-house illustrators into Lancet house style. This means editable source formats (PowerPoint, Word, SVG) are strongly preferred over polished raster images. Authors should focus on data accuracy rather than visual refinement.
+
+### The 120% Size Rule
+
+The Lancet requires photographic images to be submitted at 120% of intended publication size at 300+ DPI. This buffer ensures quality is maintained after any resizing during production. A figure intended for single-column (75 mm) should be supplied at 90 mm width.
+
+### Serif Font Convention
+
+Unlike most biomedical journals that use sans-serif fonts, The Lancet uses Times New Roman as its standard figure font. Headings are 10 pt bold; legend text is 10 pt regular single-spaced. This aligns with Lancet's traditional typographic style.
+
+## Decision Framework
+
+```
+What type of figure are you preparing?
+├── Data visualization (graph, chart)
+│   ├── PowerPoint available → Submit .pptx (preferred for redraw)
+│   └── Only image available → SVG or EPS (vector, editable)
+├── Photograph or clinical image
+│   ├── High quality needed → TIFF at 300+ DPI, 120% size
+│   └── Standard quality → JPEG at 300+ DPI, 120% size
+└── Schematic or diagram
+    ├── Editable source → PowerPoint or Word
+    └── Vector only → SVG or EPS
+```
+
+| Scenario | Format | Resolution | Notes |
+|---|---|---|---|
+| Bar chart from clinical trial | PowerPoint (.pptx) | N/A (vector) | Lancet redraws in house style |
+| Kaplan-Meier curve | PowerPoint or SVG | N/A (vector) | Provide raw data if possible |
+| Histology micrograph | TIFF | 300+ DPI at 120% size | Cannot be redrawn |
+| Flowchart (CONSORT) | PowerPoint or Word | N/A (editable) | Lancet will redraw |
+| Forest plot (meta-analysis) | PowerPoint or SVG | N/A (vector) | Data accuracy is priority |
+
+## Best Practices
+
+1. **Submit editable formats whenever possible**: PowerPoint is most preferred because Lancet illustrators redraw figures. Provide the editable source, not a rasterized export
+2. **Supply images at 120% of publication size**: Calculate target size (75 mm or 154 mm column width), then multiply by 1.2 for the submission dimensions
+3. **Use Times New Roman consistently**: The Lancet's serif font convention differs from most journals. Set Times New Roman as default before creating figures
+4. **Remove box outlines from graphs**: Lancet style does not use borders around graph panels. Remove any automatic axis boxes
+5. **Place titles in captions only**: Do not embed titles inside figures or graphs. All descriptive text goes in the figure caption
+6. **Focus on data accuracy over aesthetics**: Since figures will be redrawn, ensure data values are correct and clearly labeled rather than investing in visual polish
+7. **Number figures in citation order**: Figures must be numbered sequentially in the order they are first cited in the text
+
+## Common Pitfalls
+
+1. **Submitting only rasterized images for data figures**: Lancet illustrators cannot redraw from JPEG/PNG rasters of graphs
+   - *How to avoid*: Always provide the editable source file (PowerPoint, Word, or SVG) alongside any raster export
+2. **Forgetting the 120% size requirement**: Submitting at 100% publication size means the image will be undersized after production resizing
+   - *How to avoid*: Multiply the target column width by 1.2 before setting your canvas size
+3. **Using sans-serif fonts**: Most journals use Arial/Helvetica, but Lancet uses Times New Roman. Sans-serif fonts signal unfamiliarity with Lancet style
+   - *How to avoid*: Set Times New Roman as the default font before creating any Lancet figures
+4. **Including box outlines around graphs**: Lancet style prohibits boxes around graph panels, a common default in plotting software
+   - *How to avoid*: Disable axis box/frame in your plotting settings (e.g., `ax.spines` in matplotlib)
+5. **Over-polishing figure aesthetics**: Since Lancet redraws most figures, spending excessive time on visual refinement is wasted effort
+   - *How to avoid*: Ensure data accuracy and clear labeling; leave visual styling to Lancet's illustration team
+
 ## Pre-Submission Checklist
 
 Before submitting figures to The Lancet, verify:
@@ -239,3 +299,4 @@ Before submitting figures to The Lancet, verify:
 
 - Lancet Submission Guidelines: https://www.thelancet.com/submission-guidelines
 - Lancet Artwork Guidelines: https://www.thelancet.com/pb/assets/raw/Lancet/test/artwork-guidelines-aug2015.pdf
+- Lancet Information for Authors: https://www.thelancet.com/information-for-authors

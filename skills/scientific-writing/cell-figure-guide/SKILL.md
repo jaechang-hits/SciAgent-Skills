@@ -302,6 +302,71 @@ def validate_cell_figure(image_path, image_type='color', layout='2col_single'):
 
 ---
 
+## Key Concepts
+
+### Resolution Tiers by Image Type
+
+Cell Press uses a three-tier resolution system: 300 DPI for color/grayscale photographs, 500 DPI for black-and-white images, and 1,000 DPI for line art. All measurements are at the desired print size, not at arbitrary large dimensions. This tiered approach ensures each image type reproduces at appropriate quality.
+
+### Cell Press Column System
+
+Cell Press journals use different column layouts depending on the journal. Two-column journals (Cell, Molecular Cell) use 85/114/174 mm widths. Three-column journals use 55/114/174 mm. Other journals (Chem, Joule) use 112/172 mm. Sizing figures to the correct column width prevents unwanted rescaling.
+
+### Image Manipulation Policy
+
+Cell Press enforces one of the strictest image integrity policies in biomedical publishing. The use of Photoshop clone/heal tools on scientific images is explicitly prohibited. Any single-channel color alterations must be disclosed in both the figure legend and Methods section.
+
+## Decision Framework
+
+```
+What type of image are you preparing?
+├── Color or grayscale photograph → 300 DPI minimum
+│   ├── Micrograph → TIFF (LZW compression)
+│   └── Clinical image → TIFF or PDF
+├── Black-and-white image → 500 DPI minimum
+│   └── High-contrast micrograph → TIFF
+├── Line art (graph, diagram) → 1,000 DPI minimum
+│   ├── Vector source → Export as PDF or EPS
+│   └── Raster source → Export TIFF at 1,000 DPI
+└── Which journal layout?
+    ├── Cell, Molecular Cell → 2-column (85/114/174 mm)
+    ├── Cell Reports → 3-column (55/114/174 mm)
+    └── Chem, Joule, Matter → Single/full (112/172 mm)
+```
+
+| Scenario | Format | Resolution | Width |
+|---|---|---|---|
+| Fluorescence micrograph | TIFF (LZW) | 300 DPI | Journal-specific column |
+| Western blot | TIFF | 500 DPI | Single column (85 mm) |
+| Bar chart or scatter plot | PDF or EPS | 1,000 DPI (if rasterized) | Varies by data density |
+| Gel electrophoresis | TIFF | 500 DPI | Full width if multi-lane |
+| Pathway diagram | PDF or EPS | Vector | Full width (174 mm) |
+
+## Best Practices
+
+1. **Use LZW compression for TIFF files**: Cell accepts TIFF with LZW compression, which significantly reduces file size without quality loss. This helps stay under the 20 MB limit
+2. **Remove titles from figures**: Cell Press requires that figure titles appear only in captions, not inside the figure itself. Remove any embedded titles before submission
+3. **Use Avenir as primary font**: While Arial and Helvetica are accepted, Avenir is Cell Press's preferred font. Using it signals familiarity with journal conventions
+4. **Embed all fonts in AI files**: Adobe Illustrator files must have fonts fully embedded. Missing fonts cause rendering errors during production
+5. **Disclose all gel image modifications**: Removed lanes must be clearly marked in the figure and described in the legend. Undisclosed modifications are grounds for rejection
+6. **Match resolution to image type**: Do not use 300 DPI for line art (needs 1,000) or 1,000 DPI for photographs (wastes file size). Match the resolution tier to the content type
+7. **Keep original unprocessed data**: Cell Press may request raw data during review or post-publication. Archive all originals alongside processed versions
+
+## Common Pitfalls
+
+1. **Applying 300 DPI to all image types**: Line art requires 1,000 DPI; black-and-white images require 500 DPI. Using 300 DPI for these types produces jagged edges
+   - *How to avoid*: Check the three-tier resolution table and match your image type before export
+2. **Using clone/heal tools on scientific images**: Cell Press explicitly prohibits Photoshop clone and heal tool usage on scientific data
+   - *How to avoid*: Use only uniform brightness/contrast adjustments on the entire image; document all processing in Methods
+3. **Placing titles inside figures**: Cell Press requires all titles in the caption, not embedded in the figure
+   - *How to avoid*: Review each figure panel and remove any text that belongs in the caption
+4. **Exceeding 20 MB file size**: Uncompressed TIFF files frequently exceed the limit
+   - *How to avoid*: Apply LZW compression when saving TIFF files; check file size before upload
+5. **Incorrect column width for journal**: Using 2-column widths for a 3-column journal (or vice versa) causes figures to be rescaled
+   - *How to avoid*: Verify which Cell Press journal you are targeting and use the correct column width table
+6. **Not disclosing single-channel color adjustments**: Altering individual color channels without disclosure violates Cell Press policy
+   - *How to avoid*: Document any single-channel modifications in both the figure legend and Methods section
+
 ## Pre-Submission Checklist
 
 Before submitting figures to Cell, verify:
@@ -328,3 +393,4 @@ Before submitting figures to Cell, verify:
 
 - Cell Press Figure Guidelines: https://www.cell.com/information-for-authors/figure-guidelines
 - Cell Press Digital Image Guidelines: https://www.cell.com/matter/figureguidelines
+- Cell Press Image Integrity Policy: https://www.cell.com/cell/image-integrity

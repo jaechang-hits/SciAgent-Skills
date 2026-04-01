@@ -218,6 +218,69 @@ def validate_nejm_figure(image_path, image_type='photo', stage='final'):
 
 ---
 
+## Key Concepts
+
+### In-House Medical Illustration
+
+NEJM's most distinctive policy is that medical illustrations are created by their in-house illustrators working directly with authors. Authors should NOT submit finished medical illustrations. The journal retains copyright on illustrations created by their team. This applies only to medical illustrations — data visualizations and photographs are author-submitted.
+
+### Two-Stage Resolution Requirements
+
+NEJM accepts lower-resolution figures during peer review to reduce submission friction. However, final publication requires full resolution: 1,200 DPI for line art and 300 DPI for photographs. Authors should prepare high-resolution originals from the start to avoid rework.
+
+### Patient Privacy in Clinical Images
+
+NEJM enforces strict patient privacy requirements. All patient-identifying information must be removed from images, including faces, names, medical record numbers, and any other identifiable features. This is non-negotiable and applies to all clinical images regardless of consent status.
+
+## Decision Framework
+
+```
+What type of figure are you preparing?
+├── Medical illustration (anatomy, mechanism)
+│   └── Do NOT submit → NEJM illustrators create these
+├── Data visualization (graph, chart, diagram)
+│   ├── Vector source available → AI, EPS, or SVG (preferred)
+│   └── Raster only → TIFF at 1,200 DPI (line art) or 300 DPI (photo)
+├── Clinical photograph
+│   ├── Patient identifiable? → Remove ALL identifying information
+│   └── Ready for submission → TIFF at 300+ DPI
+└── What stage?
+    ├── Peer review → Lower resolution acceptable
+    └── Final publication → Full resolution required
+```
+
+| Scenario | Format | Resolution | Special Considerations |
+|---|---|---|---|
+| Kaplan-Meier curve | AI, EPS, SVG | Vector | Editable format preferred |
+| Clinical photograph | TIFF | 300+ DPI | Remove patient identifiers |
+| Histology image | TIFF | 300+ DPI | Include scale bar |
+| Flowchart or diagram | AI, EPS, SVG | Vector | Use Univers or Helvetica |
+| Medical illustration | Do NOT submit | N/A | NEJM creates in-house |
+| Images in Clinical Medicine | TIFF/JPEG | 300+ DPI | Title max 8 words, legend max 150 words |
+
+## Best Practices
+
+1. **Submit data visualizations as editable vector files**: NEJM prefers AI, EPS, or SVG for graphs and diagrams. Vector formats allow their production team to make typographic adjustments
+2. **Do not submit finished medical illustrations**: NEJM's in-house illustrators will create these. Submit reference sketches or descriptions instead
+3. **Remove all patient-identifying information**: Strip faces, names, record numbers, and any identifiable features from clinical images before submission
+4. **Prepare high-resolution originals early**: Although peer review accepts lower resolution, having 300+ DPI originals ready prevents delays during final production
+5. **Use Univers or Helvetica fonts**: NEJM's house font is Univers; Helvetica and Arial are acceptable alternatives. Ensure all text is legible at final reduction size
+6. **Respect word limits for Images in Clinical Medicine**: Titles must be 8 words or fewer; legends must be 150 words or fewer
+7. **Maintain original unprocessed files**: NEJM may request raw data at any point during review or after publication
+
+## Common Pitfalls
+
+1. **Submitting finished medical illustrations**: NEJM retains copyright on illustrations they create. Submitting finished artwork creates copyright conflicts
+   - *How to avoid*: Provide reference sketches, descriptions, or rough drafts; NEJM illustrators will create the final version
+2. **Leaving patient-identifying information in images**: Any identifiable features in clinical images can result in rejection and ethical concerns
+   - *How to avoid*: Review all clinical images for faces, names, ID numbers, and other identifiers; blur or crop as needed
+3. **Using raster formats for data visualizations**: JPEG or PNG graphs lose editability and may appear pixelated at print size
+   - *How to avoid*: Export charts and diagrams as AI, EPS, or SVG from your plotting software
+4. **Submitting low-resolution line art**: Line art requires 1,200 DPI — significantly higher than the 300 DPI for photographs
+   - *How to avoid*: Export line art at 1,200 DPI or use vector formats that are resolution-independent
+5. **Exceeding word limits for clinical image submissions**: Images in Clinical Medicine has strict limits (8-word title, 150-word legend)
+   - *How to avoid*: Count words before submission; move detailed descriptions to supplementary text if needed
+
 ## Pre-Submission Checklist
 
 Before submitting figures to NEJM, verify:
@@ -241,3 +304,4 @@ Before submitting figures to NEJM, verify:
 
 - NEJM Author Center: https://www.nejm.org/author-center/new-manuscripts
 - NEJM Technical Guidelines for Figures: https://www.nejm.org/pb-assets/pdfs/Technical-Guidelines-for-Figures.pdf
+- NEJM Editorial Policies: https://www.nejm.org/about-nejm/editorial-policies

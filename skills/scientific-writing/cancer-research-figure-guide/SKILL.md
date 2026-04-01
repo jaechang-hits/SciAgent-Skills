@@ -220,6 +220,62 @@ def validate_cancer_res_figure(image_path, image_type='halftone'):
 
 ---
 
+## Key Concepts
+
+### Hierarchical Panel Labeling
+
+Cancer Research uses a unique three-level labeling system: Level 1 uses capital letters (A, B, C), Level 2 uses Roman numerals (i, ii, iii), and Level 3 uses lowercase letters (a, b, c). The preferred format is Ai, Aii, Bi, Bii — not Aa, Ab, Ba, Bb. No boxes or periods surround panel labels.
+
+### Display Item Limits
+
+Cancer Research strictly limits the total number of display items (figures + tables combined). Research Articles are limited to 7 display items; Letters are limited to 2. Planning figure composition to maximize information density within these limits is essential.
+
+### Replicate Reporting in Legends
+
+A distinctive Cancer Research requirement is that figure legends must include the number of both technical and biological replicates for each experiment shown. This transparency standard supports reproducibility and is checked during editorial review.
+
+## Decision Framework
+
+```
+What type of image are you preparing?
+├── Line art (diagram, schematic) → 1,200 DPI
+├── Halftone (photo, micrograph) → 300 DPI
+├── Combination (mixed text + image) → 600-900 DPI
+└── Multi-panel figure
+    ├── Simple panels (A, B, C) → Standard uppercase labels
+    └── Sub-panels needed → Hierarchical: Ai, Aii, Bi, Bii
+```
+
+| Scenario | Format | Resolution | Labeling |
+|---|---|---|---|
+| Western blot with quantification | TIFF + EPS | 300 DPI (blot) + 1,200 DPI (graph) | Ai (blot), Aii (quantification) |
+| Tumor growth curves | EPS or AI | Vector or 1,200 DPI | A, B, C (simple panels) |
+| Immunohistochemistry panel | TIFF | 300 DPI | Ai, Aii, Bi, Bii (conditions x magnifications) |
+| Flow cytometry dot plots | TIFF or PDF | 300 DPI | Hierarchical by condition |
+| Kaplan-Meier survival curves | EPS or PDF | Vector | Simple A, B labeling |
+
+## Best Practices
+
+1. **Plan display items early**: With a 7-item limit for Research Articles, plan which results become figures vs. tables vs. supplementary material before drafting
+2. **Use hierarchical labels for complex panels**: When a main panel has sub-components (e.g., image + quantification), use the Ai/Aii system rather than separate figure letters
+3. **Include replicate counts in every legend**: State both technical and biological replicate numbers for each panel. This is a mandatory requirement, not optional
+4. **Avoid boxes and periods on labels**: Cancer Research specifically prohibits decorative elements around panel labels. Use clean, unboxed capital letters
+5. **Size figures to fit a single page**: Each figure must fit on one printed page. If content exceeds this, consider splitting into two figures or moving data to supplements
+6. **Present figures in sequential order**: Figures should appear adjacent to their legends in the order they are cited in the text
+
+## Common Pitfalls
+
+1. **Exceeding the display item limit**: Submitting more than 7 figures + tables for a Research Article triggers immediate revision request
+   - *How to avoid*: Count all display items before submission; consolidate related panels using hierarchical labeling
+2. **Using incorrect hierarchical label format**: Writing Aa/Ab instead of Ai/Aii is a common mistake
+   - *How to avoid*: Use Roman numerals (i, ii, iii) for Level 2, not lowercase letters
+3. **Omitting replicate information from legends**: Missing replicate counts delay review and may require revision
+   - *How to avoid*: Add a template line to every legend: "Data represent N=X biological replicates with Y technical replicates each"
+4. **Adding boxes or periods to panel labels**: Decorative elements around labels violate Cancer Research formatting rules
+   - *How to avoid*: Use plain capital letters without any surrounding decoration
+5. **Using 300 DPI for line art**: Line art requires 1,200 DPI — the highest tier. Graphs at 300 DPI will appear jagged in print
+   - *How to avoid*: Export vector graphics as EPS/AI, or rasterize at 1,200 DPI minimum
+
 ## Pre-Submission Checklist
 
 Before submitting figures to Cancer Research, verify:
@@ -245,3 +301,4 @@ Before submitting figures to Cancer Research, verify:
 
 - AACR Article Style and Format: https://aacrjournals.org/pages/article-style-and-format
 - AACR Editorial Policies: https://aacrjournals.org/pages/editorial-policies
+- Cancer Research Author Guidelines: https://aacrjournals.org/cancerresearch/pages/prep

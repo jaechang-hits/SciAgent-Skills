@@ -285,6 +285,71 @@ def validate_pnas_figure(image_path, image_type='halftone', layout='single'):
 
 ---
 
+## Key Concepts
+
+### Strict RGB-Only Policy
+
+PNAS enforces one of the strictest color mode policies in scientific publishing. CMYK submissions are returned without review. Authors must submit all figures in RGB color mode and tag images with their originating ICC profile to ensure accurate RGB-to-CMYK conversion by the journal's production team.
+
+### Three-Tier Resolution System
+
+PNAS uses PPI (pixels per inch) rather than DPI and defines three tiers: 300 PPI for halftones (photographs), 600-900 DPI for combination artwork (mixed text and images from MS Office), and 1,000 PPI for line art (bitmap text and thin lines). Images must meet these thresholds at final publication size.
+
+### Automated Image Screening
+
+PNAS employs screening software that automatically detects signs of inappropriate image manipulation including cloning/pasting artifacts, suspicious contrast adjustments, and inconsistent background pixelation. This automated screening supplements editorial review and can flag issues that manual inspection might miss.
+
+## Decision Framework
+
+```
+What color mode is your image?
+├── CMYK → REJECTED (convert to RGB before submission)
+├── RGB → Accepted
+│   └── ICC profile tagged? → Recommended for accurate print conversion
+└── Grayscale → Convert to RGB
+
+What type of image?
+├── Halftone (photo/micrograph) → 300 PPI minimum
+├── Combination (MS Office mixed) → 600-900 DPI
+├── Line art (bitmap text/lines) → 1,000 PPI
+└── LaTeX figure → High-quality PDF or EPS
+
+What submission stage?
+├── Initial → Single PDF with all content (format-neutral)
+└── Production → Separate high-resolution figure uploads
+```
+
+| Scenario | Format | Resolution | Color Mode |
+|---|---|---|---|
+| Micrograph | TIFF | 300 PPI | RGB (ICC tagged) |
+| PowerPoint chart | PPT or TIFF | 600-900 DPI | RGB |
+| Schematic diagram | EPS or PDF | Vector or 1,000 PPI | RGB |
+| Gel/blot image | TIFF | 300 PPI | RGB |
+| 3D molecular model | PRC/U3D + TIFF | 300 PPI (2D fallback) | RGB |
+
+## Best Practices
+
+1. **Convert CMYK to RGB before submission**: PNAS returns CMYK files without review. Always verify color mode before upload using image metadata tools
+2. **Tag RGB images with ICC profiles**: Embedding the originating ICC profile ensures accurate color conversion during PNAS's print production pipeline
+3. **Provide images at final publication size**: PNAS requires figures sized to column widths (8.7/11.4/17.8 cm). Do not submit oversized images expecting the journal to resize
+4. **Use italicized uppercase panel labels**: PNAS uses a distinctive convention — *A*, *B*, *C* (italic, uppercase) — that differs from most other journals
+5. **Embed all fonts in EPS and PDF files**: Missing fonts cause rendering failures. Use vector text rather than rasterized text for clean scaling
+6. **Prepare alt text for accessibility**: Since Volume 123, PNAS includes alt text for all figures. Drafting alt text during figure preparation saves revision time
+7. **Name processing software in Methods**: PNAS requires explicit mention of all image processing software used, not just a general description of adjustments
+
+## Common Pitfalls
+
+1. **Submitting figures in CMYK color mode**: PNAS strictly rejects CMYK. This is the most common preventable rejection reason for figures
+   - *How to avoid*: Run the color mode validation script on every figure before submission; convert CMYK to RGB
+2. **Using 300 PPI for line art**: Line art with bitmap text requires 1,000 PPI. At 300 PPI, thin lines and small text appear jagged
+   - *How to avoid*: Classify each figure by type (halftone vs. line art vs. combination) and apply the correct resolution tier
+3. **Submitting figures larger than publication size**: PNAS requires images at final size, not oversized. Oversized figures may be rescaled, degrading quality
+   - *How to avoid*: Set canvas size to the target column width before exporting
+4. **Using non-italic panel labels**: PNAS's italic uppercase convention (*A*, *B*, *C*) is unique. Non-italic labels signal unfamiliarity with the journal
+   - *How to avoid*: Use `fontstyle='italic'` in matplotlib or the italic setting in Illustrator for panel labels
+5. **Omitting multi-source composite indicators**: When combining images from different experiments, PNAS requires explicit visual and textual indication
+   - *How to avoid*: Use clear borders or spacing between composite elements and describe the composition in the figure legend
+
 ## Pre-Submission Checklist
 
 Before submitting figures to PNAS, verify:

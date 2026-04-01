@@ -296,6 +296,70 @@ def validate_nature_figure(image_path):
 
 ---
 
+## Key Concepts
+
+### Resolution and DPI
+
+DPI (dots per inch) measures print resolution. Nature requires 300+ DPI at maximum print size. Upsampling (artificially increasing resolution in software) does not improve image quality and introduces interpolation artifacts. Always capture or export images at native high resolution.
+
+### Vector vs Raster Formats
+
+Vector formats (AI, EPS, PDF) store images as mathematical paths and scale without quality loss — ideal for graphs, schematics, and line art. Raster formats (TIFF, JPEG, PSD) store pixel grids and degrade when enlarged — appropriate for photographs and micrographs. Nature prefers vector for line drawings and raster for photographic content.
+
+### Image Integrity
+
+Nature enforces strict image integrity policies aligned with the Committee on Publication Ethics (COPE) guidelines. All adjustments must be applied uniformly to the entire image. Selective enhancement of specific regions (e.g., adjusting brightness on one gel lane) is considered data manipulation and grounds for rejection or retraction.
+
+## Decision Framework
+
+```
+What type of figure are you preparing?
+├── Graph, schematic, or diagram → Vector format (AI, EPS, PDF)
+│   ├── Created in Illustrator → Export as AI or EPS
+│   └── Created in Python/R → Export as PDF or EPS
+├── Photograph or micrograph → Raster format (TIFF, PSD, JPEG)
+│   ├── Need highest quality → TIFF at 450+ DPI
+│   └── File size constrained → JPEG at 300+ DPI
+└── Multi-panel composite → Single assembled file
+    ├── Mixed vector + raster → Assemble in Illustrator, export as AI/PDF
+    └── All raster panels → Assemble in Photoshop, export as TIFF
+```
+
+| Scenario | Recommended Format | Resolution | Notes |
+|---|---|---|---|
+| Bar chart or line graph | AI, EPS, PDF | Vector (resolution-independent) | Keep text editable |
+| Fluorescence micrograph | TIFF | 450+ DPI | RGB mode, colorblind-safe palette |
+| Western blot image | TIFF | 300+ DPI | No selective adjustments |
+| Flow chart or pathway | AI, EPS | Vector | Use Helvetica/Arial fonts |
+| Extended Data figure | JPEG | 300+ DPI | Same standards as main figures |
+
+## Best Practices
+
+1. **Export at native resolution**: Always capture or generate images at the target resolution (300+ DPI). Never upsample low-resolution images in Photoshop or similar tools
+2. **Use colorblind-friendly palettes**: Nature strongly recommends accessible color schemes. Avoid red-green combinations; use blue-orange or include pattern/shape differentiation
+3. **Keep text editable in vector files**: Do not outline or rasterize text in AI/EPS files. Nature's production team may need to edit fonts during typesetting
+4. **Assemble multi-panel figures before upload**: Combine all panels (a, b, c, etc.) into a single image file. Individual panel uploads will be rejected
+5. **Maintain separate layers for scale bars**: Scale bars must remain on a separate layer from the image data so they can be repositioned during production
+6. **Apply adjustments uniformly**: Any brightness, contrast, or color correction must be applied to the entire image, not selectively to specific regions
+7. **Retain original unprocessed data**: Editors or reviewers may request raw image files at any stage of review or post-publication
+
+## Common Pitfalls
+
+1. **Upsampling low-resolution images**: Artificially increasing DPI in image software does not add real detail and introduces blurring artifacts
+   - *How to avoid*: Re-export from the original source (microscope, plotting software) at 300+ DPI natively
+2. **Submitting individual panels instead of assembled figures**: Nature requires multi-panel figures as a single composite file
+   - *How to avoid*: Assemble all panels in Illustrator or Photoshop before uploading; use lowercase bold labels (a, b, c)
+3. **Using uppercase panel labels**: Nature uses lowercase bold (a, b, c), unlike many other journals that use uppercase
+   - *How to avoid*: Double-check the journal's labeling convention; Nature specifically requires lowercase
+4. **Outlining text in vector files**: Converting text to outlines makes it uneditable, which Nature prohibits
+   - *How to avoid*: Embed fonts as TrueType 2 or 42 instead of converting to outlines
+5. **Submitting in CMYK color mode**: While accepted, CMYK narrows the color gamut and may misrepresent fluorescence data online
+   - *How to avoid*: Submit in RGB; Nature handles CMYK conversion for print internally
+6. **Exceeding the 10 MB file size limit**: Large TIFF files often exceed this threshold
+   - *How to avoid*: Use LZW compression for TIFF files or convert to high-quality JPEG (300+ DPI)
+
+---
+
 ## Pre-Submission Checklist
 
 Before submitting figures to Nature, verify:
