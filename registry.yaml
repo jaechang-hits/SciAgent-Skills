@@ -1523,3 +1523,11 @@ entries:
     description: "Figure and image preparation guide for eLife. Covers file formats (TIFF, EPS, PDF), striking image requirements (1800x900 px), figure supplement naming conventions, and routine image screening policy where selective enhancement is treated as misconduct."
     date_added: "2026-04-01"
 
+  - name: "general-figure-guide"
+    type: skill
+    sub_type: guide
+    category: "scientific-writing"
+    path: "skills/scientific-writing/general-figure-guide/SKILL.md"
+    description: "General scientific figure quality checklist for generated plots. Covers visual inspection for overlapping labels, clipped text, missing axes/legends, empty plot areas, overcrowded data, and resolution/format best practices across journals."
+    date_added: "2026-04-01"
+
