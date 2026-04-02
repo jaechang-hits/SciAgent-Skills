@@ -1059,6 +1059,14 @@ entries:
     description: "Interactive scientific visualization with Plotly. Two-layer API: plotly.express (px) for one-liner DataFrame plots and plotly.graph_objects (go) for full trace-level control. 40+ chart types with hover, zoom, pan, and animation. Exports to interactive HTML or static PNG/SVG/PDF via kaleido. Use for interactive web figures, volcano plots with gene hover info, dose-response dashboards, gene expression heatmaps, and 3D molecular visualizations. Use seaborn for statistical summaries with automatic aggregation; use matplotlib for fine-grained publication figures; use plotly for interactive or web-embedded output."
     date_added: "2026-02-18"
 
+  - name: "statistical-significance-annotation"
+    type: skill
+    sub_type: guide
+    category: "data-visualization"
+    path: "skills/data-visualization/statistical-significance-annotation/SKILL.md"
+    description: "Guide for annotating statistical significance (p-value asterisk notation) on comparison plots. Covers standard notation conventions (ns, *, **, ***, ****), when to annotate, matplotlib bracket+asterisk implementation, and integration with seaborn box/violin/bar plots."
+    date_added: "2026-04-02"
+
   - name: "muon-multiomics-singlecell"
     type: skill
     sub_type: toolkit
