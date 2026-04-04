@@ -1,12 +1,12 @@
 # SciAgent-Skills
 
-## Benchmark: 92.0% on Life Science QA
+## Benchmark: 92.0% on BixBench-Verified-50
 
 <p align="center">
   <img src="assets/benchmark.png" alt="OmicsHorizon benchmark results" width="700">
 </p>
 
-**OmicsHorizon**, powered by SciAgent-Skills, achieved **92.0% accuracy** on a 50-question life science benchmark — outperforming all other systems compared. Notably, Claude Code (Opus 4.6) without skills scores 65.3%, but jumps to 92.0% simply by equipping it with these domain-specific skills (**+26.7%p**).
+**OmicsHorizon**, powered by SciAgent-Skills, achieved **92.0% accuracy** on the BixBench-Verified-50 benchmark — outperforming all other systems compared. Notably, Claude Code (Opus 4.6) without skills scores 65.3%, but jumps to 92.0% simply by equipping it with these domain-specific skills (**+26.7%p**).
 
 ---
 
