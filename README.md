@@ -1,5 +1,15 @@
 # SciAgent-Skills
 
+## Benchmark: 92.0% on Life Science QA
+
+<p align="center">
+  <img src="assets/benchmark.png" alt="OmicsHorizon benchmark results" width="700">
+</p>
+
+**OmicsHorizon**, powered by SciAgent-Skills, achieved **92.0% accuracy** on a 50-question life science benchmark — outperforming all other systems compared. Notably, Claude Code (Opus 4.6) without skills scores 65.3%, but jumps to 92.0% simply by equipping it with these domain-specific skills (**+26.7%p**).
+
+---
+
 **196 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
 
 Each skill is a self-contained SKILL.md file with runnable code examples, key parameters, troubleshooting guides, and best practices. Designed for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but compatible with any agent that reads markdown skill files.
