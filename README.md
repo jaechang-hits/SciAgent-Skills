@@ -8,6 +8,10 @@
 
 **OmicsHorizon**, powered by SciAgent-Skills, achieved **92.0% accuracy** on the BixBench-Verified-50 benchmark — outperforming all other systems compared. Notably, Claude Code (Opus 4.6) without skills scores 65.3%, but jumps to 92.0% simply by equipping it with these domain-specific skills (**+26.7%p**).
 
+## Try It Now
+
+Want to try these skills without any setup? **[OmicsHorizon](https://omicshorizon.ai/en/)** lets you use SciAgent-Skills directly in your browser — just sign up and start analyzing.
+
 ---
 
 **196 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
