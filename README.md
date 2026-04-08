@@ -1,5 +1,14 @@
 # SciAgent-Skills
 
+<p align="center">
+  <img src="https://img.shields.io/badge/skills-197-blue?style=for-the-badge" alt="197 Skills">
+  <img src="https://img.shields.io/badge/benchmark-92.0%25-brightgreen?style=for-the-badge" alt="92.0% Benchmark">
+  <img src="https://img.shields.io/badge/license-CC--BY--4.0-lightgrey?style=for-the-badge" alt="CC-BY-4.0">
+  <img src="https://img.shields.io/github/stars/jaechang-hits/SciAgent-Skills?style=for-the-badge" alt="GitHub Stars">
+</p>
+
+> **Turn your AI coding agent into a life sciences expert** — 197 skills covering genomics, proteomics, drug discovery, and more. Open source.
+
 ## Benchmark: 92.0% on BixBench-Verified-50
 
 <p align="center">
@@ -14,7 +23,7 @@ Want to try these skills without any setup? **[OmicsHorizon](https://omicshorizo
 
 ---
 
-**196 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
+**197 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
 
 Each skill is a self-contained SKILL.md file with runnable code examples, key parameters, troubleshooting guides, and best practices. Designed for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but compatible with any agent that reads markdown skill files.
 
@@ -142,7 +151,7 @@ The agent reads only the `description` field during planning. Full skill content
 SciAgent-Skills/
 ├── .claude-plugin/
 │   └── plugin.json        # Claude Code plugin manifest
-├── skills/                 # All 196 skills organized by category
+├── skills/                 # All 197 skills organized by category
 │   ├── genomics-bioinformatics/
 │   ├── structural-biology-drug-discovery/
 │   ├── scientific-computing/
