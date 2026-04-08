@@ -1,7 +1,7 @@
 {
   "name": "sciagent-skills",
-  "description": "Life sciences computational skills for scientific AI agents — 60+ skills covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing",
-  "version": "0.1.0",
+  "description": "Life sciences computational skills for scientific AI agents — 197 skills covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing",
+  "version": "1.0.0",
   "author": {
     "name": "jaechang-hits"
   },
@@ -12,6 +12,7 @@
     "./skills/cell-biology/",
     "./skills/data-visualization/",
     "./skills/genomics-bioinformatics/",
+    "./skills/molecular-biology/",
     "./skills/lab-automation/",
     "./skills/proteomics-protein-engineering/",
     "./skills/scientific-computing/",

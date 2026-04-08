@@ -4,14 +4,14 @@
     "name": "jaechang-hits"
   },
   "metadata": {
-    "description": "140 validated life sciences skills for Claude Code",
+    "description": "197 validated life sciences skills for Claude Code",
     "version": "1.0.0"
   },
   "plugins": [
     {
       "name": "sciagent-skills",
       "source": "./",
-      "description": "140 validated life sciences skills — genomics, proteomics, drug discovery, biostatistics, scientific computing",
+      "description": "197 validated life sciences skills — genomics, proteomics, drug discovery, biostatistics, scientific computing",
       "version": "1.0.0",
       "author": {
         "name": "jaechang-hits"
