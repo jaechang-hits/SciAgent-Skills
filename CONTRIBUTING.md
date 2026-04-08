@@ -1,6 +1,6 @@
-# Contributing to SciCraft
+# Contributing to SciAgent-Skills
 
-Thank you for your interest in contributing. SciCraft is designed so that Claude Code can author new skills with minimal effort — but human contributions are equally welcome.
+Thank you for your interest in contributing! SciAgent-Skills is designed so that Claude Code can author new skills with minimal effort — but human contributions are equally welcome.
 
 ## Two ways to add a skill
 
