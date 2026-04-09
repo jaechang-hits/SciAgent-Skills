@@ -533,7 +533,7 @@ for model in structure:
 
 Content from api_reference.md consolidated into: Key Concepts (data hierarchy, fields, query types, operators, return types), Core API Modules 1-7 (search patterns, GraphQL, download helper, rate limiting, batch), Workflows (drug-target, quality filtering), Troubleshooting table.
 
-**Omitted**: ModelServer API, VolumeServer API, Sequence Coordinates API, Alignment API (4 specialized server APIs -- rarely used programmatically; documented at data.rcsb.org). Debugging subprocess/curl tip replaced by `to_dict()` in Best Practices. Promotional K-Dense section stripped.
+**Omitted**: ModelServer API, VolumeServer API, Sequence Coordinates API, Alignment API (4 specialized server APIs -- rarely used programmatically; documented at data.rcsb.org). Debugging subprocess/curl tip replaced by `to_dict()` in Best Practices.
 
 ## Related Skills
 
