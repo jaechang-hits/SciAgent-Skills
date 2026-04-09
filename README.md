@@ -2,30 +2,43 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/skills-197-blue?style=for-the-badge" alt="197 Skills">
-  <img src="https://img.shields.io/badge/benchmark-92.0%25-brightgreen?style=for-the-badge" alt="92.0% Benchmark">
+  <img src="https://img.shields.io/badge/BixBench-92.0%25-brightgreen?style=for-the-badge" alt="BixBench 92.0%">
   <img src="https://img.shields.io/badge/license-CC--BY--4.0-lightgrey?style=for-the-badge" alt="CC-BY-4.0">
   <img src="https://img.shields.io/github/stars/jaechang-hits/SciAgent-Skills?style=for-the-badge" alt="GitHub Stars">
 </p>
 
-> **Turn your AI coding agent into a life sciences expert** — 197 skills covering genomics, proteomics, drug discovery, and more. Open source.
+> **Turn your AI coding agent into a life sciences expert** — 197 bioinformatics skills for Claude Code covering RNA-seq, single-cell analysis, genomics, proteomics, drug discovery, and more. Boosted [BixBench](https://github.com/Future-House/BixBench) from 65% to 92%. Open source.
+
+**SciAgent-Skills** is the largest open-source skill library for scientific AI agents. It equips [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (and any markdown-compatible agent) with domain-specific knowledge for computational biology, bioinformatics, cheminformatics, and biostatistics — no fine-tuning required, just plug in and analyze.
+
+**Keywords:** bioinformatics AI agent, Claude Code skills, scientific computing, RNA-seq analysis, single-cell RNA-seq, drug discovery pipeline, protein structure prediction, computational biology tools, life science automation, BixBench benchmark
 
 ## Benchmark: 92.0% on BixBench-Verified-50
 
 <p align="center">
-  <img src="assets/benchmark.png" alt="OmicsHorizon benchmark results" width="700">
+  <img src="assets/benchmark.png" alt="BixBench bioinformatics benchmark results — SciAgent-Skills achieves 92.0% accuracy" width="700">
 </p>
 
-**OmicsHorizon**, powered by SciAgent-Skills, achieved **92.0% accuracy** on the BixBench-Verified-50 benchmark — outperforming all other systems compared. Notably, Claude Code (Opus 4.6) without skills scores 65.3%, but jumps to 92.0% simply by equipping it with these domain-specific skills (**+26.7%p**).
+[BixBench](https://github.com/Future-House/BixBench) is a benchmark for evaluating AI agents on real-world bioinformatics tasks. **SciAgent-Skills achieved 92.0% accuracy** on BixBench-Verified-50, the highest among all tested systems:
 
-## Try It Now
+| System | BixBench-Verified-50 Accuracy |
+|--------|:----------------------------:|
+| Claude Code (Opus 4.6) **+ SciAgent-Skills** | **92.0%** |
+| Claude Code (Opus 4.6) baseline | 65.3% |
 
-Want to try these skills without any setup? **[OmicsHorizon](https://omicshorizon.ai/en/)** lets you use SciAgent-Skills directly in your browser — just sign up and start analyzing.
+Simply equipping Claude Code with these domain-specific skills yields a **+26.7 percentage point improvement** — no fine-tuning, no custom model, just structured scientific knowledge.
+
+## Try It Now — OmicsHorizon
+
+Want to try these skills without any setup? **[OmicsHorizon](https://omicshorizon.ai/en/)** (오믹스 호라이즌) is the web platform powered by SciAgent-Skills. Sign up and start analyzing your bioinformatics data directly in your browser — RNA-seq, proteomics, drug screening, and more.
+
+[![Try OmicsHorizon](https://img.shields.io/badge/Try-OmicsHorizon.ai-blue?style=for-the-badge)](https://omicshorizon.ai/en/)
 
 ---
 
 **197 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
 
-Each skill is a self-contained SKILL.md file with runnable code examples, key parameters, troubleshooting guides, and best practices. Designed for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but compatible with any agent that reads markdown skill files.
+Each skill is a self-contained SKILL.md file with runnable code examples, key parameters, troubleshooting guides, and best practices. Designed for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but compatible with any AI agent that reads markdown skill files (Cursor, Windsurf, Codex, etc.).
 
 ## What's Inside
 
@@ -172,25 +185,35 @@ SciAgent-Skills/
 
 ## Example Use Cases
 
+**Single-Cell RNA-seq Analysis** (scRNA-seq)
+> "Load 10X data, QC filter, normalize, cluster, find marker genes, and annotate cell types"
+
+Uses: `anndata-data-structure` → `scanpy-scrna-seq`
+
+**Bulk RNA-seq Differential Expression**
+> "Run DESeq2-style differential expression analysis on this count matrix, generate volcano plot"
+
+Uses: `pydeseq2-differential-expression` → `matplotlib-scientific-plotting`
+
 **Drug Discovery Pipeline**
 > "Search ChEMBL for EGFR inhibitors with IC50 < 100nM, filter with Lipinski rules using RDKit, dock top candidates with AutoDock Vina"
 
 Uses: `chembl-database-bioactivity` → `rdkit-cheminformatics` → `autodock-vina-docking`
 
-**Single-Cell RNA-seq Analysis**
-> "Load 10X data, QC filter, normalize, cluster, find marker genes, and annotate cell types"
+**Protein Structure Prediction & Analysis**
+> "Get the AlphaFold structure for UniProt P04637, assess confidence, find high-confidence binding regions"
 
-Uses: `anndata-data-structure` → `scanpy-scrna-seq`
+Uses: `uniprot-protein-database` → `alphafold-database-access`
 
 **Bayesian Biostatistics**
 > "Fit a hierarchical Bayesian model to this clinical trial data with patient-level random effects"
 
 Uses: `pymc-bayesian-modeling` → `matplotlib-scientific-plotting`
 
-**Protein Structure Analysis**
-> "Get the AlphaFold structure for UniProt P04637, assess confidence, find high-confidence binding regions"
+**Multi-omics Integration**
+> "Integrate transcriptomics and proteomics data, run pathway enrichment, build a protein interaction network"
 
-Uses: `uniprot-protein-database` → `alphafold-database-access`
+Uses: `lamindb-data-management` → `reactome-pathway-analysis` → `string-protein-interaction`
 
 ## Contributing
 
@@ -217,6 +240,16 @@ Uses: `uniprot-protein-database` → `alphafold-database-access`
 - No runtime dependencies — skills are markdown files read by the agent
 - Individual skills list their own tool-specific prerequisites (e.g., `pip install scanpy`)
 
+## Comparison with Other Tools
+
+| Feature | SciAgent-Skills | GPTomics/bioSkills | ClawBio |
+|---------|:-:|:-:|:-:|
+| Total skills | **197** | ~30 | ~20 |
+| BixBench benchmark | **92.0%** | — | — |
+| Skill types | Pipeline, Toolkit, Database, Guide | Pipeline | Pipeline |
+| Claude Code plugin | Yes | No | No |
+| Web platform | [OmicsHorizon](https://omicshorizon.ai/en/) | No | No |
+
 ## License
 
 CC-BY-4.0 for original content. Individual skills note the license of their underlying tools.
@@ -224,4 +257,8 @@ CC-BY-4.0 for original content. Individual skills note the license of their unde
 ## Acknowledgments
 
 This project builds on 50+ open-source scientific Python packages. If you find a skill useful, consider starring the underlying tool's repository and supporting its maintainers.
+
+---
+
+<sub>**Related searches:** bioinformatics AI agent, Claude Code scientific skills, RNA-seq analysis tool, single-cell RNA-seq AI, drug discovery AI pipeline, protein structure prediction, computational biology automation, life science AI tools, 바이오인포매틱스 AI, 오믹스 호라이즌, 생명과학 AI 에이전트, BixBench benchmark</sub>
 
