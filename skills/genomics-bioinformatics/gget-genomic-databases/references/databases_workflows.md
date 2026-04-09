@@ -332,4 +332,4 @@ When publishing results obtained through gget, cite:
 
 Always check individual database citation policies before publication. COSMIC data redistribution is restricted by license.
 
-*Condensed from database_info.md (301 lines) and workflows.md (815 lines) — 1,116 total. Retained: complete database directory, 3 extended workflows, reproducibility guide. Omitted: scripts/ content (3 files, 590 lines — thin CLI wrappers absorbed into Core API), promotional content (stripped per migration rule 4). Relocated to SKILL.md: core database overview table, top 3 workflows, basic best practices, reproducibility patterns.*
+*Condensed from database_info.md (301 lines) and workflows.md (815 lines) — 1,116 total. Retained: complete database directory, 3 extended workflows, reproducibility guide. Omitted: scripts/ content (3 files, 590 lines — thin CLI wrappers absorbed into Core API). Relocated to SKILL.md: core database overview table, top 3 workflows, basic best practices, reproducibility patterns.*

@@ -447,7 +447,7 @@ print(f"Covalent warhead candidates: {len(warhead_mols)}")
 
 ### references/rules_catalog.md
 
-Complete catalog of all medicinal chemistry rules and structural alert filters with literature references, threshold criteria, chemical group patterns, custom SMARTS examples, and stage-specific filter selection guidelines. API function signatures were consolidated into Core API code blocks above. Agent meta-instructions and promotional sections omitted per migration rules.
+Complete catalog of all medicinal chemistry rules and structural alert filters with literature references, threshold criteria, chemical group patterns, custom SMARTS examples, and stage-specific filter selection guidelines. API function signatures were consolidated into Core API code blocks above.
 
 ## Related Skills
 

@@ -536,7 +536,7 @@ print(dict(class_counts.most_common(10)))
 
 ## Bundled Resources
 
-Self-contained entry. The original reference file `hmdb_data_fields.md` (268 lines, field catalog with XML element names and descriptions) is consolidated into the Key Concepts "HMDB XML Entry Structure" table and the "Data Field Completeness" table above. The field catalog's per-element XML tag names are demonstrated in Core API code blocks. Omitted from original: web interface descriptions (not programmatic), promotional content.
+Self-contained entry. The original reference file `hmdb_data_fields.md` (268 lines, field catalog with XML element names and descriptions) is consolidated into the Key Concepts "HMDB XML Entry Structure" table and the "Data Field Completeness" table above. The field catalog's per-element XML tag names are demonstrated in Core API code blocks. Omitted from original: web interface descriptions (not programmatic).
 
 ## Related Skills
 
