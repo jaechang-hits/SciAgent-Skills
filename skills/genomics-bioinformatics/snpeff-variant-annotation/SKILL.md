@@ -27,6 +27,8 @@ SnpEff annotates variants in VCF files by predicting their functional consequenc
 - **Python packages** (optional): `cyvcf2`, `pandas`, `matplotlib`, `seaborn` for Python-side parsing and visualization
 - **Reference genome database**: downloaded once per assembly (e.g., `hg38`, `GRCh37`, `mm10`)
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v snpEff` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run snpEff` rather than bare `snpEff`.
+
 ```bash
 # Download SnpEff JAR
 wget https://snpeff.blob.core.windows.net/versions/snpEff_latest_core.zip

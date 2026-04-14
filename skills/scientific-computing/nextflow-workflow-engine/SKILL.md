@@ -26,6 +26,8 @@ Nextflow implements a dataflow programming model where **processes** (containeri
 - **Containers**: Docker or Singularity for process isolation (recommended)
 - **Optional**: nf-core tools for community pipeline management
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v nextflow` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run nextflow` rather than bare `nextflow`.
+
 ```bash
 # Install Nextflow (self-contained JAR — no sudo required)
 curl -s https://get.nextflow.io | bash

@@ -26,20 +26,26 @@ PLINK2 is the high-performance successor to PLINK 1.9, designed for genome-wide 
 - **Software**: PLINK2 (pre-compiled binary; no pip/conda package)
 - **Input**: PLINK binary files (.bed/.bim/.fam) or VCF/BGEN from array genotyping or imputation
 
+> **Check before installing**: The tool may already be available (e.g., inside a `pixi` / `conda` env). Always run `command -v plink2` first and skip the install block if it returns a path. When executing tools inside a pixi project, prefer `pixi run <tool>` over plain `<tool>`.
+
 ```bash
-# Download PLINK2 pre-compiled binary (Linux)
-wget https://s3.amazonaws.com/plink2-assets/alpha6/plink2_linux_avx2_20241112.zip
-unzip plink2_linux_avx2_20241112.zip
-chmod +x plink2
-export PATH="$PWD:$PATH"
+# Skip install if already present
+if command -v plink2 >/dev/null 2>&1; then
+    echo "plink2 already installed: $(plink2 --version)"
+else
+    # Download PLINK2 pre-compiled binary (Linux)
+    wget https://s3.amazonaws.com/plink2-assets/alpha6/plink2_linux_avx2_20241112.zip
+    unzip plink2_linux_avx2_20241112.zip
+    chmod +x plink2
+    export PATH="$PWD:$PATH"
 
-# macOS
-wget https://s3.amazonaws.com/plink2-assets/alpha6/plink2_mac_20241112.zip
-unzip plink2_mac_20241112.zip
+    # macOS
+    # wget https://s3.amazonaws.com/plink2-assets/alpha6/plink2_mac_20241112.zip
+    # unzip plink2_mac_20241112.zip
 
-# Verify
-plink2 --version
-# PLINK v2.00a6LM
+    plink2 --version
+    # PLINK v2.00a6LM
+fi
 
 # Python for downstream analysis
 pip install pandas numpy matplotlib scipy

@@ -29,6 +29,8 @@ HOMER (Hypergeometric Optimization of Motif EnRichment) is a suite of Perl/C++ t
 - **Input**: BED file of peaks (at minimum: chr, start, end columns); ideally summit-centered peaks from MACS3
 - **Python packages** (for parsing/visualization): `pandas`, `matplotlib`, `seaborn`
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v findMotifsGenome.pl` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run findMotifsGenome.pl` rather than bare `findMotifsGenome.pl`.
+
 ```bash
 # Install HOMER via conda (recommended — handles Perl dependencies)
 conda install -c bioconda homer

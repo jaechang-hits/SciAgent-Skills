@@ -26,6 +26,8 @@ STAR (Spliced Transcripts Alignment to a Reference) aligns RNA-seq reads to a ge
 - **RAM**: 30–32 GB for human/mouse genome index; 8–16 GB for smaller genomes
 - **Disk**: ~25 GB for human genome index, ~5–10 GB per sample BAM
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v STAR` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run STAR` rather than bare `STAR`.
+
 ```bash
 # Install with conda (recommended)
 conda install -c bioconda star

@@ -25,6 +25,8 @@ fastp performs adapter trimming, quality filtering, and QC reporting for Illumin
 - **Software**: fastp (conda or pre-compiled binary)
 - **Input**: raw Illumina FASTQ files (single-end or paired-end, .fastq or .fastq.gz)
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v fastp` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run fastp` rather than bare `fastp`.
+
 ```bash
 # Install with conda
 conda install -c bioconda fastp

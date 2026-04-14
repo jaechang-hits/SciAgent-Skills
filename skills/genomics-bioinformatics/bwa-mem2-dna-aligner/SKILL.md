@@ -26,6 +26,8 @@ BWA-MEM2 aligns short DNA reads (Illumina, 50–250 bp) to a reference genome us
 - **Reference**: genome FASTA (e.g., GRCh38, hg19, mm10)
 - **RAM**: ~28 GB for human genome index; 6–8 GB for mouse
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v bwa-mem2` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run bwa-mem2` rather than bare `bwa-mem2`.
+
 ```bash
 # Install with conda (recommended)
 conda install -c bioconda bwa-mem2 samtools

@@ -26,6 +26,8 @@ GATK (Genome Analysis Toolkit) implements the GATK Best Practices workflow for c
 - **Reference files**: genome FASTA + known variants VCF (dbSNP, 1000G, Mills indels)
 - **Input**: duplicate-marked, sorted BAM with `@RG` read group headers (from BWA-MEM2)
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v gatk` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run gatk` rather than bare `gatk`.
+
 ```bash
 # Install GATK4
 wget https://github.com/broadinstitute/gatk/releases/download/4.6.0.0/gatk-4.6.0.0.zip

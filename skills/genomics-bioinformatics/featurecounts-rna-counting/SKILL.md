@@ -25,6 +25,8 @@ featureCounts (part of the Subread package) assigns sequencing reads in BAM file
 - **Software**: Subread package (contains `featureCounts`)
 - **Input**: Sorted BAM files from STAR or HISAT2, plus a matching GTF annotation file
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v featureCounts` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run featureCounts` rather than bare `featureCounts`.
+
 ```bash
 # Install with conda (recommended)
 conda install -c bioconda subread

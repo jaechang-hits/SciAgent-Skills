@@ -27,6 +27,8 @@ ETE Toolkit (ETE3) is a Python framework for phylogenetic tree exploration, mani
 - **Data requirements**: Newick string or tree file; NCBI taxonomy database (downloaded on first use for NCBI module)
 - **Environment**: Python 3.6+; PyQt5 required for `TreeStyle` rendering and interactive GUI; headless rendering requires `xvfb`
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v python` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run python` rather than bare `python`.
+
 ```bash
 pip install ete3 numpy lxml PyQt5
 # For headless rendering on Linux servers:

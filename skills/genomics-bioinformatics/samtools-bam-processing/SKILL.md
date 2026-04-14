@@ -30,6 +30,8 @@ samtools is the standard command-line toolkit for processing sequence alignment 
 - **Input requirements**: SAM/BAM/CRAM files; CRAM requires FASTA reference
 - **Companion tools**: `samtools faidx` for FASTA indexing; `samtools sort` before `samtools index`
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v samtools` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run samtools` rather than bare `samtools`.
+
 ```bash
 # Bioconda (recommended)
 conda install -c bioconda samtools
