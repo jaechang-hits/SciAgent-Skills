@@ -26,6 +26,8 @@ MultiQC automatically searches directories for QC log files from 150+ bioinforma
 - **Input requirements**: Output files from bioinformatics tools (FastQC `.zip`, samtools `.flagstat`, STAR `Log.final.out`, etc.) — MultiQC finds them automatically
 - **Environment**: Python 3.8+
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v multiqc` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run multiqc` rather than bare `multiqc`.
+
 ```bash
 pip install multiqc
 

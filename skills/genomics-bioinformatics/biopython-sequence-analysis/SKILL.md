@@ -32,6 +32,8 @@ For PCR primer design, restriction enzyme digestion, cloning simulation, protein
 - **NCBI access**: Set `Entrez.email` before any E-utilities call; obtain a free API key at https://www.ncbi.nlm.nih.gov/account/ for 10 req/s (default is 3 req/s)
 - **Local BLAST**: BLAST+ installed separately (`conda install -c bioconda blast`) for offline searches
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v python` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run python` rather than bare `python`.
+
 ```bash
 pip install biopython numpy matplotlib
 conda install -c bioconda blast  # optional, for local BLAST

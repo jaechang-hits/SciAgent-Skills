@@ -275,6 +275,7 @@ Before finalizing any entry, verify:
 - [ ] **URL verification**: spot-check primary URLs against official project. Do NOT invent repository URLs
 - [ ] No verbatim copy-paste from sources (synthesize and attribute)
 - [ ] No promotional or advertising content
+- [ ] **Check-before-install**: Prerequisites sections for CLI executables include a note telling the agent to run `command -v <tool>` first and skip the install commands if the tool is already present (e.g., inside a `pixi` / `conda` env), and to invoke tools via `pixi run <tool>` when inside a pixi project
 - [ ] `registry.yaml` updated with new entry
 - [ ] Cross-cutting tools: secondary categories noted in description field
 - [ ] (migrations) Capability completeness, pitfall migration, narrative use-case disposition, stub detection checks completed

@@ -29,6 +29,8 @@ bedtools is the standard toolkit for operating on genomic intervals in BED, BAM,
 - **Input requirements**: BED/BAM/GFF/VCF files; FASTA reference for `getfasta`; genome file (chromosome sizes) for `slop`/`flank`/`genomecov`
 - **Sorting**: Most operations require coordinate-sorted input
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v bedtools` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run bedtools` rather than bare `bedtools`.
+
 ```bash
 # Bioconda (recommended)
 conda install -c bioconda bedtools

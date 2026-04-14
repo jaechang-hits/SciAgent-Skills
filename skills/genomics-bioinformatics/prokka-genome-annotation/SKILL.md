@@ -28,6 +28,8 @@ Prokka is a command-line pipeline for rapid annotation of prokaryotic genomes (b
 - **Input**: assembled genome in FASTA format (complete or draft with multiple contigs)
 - **Environment**: conda strongly recommended to handle the Perl and C dependency stack
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v prokka` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run prokka` rather than bare `prokka`.
+
 ```bash
 # Install Prokka via conda/mamba (recommended)
 conda install -c conda-forge -c bioconda prokka

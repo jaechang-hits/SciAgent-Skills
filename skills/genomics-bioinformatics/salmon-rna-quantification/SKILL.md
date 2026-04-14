@@ -26,6 +26,8 @@ Salmon quantifies transcript abundance from RNA-seq reads using quasi-mapping â€
 - **Reference**: transcriptome FASTA (cDNA sequences, e.g., GENCODE or Ensembl) + genome FASTA for decoy-aware indexing
 - **Python packages**: `pandas` for parsing output; `pydeseq2` for differential expression
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v salmon` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run salmon` rather than bare `salmon`.
+
 ```bash
 # Install with conda (recommended)
 conda install -c bioconda salmon

@@ -28,6 +28,8 @@ Snakemake is a Python-based workflow management system that scales analyses from
 - **Environment**: Python 3.11+; conda/mamba recommended for per-rule environments
 - **Data requirements**: Input files, reference files; output paths defined as rules
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v snakemake` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run snakemake` rather than bare `snakemake`.
+
 ```bash
 # Install via conda (includes optional dependencies)
 conda install -c conda-forge -c bioconda snakemake

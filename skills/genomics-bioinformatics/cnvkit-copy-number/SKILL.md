@@ -28,6 +28,8 @@ CNVkit detects somatic copy number variants (CNVs) from whole-exome sequencing (
 - **Input files**: sorted, indexed BAM files (tumor ± matched normal); BED file of capture targets; reference genome FASTA; access to R with DNAcopy package for CBS
 - **Data requirements**: minimum ~50× mean target coverage for WES; WGS works at 20-30×
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v cnvkit.py` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run cnvkit.py` rather than bare `cnvkit.py`.
+
 ```bash
 # Install CNVkit via conda (recommended — handles R/DNAcopy dependency)
 conda install -c bioconda cnvkit

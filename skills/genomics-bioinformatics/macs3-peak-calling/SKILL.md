@@ -26,6 +26,8 @@ MACS3 (Model-based Analysis of ChIP-seq) identifies regions of significant read 
 - **Input**: Sorted BAM files (with index) from ChIP-seq or ATAC-seq alignment (e.g., using STAR or Bowtie2)
 - **Optional**: Input/IgG control BAM for background normalization
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v macs3` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run macs3` rather than bare `macs3`.
+
 ```bash
 # Install with pip or conda
 pip install macs3

@@ -29,6 +29,8 @@ bcftools is the standard command-line toolkit for processing VCF (Variant Call F
 - **Input requirements**: VCF or BGzipped+tabix-indexed VCF (`.vcf.gz + .vcf.gz.tbi`) for region queries
 - **Companion tools**: `samtools` for BAM processing; `tabix` for VCF indexing
 
+> **Check before installing**: The tool may already be available in the current environment (e.g., inside a `pixi` / `conda` env). Run `command -v bcftools` first and skip the install commands below if it returns a path. When running inside a pixi project, invoke the tool via `pixi run bcftools` rather than bare `bcftools`.
+
 ```bash
 # Bioconda (recommended — installs HTSlib suite)
 conda install -c bioconda bcftools
