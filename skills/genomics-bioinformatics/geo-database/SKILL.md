@@ -355,6 +355,8 @@ print(df[["accession", "title", "n_samples"]].head(10).to_string(index=False))
 
 5. **Check platform column names**: GPL annotation table column names vary by platform (e.g., `"Gene Symbol"` vs `"GENE_SYMBOL"` vs `"gene_id"`). Always inspect `gpl.table.columns` before assuming field names.
 
+6. **Always resolve SubSeries before analysis**: After loading any GSE, inspect `gse.metadata.get("relation", [])` for `"SuperSeries of: ..."` entries. If present, iterate every referenced SubSeries accession and download each one — the SuperSeries record itself carries no samples or expression matrices. Skipping this step silently drops the actual data.
+
 ## Common Recipes
 
 ### Recipe: Quick GSE Metadata Peek
