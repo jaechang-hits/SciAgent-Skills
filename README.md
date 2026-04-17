@@ -38,7 +38,7 @@ Want to try these skills without any setup? **[OmicsHorizon](https://omicshorizo
 
 **197 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
 
-Each skill is a self-contained SKILL.md file with runnable code examples, key parameters, troubleshooting guides, and best practices. Designed for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but compatible with any AI agent that reads markdown skill files (Cursor, Windsurf, Codex, etc.).
+Each skill is a self-contained SKILL.md file with runnable code examples, key parameters, troubleshooting guides, and best practices. Designed for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but compatible with any AI agent that reads markdown skill files ([setup guides below](#using-with-other-agents)).
 
 ## What's Inside
 
@@ -62,9 +62,11 @@ Each skill is a self-contained SKILL.md file with runnable code examples, key pa
 
 ### Prerequisites
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI installed
+- An AI coding agent: [Claude Code](https://docs.anthropic.com/en/docs/claude-code), [OpenAI Codex CLI](https://github.com/openai/codex), [Cursor](https://www.cursor.com/), or [Windsurf](https://windsurf.com/)
 - Git
 - Python 3.12+ (only needed if you want to run validation scripts)
+
+> **Note:** SciAgent-Skills is **not** an npm package. Skills are plain markdown files read directly by your AI agent — no `npx`, `npm install`, or runtime dependencies needed. Just clone the repository and point your agent at the skill files.
 
 ### Step 1: Clone the Repository
 
@@ -104,7 +106,7 @@ Or just describe your task — the agent finds the relevant skill automatically:
 /plugin install sciagent-skills
 ```
 
-#### Method B: Project-Level Integration
+#### Method B: Project-Level Integration (Claude Code)
 
 Clone into your project directory so Claude Code picks up skills via `CLAUDE.md`:
 
@@ -120,6 +122,44 @@ Add to your project's `CLAUDE.md`:
 Reference skills in `.sciagent-skills/skills/` for domain-specific analysis.
 Registry: `.sciagent-skills/registry.yaml`
 ```
+
+#### Using with Other Agents
+
+SciAgent-Skills works with any AI agent that can read project files. Clone the repo into your project, then configure the agent to discover skills via `registry.yaml`.
+
+**Method C: OpenAI Codex CLI**
+
+```bash
+cd your-project
+git clone https://github.com/jaechang-hits/SciAgent-Skills.git .sciagent-skills
+cp .sciagent-skills/integration-templates/AGENTS.md ./AGENTS.md
+```
+
+Codex reads `AGENTS.md` at the project root automatically. If you already have an `AGENTS.md`, append the contents from the template.
+
+**Method D: Cursor**
+
+```bash
+cd your-project
+git clone https://github.com/jaechang-hits/SciAgent-Skills.git .sciagent-skills
+mkdir -p .cursor/rules
+cp .sciagent-skills/integration-templates/cursor-rules.md .cursor/rules/sciagent-skills.md
+```
+
+Cursor loads rules from `.cursor/rules/` automatically. Alternatively, you can use the `AGENTS.md` template — Cursor supports it as well.
+
+**Method E: Windsurf**
+
+```bash
+cd your-project
+git clone https://github.com/jaechang-hits/SciAgent-Skills.git .sciagent-skills
+mkdir -p .windsurf/rules
+cp .sciagent-skills/integration-templates/windsurf-rules.md .windsurf/rules/sciagent-skills.md
+```
+
+Windsurf loads rules from `.windsurf/rules/` automatically. Alternatively, you can use the `AGENTS.md` template — Windsurf supports it as well.
+
+**Other agents**: If your agent reads project files, clone the repo as `.sciagent-skills/` and instruct the agent (via its config mechanism) to read `.sciagent-skills/registry.yaml` for skill discovery.
 
 ### Step 3: Install Dependencies
 
@@ -164,6 +204,7 @@ The agent reads only the `description` field during planning. Full skill content
 SciAgent-Skills/
 ├── .claude-plugin/
 │   └── plugin.json        # Claude Code plugin manifest
+├── integration-templates/  # Config templates for Codex, Cursor, Windsurf
 ├── skills/                 # All 197 skills organized by category
 │   ├── genomics-bioinformatics/
 │   ├── structural-biology-drug-discovery/
@@ -247,6 +288,7 @@ Uses: `lamindb-data-management` → `reactome-pathway-analysis` → `string-prot
 | Total skills | **197** | ~30 | ~20 |
 | BixBench benchmark | **92.0%** | — | — |
 | Skill types | Pipeline, Toolkit, Database, Guide | Pipeline | Pipeline |
+| Multi-agent support | Claude Code, Codex, Cursor, Windsurf | Claude Code | Claude Code |
 | Claude Code plugin | Yes | No | No |
 | Web platform | [OmicsHorizon](https://omicshorizon.ai/en/) | No | No |
 
