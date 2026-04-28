@@ -1,6 +1,6 @@
 ---
 name: "viennarna-structure-prediction"
-description: "Predict RNA secondary structure, minimum free energy (MFE) folding, base pair probabilities, and RNA-RNA interactions using ViennaRNA Python bindings. Pipeline: load sequence → compute MFE structure → calculate partition function and base pair probability matrix → visualize dot-bracket notation → assess RNA-RNA duplex formation. Use for siRNA/sgRNA targeting, ribozyme design, and RNA accessibility analysis. Use mfold or RNAfold CLI directly for batch command-line use without Python."
+description: "Predict RNA secondary structure, MFE folding, base-pair probabilities, RNA-RNA interactions via ViennaRNA Python bindings. Pipeline: sequence → MFE → partition function and pair-probability matrix → dot-bracket → duplex. Use for siRNA/sgRNA targeting, ribozyme design, RNA accessibility. Use RNAfold CLI for batch use without Python."
 license: "MIT"
 ---
 

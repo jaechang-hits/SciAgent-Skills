@@ -1,6 +1,6 @@
 ---
 name: lamindb-data-management
-description: "Open-source data framework for biology: queryable, traceable, FAIR data management. Version artifacts (AnnData, DataFrame, Zarr), track computational lineage, validate with biological ontologies (Bionty), query across datasets. Integrates with Nextflow, Snakemake, W&B, scVI-tools. For single-cell analysis use scanpy; for ontology-only lookups use bionty directly."
+description: "Open-source FAIR biology data framework. Version artifacts (AnnData, DataFrame, Zarr), track lineage, validate via ontologies (Bionty), query datasets. Integrates with Nextflow, Snakemake, W&B, scVI. For scRNA-seq use scanpy; for ontology lookups use bionty."
 license: Apache-2.0
 ---
 

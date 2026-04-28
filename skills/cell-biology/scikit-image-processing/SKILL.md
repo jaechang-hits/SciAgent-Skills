@@ -1,6 +1,6 @@
 ---
 name: "scikit-image-processing"
-description: "Python image processing library for scientific microscopy and bioimage analysis. Read/write multi-format images, apply filters (Gaussian, median, LoG), segment objects (thresholding, watershed, active contours), measure region properties (area, intensity, shape), and detect features. Part of the SciPy ecosystem; integrates with NumPy arrays. Use OpenCV instead for real-time video processing; use CellPose for deep-learning cell segmentation; use napari for interactive visualization."
+description: "Python image processing for microscopy and bioimage analysis. Read/write images, filter (Gaussian, median, LoG), segment (thresholding, watershed, active contours), measure region properties, detect features. SciPy/NumPy ecosystem. Use OpenCV for real-time video; CellPose for DL cell segmentation; napari for visualization."
 license: "BSD-3-Clause"
 ---
 

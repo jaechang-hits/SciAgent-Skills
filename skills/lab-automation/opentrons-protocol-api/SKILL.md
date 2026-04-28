@@ -1,6 +1,6 @@
 ---
 name: "opentrons-protocol-api"
-description: "Python API v2 for programming Opentrons OT-2 and Flex liquid handling robots. Write protocols as Python files with metadata and a run() function; control pipettes, labware, and hardware modules (thermocycler, heater-shaker, magnetic, temperature). Simulate locally with opentrons_simulate, then upload to the robot app. Use PyLabRobot instead for hardware-agnostic scripts that run on Hamilton, Tecan, or other vendors."
+description: "Python API v2 for Opentrons OT-2/Flex liquid handlers: protocols as Python files with metadata and run(); control pipettes, labware, and modules (thermocycler, heater-shaker, magnetic, temperature). Simulate via opentrons_simulate then upload. Use PyLabRobot for vendor-agnostic scripts (Hamilton, Tecan)."
 license: "Apache-2.0"
 ---
 

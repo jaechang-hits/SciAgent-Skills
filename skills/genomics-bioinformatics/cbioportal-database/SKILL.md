@@ -1,6 +1,6 @@
 ---
 name: "cbioportal-database"
-description: "Access TCGA and other cancer genomics datasets via cBioPortal REST API. Retrieve somatic mutations, copy number alterations, gene expression profiles, and clinical data (survival, stage, treatment) for thousands of cancer studies. Use for tumor mutation burden analysis, oncoprint queries, and survival analysis. For population variant frequencies use gnomad-database; for drug-gene interactions use dgidb-database."
+description: "Cancer genomics (TCGA et al.) via cBioPortal REST API. Retrieve somatic mutations, CNAs, expression, clinical data (survival/stage/treatment) across thousands of studies. Use for TMB, oncoprints, survival analysis. For population frequencies use gnomad-database; for drug-gene interactions use dgidb-database."
 license: "AGPL-3.0"
 ---
 

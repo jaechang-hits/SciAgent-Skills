@@ -1,6 +1,6 @@
 ---
 name: "snakemake-workflow-engine"
-description: "Python-based workflow management system for reproducible, scalable pipelines. Define rules with file-based dependencies; Snakemake automatically determines the execution order and parallelism. Supports local, SLURM, LSF, AWS, and Google Cloud execution via profiles; per-rule conda/Singularity environments. Use for bioinformatics NGS pipelines, ML training workflows, and any multi-step file-processing analysis. Use Nextflow instead for Groovy-based dataflow pipelines or when nf-core ecosystem integration is required."
+description: "Python-based workflow manager for reproducible, scalable pipelines. Define rules with file-based dependencies; Snakemake resolves execution order and parallelism. Runs local, SLURM, LSF, AWS, GCP via profiles; per-rule conda/Singularity envs. For NGS pipelines, ML training, and multi-step file processing. Use Nextflow for Groovy dataflow or nf-core integration."
 license: "MIT"
 ---
 

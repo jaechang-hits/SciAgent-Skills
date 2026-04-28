@@ -1,6 +1,6 @@
 ---
 name: vcf-variant-filtering
-description: "Guide to mandatory quality filtering of raw/unfiltered VCF files before computing summary statistics such as Ts/Tv ratio, variant counts, or allele frequency distributions. Covers detection of raw VCFs via FILTER column and QUAL distribution inspection, QUAL-based filtering with bcftools, interpretation of Ts/Tv ratios, and when NOT to filter. Essential reading before any variant-level QC task. Cross-references: bcftools-variant-manipulation for advanced filtering expressions, gatk-variant-calling for upstream caller configuration, samtools-bam-processing for alignment QC prior to variant calling."
+description: "Guide to quality filtering raw VCF files before computing summary stats (Ts/Tv ratio, variant counts, AF distributions). Covers detecting raw VCFs via FILTER column and QUAL inspection, QUAL-based filtering with bcftools, Ts/Tv interpretation, and when NOT to filter. Read before any variant-level QC task. See bcftools-variant-manipulation for advanced filters, gatk-variant-calling for caller config, samtools-bam-processing for upstream alignment QC."
 license: CC-BY-4.0
 ---
 

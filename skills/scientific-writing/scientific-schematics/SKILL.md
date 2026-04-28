@@ -1,6 +1,6 @@
 ---
 name: "scientific-schematics"
-description: "Guide for designing and creating scientific schematics, diagrams, and graphical abstracts. Covers tool selection (BioRender, Inkscape, Affinity Designer, PowerPoint), design principles for biological pathway diagrams, molecular mechanism schematics, experimental workflow diagrams, and graphical abstracts for journal submissions. Includes composition rules, icon sourcing, color usage for biological entities, and accessibility considerations. Use when planning or creating a scientific figure that is primarily illustrative rather than data-driven."
+description: "Designing scientific schematics, diagrams, and graphical abstracts. Covers tool selection (BioRender, Inkscape, Affinity, PowerPoint), design principles for pathway diagrams, mechanism schematics, experimental workflows, and journal graphical abstracts. Includes composition, icon sourcing, color for biological entities, and accessibility. Use when creating illustrative (not data-driven) scientific figures."
 license: "CC-BY-4.0"
 ---
 

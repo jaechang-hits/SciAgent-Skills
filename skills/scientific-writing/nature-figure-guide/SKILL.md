@@ -1,6 +1,6 @@
 ---
 name: nature-figure-guide
-description: "Figure and image preparation guide for Nature journal. Covers resolution (300+ DPI), file formats (AI, EPS, TIFF), RGB color mode, Helvetica/Arial fonts, lowercase panel labels, and image integrity requirements."
+description: "Nature figure preparation: resolution (300+ DPI), formats (AI/EPS/TIFF), RGB color, Helvetica/Arial fonts, lowercase panel labels, image integrity requirements."
 license: CC-BY-4.0
 compatibility: Python 3.10+, Pillow, Matplotlib
 metadata:

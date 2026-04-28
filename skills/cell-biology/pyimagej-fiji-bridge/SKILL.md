@@ -1,6 +1,6 @@
 ---
 name: "pyimagej-fiji-bridge"
-description: "Python bridge to ImageJ2/Fiji enabling macro execution, plugin calls (Bio-Formats, TrackMate, Analyze Particles), bidirectional NumPy↔ImagePlus/ImgLib2 data exchange, and ImageJ Ops from Python. Use for automating Fiji-specific workflows headlessly from Python scripts. Use scikit-image instead for pure Python pipelines that do not require Fiji plugins; use napari for interactive visualization."
+description: "Python bridge to ImageJ2/Fiji for macros, plugins (Bio-Formats, TrackMate, Analyze Particles), NumPy↔ImagePlus/ImgLib2 exchange, and ImageJ Ops. Automates Fiji headlessly from Python. Use scikit-image for pure Python without Fiji plugins; napari for visualization."
 license: "Apache-2.0"
 ---
 

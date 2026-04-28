@@ -1,6 +1,6 @@
 ---
 name: "arboreto-grn-inference"
-description: "Gene regulatory network inference from expression data using GRNBoost2 (gradient boosting) or GENIE3 (Random Forest). Load expression matrix, optionally filter by transcription factors, infer TF-target-importance links, filter and save network. Dask-parallelized for single-cell scale. Core component of the SCENIC pipeline."
+description: "GRN inference from expression via GRNBoost2 (gradient boosting) or GENIE3 (Random Forest). Load matrix, filter by TFs, infer TF-target-importance links, save network. Dask-parallelized to single-cell scale. Core SCENIC component."
 license: "BSD-3-Clause"
 ---
 

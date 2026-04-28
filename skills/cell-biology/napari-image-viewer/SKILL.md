@@ -1,6 +1,6 @@
 ---
 name: "napari-image-viewer"
-description: "Interactive multi-dimensional image viewer for scientific microscopy data. Napari displays 2D/3D/4D arrays as Image, Labels, Points, Shapes, and Tracks layers; supports real-time annotation, plugin-based analysis, and headless screenshot export. Core visualization tool for bioimage analysis workflows. Use ImageJ/FIJI for macro-based processing; use napari for Python-native interactive visualization and plugin-based deep learning segmentation review."
+description: "Interactive viewer for microscopy. Displays 2D/3D/4D arrays as Image, Labels, Points, Shapes, Tracks layers; supports annotation, plugin analysis, headless screenshots. Core visualization for Python bioimage workflows. Use ImageJ/FIJI for macro processing; napari for Python-native interactive visualization and DL segmentation review."
 license: "BSD-3-Clause"
 ---
 

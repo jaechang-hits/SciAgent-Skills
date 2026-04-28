@@ -1,6 +1,6 @@
 ---
 name: "autodock-vina-docking"
-description: "Molecular docking with AutoDock Vina via Python API. Receptor/ligand preparation (Meeko + RDKit), grid box setup, docking execution, pose extraction, binding energy analysis, and batch virtual screening. Use for protein-ligand docking and hit identification."
+description: "Molecular docking with AutoDock Vina (Python API). Receptor/ligand prep (Meeko + RDKit), grid box, docking, pose and binding energy analysis, and batch virtual screening."
 license: "CC-BY-4.0"
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "interpro-database"
-description: "Query the InterPro REST API for protein domain architecture, family classification, and member database integration. Search InterPro entries by name or accession, retrieve all domains in a protein (domain architecture), list proteins in a family, get taxonomic distribution, and link to PDB structures. Integrates Pfam, PANTHER, PIRSF, PRINTS, PROSITE, SMART, CDD, and NCBIfam into a unified hierarchy. For protein sequence and Swiss-Prot annotations use uniprot-protein-database; for experimental 3D structures use pdb-database."
+description: "Query InterPro REST API for protein domain architecture, family classification, and member-DB integration. Search entries, retrieve a protein's domains, list family members, get taxonomic distribution, link to PDB. Unifies Pfam, PANTHER, PIRSF, PRINTS, PROSITE, SMART, CDD, NCBIfam. Use uniprot-protein-database for sequences; pdb-database for 3D structures."
 license: "CC-BY-4.0"
 ---
 

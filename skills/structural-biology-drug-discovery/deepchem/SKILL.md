@@ -1,6 +1,6 @@
 ---
 name: deepchem
-description: "Deep learning framework for drug discovery and materials science. 60+ models (GCN, GAT, AttentiveFP, MPNN, DMPNN, ChemBERTa, GROVER), 50+ molecular featurizers, MoleculeNet benchmarks, hyperparameter optimization, transfer learning. Unified load-featurize-split-train-evaluate API. For fingerprint-only cheminformatics use rdkit-cheminformatics; for featurization hub without training use molfeat-molecular-featurization."
+description: "Deep learning for drug discovery. 60+ models (GCN, GAT, AttentiveFP, MPNN, ChemBERTa, GROVER), 50+ featurizers, MoleculeNet benchmarks, HPO, transfer learning. Unified load-featurize-split-train-evaluate API. For fingerprints use rdkit-cheminformatics; for featurization-only use molfeat."
 license: MIT
 ---
 

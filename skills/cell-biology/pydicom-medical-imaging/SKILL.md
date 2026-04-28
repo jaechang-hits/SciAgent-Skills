@@ -1,6 +1,6 @@
 ---
 name: "pydicom-medical-imaging"
-description: "Pure Python DICOM library for medical imaging (CT, MRI, X-ray, ultrasound). Read/write DICOM files, extract pixel data as NumPy arrays, access/modify metadata tags, apply windowing (VOI LUT), anonymize PHI, build DICOM from scratch, process series into 3D volumes. For whole-slide pathology images use histolab; for NIfTI neuroimaging use nibabel."
+description: "Pure Python DICOM for medical imaging (CT, MRI, X-ray, ultrasound). Read/write DICOM, pixels as NumPy, edit tags, windowing (VOI LUT), PHI anonymization, build DICOM, series→3D volumes. Use histolab for WSI pathology; nibabel for NIfTI."
 license: MIT
 ---
 

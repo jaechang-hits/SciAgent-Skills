@@ -1,6 +1,6 @@
 ---
 name: "ucsc-genome-browser"
-description: "Query the UCSC Genome Browser REST API for DNA sequences, track annotations, gene models, and conservation scores across 100+ genome assemblies. Retrieve sequence for any genomic region, list or fetch BED/bigWig track data, get chromosome sizes, query RefSeq/GENCODE gene structures, and access PhyloP/PhastCons conservation scores. Use for programmatic access to UCSC annotations; use Ensembl REST API instead for Ensembl-native gene IDs and VEP variant annotation."
+description: "Query UCSC Genome Browser REST API for DNA sequences, tracks, gene models, and conservation across 100+ assemblies. Retrieve sequence by region, list/fetch BED/bigWig tracks, chromosome sizes, RefSeq/GENCODE gene structures, PhyloP/PhastCons scores. Use for UCSC annotations; Ensembl REST API for Ensembl gene IDs and VEP variant annotation."
 license: "Apache-2.0"
 ---
 

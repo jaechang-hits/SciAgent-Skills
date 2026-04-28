@@ -1,6 +1,6 @@
 ---
 name: "cosmic-database"
-description: "Query COSMIC (Catalogue Of Somatic Mutations In Cancer) for cancer somatic mutations, gene census data, mutational signatures, drug resistance variants, and cancer gene annotations. REST API v3.1 supports gene/sample/variant queries. Free registration required. For germline clinical variants use clinvar-database; for drug-target data use opentargets-database or chembl-database-bioactivity."
+description: "Query COSMIC for cancer somatic mutations, gene census, mutational signatures, drug resistance variants. REST API v3.1 supports gene/sample/variant queries; free registration. For germline use clinvar-database; for drug-target data use opentargets-database or chembl-database-bioactivity."
 license: "CC-BY-NC-SA-4.0"
 ---
 

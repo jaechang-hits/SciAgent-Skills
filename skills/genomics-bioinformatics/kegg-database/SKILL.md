@@ -1,6 +1,6 @@
 ---
 name: kegg-database
-description: "Direct REST API access to KEGG (academic use only). Query pathways, genes, compounds, enzymes, diseases, drugs. Seven operations: info, list, find, get, conv, link, ddi. ID conversion (NCBI, UniProt, PubChem). For Python workflows with multiple databases, prefer bioservices."
+description: "KEGG REST API (academic only). Pathways, genes, compounds, enzymes, diseases, drugs via 7 ops (info/list/find/get/conv/link/ddi). ID conversion (NCBI/UniProt/PubChem). Use bioservices for multi-DB Python."
 license: Non-academic use of KEGG requires a commercial license
 ---
 

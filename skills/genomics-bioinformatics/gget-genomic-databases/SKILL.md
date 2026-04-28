@@ -1,6 +1,6 @@
 ---
 name: gget-genomic-databases
-description: "Unified CLI/Python interface to 20+ genomic databases. Use for quick gene lookups (Ensembl search/info/seq), BLAST/BLAT sequence alignment, AlphaFold structure prediction, enrichment analysis (Enrichr), disease/drug associations (OpenTargets), single-cell data (CELLxGENE), cancer genomics (cBioPortal/COSMIC), and expression correlation (ARCHS4). Covers genomics, proteomics, and disease domains. For batch processing or advanced BLAST use biopython; for multi-database Python SDK workflows use bioservices."
+description: "Unified CLI/Python interface to 20+ genomic databases. Gene lookups (Ensembl search/info/seq), BLAST/BLAT, AlphaFold, Enrichr enrichment, OpenTargets disease/drug, CELLxGENE single-cell, cBioPortal/COSMIC cancer, ARCHS4 expression. Spans genomics, proteomics, disease. For batch/advanced BLAST use biopython; for multi-DB Python SDK use bioservices."
 license: BSD-2-Clause
 ---
 

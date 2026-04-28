@@ -1,6 +1,6 @@
 ---
 name: "plotly-interactive-plots"
-description: "Interactive scientific visualization with Plotly. Two-layer API: plotly.express (px) for one-liner DataFrame plots and plotly.graph_objects (go) for full trace-level control. 40+ chart types with hover, zoom, pan, and animation. Exports to interactive HTML or static PNG/SVG/PDF via kaleido. Use for interactive web figures, volcano plots with gene hover info, dose-response dashboards, gene expression heatmaps, and 3D molecular visualizations. Use seaborn for statistical summaries with automatic aggregation; use matplotlib for fine-grained publication figures; use plotly for interactive or web-embedded output."
+description: "Interactive scientific visualization with Plotly. Two APIs: plotly.express (px) for one-liner DataFrame plots, plotly.graph_objects (go) for trace-level control. 40+ chart types with hover, zoom, pan, animation. Exports HTML or static PNG/SVG/PDF via kaleido. Use for volcano plots with gene hover, dose-response dashboards, expression heatmaps, 3D molecular views. Use seaborn for stats; matplotlib for publication figures."
 license: "MIT"
 ---
 

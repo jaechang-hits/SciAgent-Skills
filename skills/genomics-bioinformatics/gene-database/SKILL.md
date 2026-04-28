@@ -1,6 +1,6 @@
 ---
 name: "gene-database"
-description: "Query NCBI Gene via E-utilities for curated gene records across 1M+ taxa. Retrieve official gene symbols, aliases, RefSeq accessions, summary descriptions, genomic coordinates, GO annotations, and interaction data. Use for gene ID resolution, cross-species queries, and gene function summaries. For sequence retrieval use Ensembl; for expression data use geo-database."
+description: "NCBI Gene via E-utilities: curated records across 1M+ taxa. Official symbols, aliases, RefSeq IDs, summaries, coordinates, GO, interactions. Use for gene ID resolution and cross-species function queries. For sequences use Ensembl; for expression use geo-database."
 license: "CC0-1.0"
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "rdkit-cheminformatics"
-description: "Cheminformatics toolkit for molecular analysis and virtual screening. Use for SMILES/SDF parsing, molecular descriptor calculation (MW, LogP, TPSA), fingerprint generation (Morgan/ECFP, MACCS, RDKit), Tanimoto similarity search, substructure filtering with SMARTS, drug-likeness assessment (Lipinski Ro5), chemical reaction enumeration, 2D/3D coordinate generation, and compound library profiling. For simpler high-level API, use datamol. Use RDKit when you need fine-grained control over sanitization, custom fingerprints, SMARTS queries, or reaction SMARTS."
+description: "Cheminformatics toolkit for molecular analysis and virtual screening: SMILES/SDF parsing, descriptors (MW, LogP, TPSA), fingerprints (Morgan/ECFP, MACCS), Tanimoto similarity, SMARTS substructure filtering, Lipinski drug-likeness, reaction enumeration, 2D/3D coordinates. For simpler API use datamol; use RDKit for fine-grained sanitization, custom fingerprints, or SMARTS/reaction control."
 license: "BSD-3-Clause"
 ---
 

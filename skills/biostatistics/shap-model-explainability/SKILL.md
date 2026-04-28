@@ -1,13 +1,12 @@
 ---
 name: shap-model-explainability
 description: >-
-  Model interpretability using SHAP (SHapley Additive exPlanations) based on
-  Shapley values from game theory. Covers explainer selection (Tree, Deep,
-  Linear, Kernel, Gradient, Permutation), computing feature attributions,
-  and visualization (waterfall, beeswarm, bar, scatter, force, heatmap).
-  Use when explaining ML model predictions, computing feature importance,
-  debugging model behavior, analyzing fairness/bias, or comparing models.
-  Works with tree-based, deep learning, linear, and black-box models.
+  Model interpretability via SHAP (Shapley values from game theory).
+  Covers explainer choice (Tree, Deep, Linear, Kernel, Gradient,
+  Permutation), feature attribution, and plots (waterfall, beeswarm,
+  bar, scatter, force, heatmap). Use to explain ML predictions, rank
+  features, debug models, audit fairness, or compare models. Works
+  with tree, deep, linear, and black-box models.
 license: MIT
 ---
 

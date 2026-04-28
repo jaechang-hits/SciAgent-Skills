@@ -1,6 +1,6 @@
 ---
 name: "deseq2-differential-expression"
-description: "Differential expression analysis for bulk RNA-seq using R/Bioconductor DESeq2. Negative binomial GLM with empirical Bayes shrinkage, Wald and LRT tests, multi-factor designs, interaction terms, Salmon tximeta import, apeglm LFC shrinkage, MA/volcano/heatmap visualization. The R gold standard for DE analysis with native Bioconductor integration. Use pydeseq2-differential-expression for Python-based pipelines; use edgeR for TMM normalization."
+description: "Bulk RNA-seq DE with R/Bioconductor DESeq2. Negative binomial GLM, empirical Bayes shrinkage, Wald/LRT tests, multi-factor designs, Salmon tximeta import, apeglm LFC shrinkage, MA/volcano/heatmap viz. R gold standard. Use pydeseq2-differential-expression for Python; use edgeR for TMM normalization."
 license: "LGPL-3.0"
 ---
 

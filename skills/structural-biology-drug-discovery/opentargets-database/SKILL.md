@@ -1,6 +1,6 @@
 ---
 name: "opentargets-database"
-description: "Query Open Targets Platform GraphQL API for target-disease associations, evidence scores, drug-target links, and safety data. Search targets by gene symbol, diseases by EFO ID, retrieve evidence scores from 20+ data sources, drug mechanisms, and tractability assessments. For ChEMBL bioactivity use chembl-database-bioactivity; for clinical trials use clinicaltrials-database-search."
+description: "Query Open Targets GraphQL API for target-disease associations, evidence, drug links, safety. Search targets by gene, diseases by EFO ID; scores from 20+ sources, drug mechanisms, tractability. For ChEMBL use chembl-database-bioactivity; for trials use clinicaltrials-database-search."
 license: "Apache-2.0"
 ---
 

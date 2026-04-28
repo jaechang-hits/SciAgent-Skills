@@ -1,6 +1,6 @@
 ---
 name: "transformers-bio-nlp"
-description: "Use HuggingFace Transformers with biomedical language models for scientific NLP tasks. Load BioBERT, PubMedBERT, BioGPT, and BioMedLM for named entity recognition (genes, diseases, chemicals), relation extraction, question answering on biomedical literature, text classification, and abstract summarization. Covers model loading, tokenization of biomedical text, inference pipelines, and fine-tuning on domain-specific datasets. Alternatives: spaCy with en_core_sci_lg (rule-based NER), Stanza (Stanford NLP, biomedical models), NLTK (classical NLP)."
+description: "HuggingFace Transformers with biomedical LMs (BioBERT, PubMedBERT, BioGPT, BioMedLM) for scientific NLP: NER (genes, diseases, chemicals), relation extraction, QA, text classification, abstract summarization. Covers loading, biomedical tokenization, inference pipelines, fine-tuning. Alternatives: spaCy en_core_sci_lg (rule-based NER), Stanza (biomedical models), NLTK."
 license: "Apache-2.0"
 ---
 

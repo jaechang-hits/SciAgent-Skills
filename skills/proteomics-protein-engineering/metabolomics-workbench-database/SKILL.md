@@ -1,6 +1,6 @@
 ---
 name: "metabolomics-workbench-database"
-description: "Query Metabolomics Workbench REST API (4,200+ studies, NIH-funded) for metabolite identification, study discovery, RefMet name standardization, MS m/z precursor ion searches, MetStat study filtering, and gene/protein annotations. For local metabolite XML parsing use hmdb-database; for compound property lookups use pubchem-compound-search."
+description: "Query Metabolomics Workbench REST API (4,200+ NIH studies) for metabolite ID, study discovery, RefMet standardization, m/z precursor searches, MetStat filtering, gene/protein annotations. Use hmdb-database for local XML; pubchem-compound-search for compounds."
 license: "Unknown"
 ---
 

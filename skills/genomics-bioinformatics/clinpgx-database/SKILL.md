@@ -1,6 +1,6 @@
 ---
 name: "clinpgx-database"
-description: "Query PharmGKB (Clinical Pharmacogenomics) database via REST API for drug-gene interactions, clinical annotations, dosing guidelines (CPIC, DPWG), variant-drug associations, and pharmacogenomic pathways. Search by gene, drug, rsID, or pathway. No authentication required. For somatic cancer pharmacogenomics use cosmic-database or opentargets-database; for drug structures use chembl-database-bioactivity."
+description: "Query PharmGKB REST API for drug-gene interactions, clinical annotations, CPIC/DPWG guidelines, variant-drug associations, PGx pathways. Search by gene/drug/rsID/pathway; no auth. For somatic cancer PGx use cosmic-database or opentargets-database; for drug structures use chembl-database-bioactivity."
 license: "CC-BY-SA-4.0"
 ---
 

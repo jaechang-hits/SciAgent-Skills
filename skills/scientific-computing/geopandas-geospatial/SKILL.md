@@ -1,14 +1,11 @@
 ---
 name: geopandas-geospatial
 description: >-
-  Python library for geospatial vector data analysis extending pandas with
-  spatial operations. Covers reading/writing spatial formats (Shapefile,
-  GeoJSON, GeoPackage, Parquet, PostGIS), coordinate reference systems,
-  geometric operations (buffer, simplify, centroid, affine transforms),
-  spatial analysis (joins, overlays, dissolve, clipping, distance), and
-  visualization (choropleth, interactive maps, basemaps). Use when working
-  with geographic data for spatial joins, overlay operations, coordinate
-  transformations, area/distance calculations, or map creation.
+  Geospatial vector analysis extending pandas. Read/write spatial formats
+  (Shapefile, GeoJSON, GeoPackage, Parquet, PostGIS), CRS handling, geometric
+  ops (buffer, simplify, centroid, affine), spatial analysis (joins, overlays,
+  dissolve, clipping, distance), visualization (choropleth, interactive maps,
+  basemaps). Use for spatial joins, overlays, CRS transforms, area/distance, maps.
 license: BSD-3-Clause
 ---
 

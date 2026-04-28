@@ -1,6 +1,6 @@
 ---
 name: "maxquant-proteomics"
-description: "MaxQuant + Perseus proteomics pipeline: configure and run MaxQuant for label-free quantification (LFQ) and SILAC; parse proteinGroups.txt in Python; filter contaminants/reverse decoys; log2-transform and median-normalize LFQ intensities; impute MNAR missing values; t-test with FDR correction; volcano plot; GO/pathway enrichment. Use Proteome Discoverer for Thermo instrument-native processing; FragPipe/MSFragger for GPU-accelerated database search."
+description: "MaxQuant + Perseus proteomics pipeline: run MaxQuant for LFQ and SILAC; parse proteinGroups.txt in Python; filter contaminants/decoys; log2 + median-normalize; impute MNAR; t-test with FDR; volcano plot; GO/pathway enrichment. Use Proteome Discoverer for Thermo-native processing; FragPipe/MSFragger for GPU-accelerated DB search."
 license: "Apache-2.0"
 ---
 

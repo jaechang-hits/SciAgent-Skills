@@ -1,6 +1,6 @@
 ---
 name: anndata-data-structure
-description: "Annotated data matrices for single-cell genomics. AnnData stores expression data (X) with observation metadata (obs), variable metadata (var), layers, embeddings (obsm/varm), graphs (obsp/varp), and unstructured data (uns). Use for .h5ad/.zarr file handling, dataset concatenation, and scverse ecosystem integration. For analysis workflows use scanpy; for probabilistic models use scvi-tools."
+description: "Annotated matrices for single-cell genomics. Stores X with obs/var metadata, layers, embeddings (obsm/varm), graphs (obsp/varp), uns. Use for .h5ad/.zarr I/O, concatenation, scverse integration. For analysis use scanpy; for probabilistic models use scvi-tools."
 license: BSD-3-Clause
 ---
 

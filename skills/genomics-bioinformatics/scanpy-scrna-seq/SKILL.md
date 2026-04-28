@@ -1,6 +1,6 @@
 ---
 name: "scanpy-scrna-seq"
-description: "Single-cell RNA-seq analysis with Scanpy. QC filtering, normalization, HVG selection, PCA, neighborhood graph, UMAP/t-SNE, Leiden clustering, marker gene identification, cell type annotation, and trajectory inference. Use for standard scRNA-seq exploratory workflows."
+description: "scRNA-seq with Scanpy: QC, normalization, HVG selection, PCA, neighborhood graph, UMAP/t-SNE, Leiden clustering, markers, cell annotation, trajectory inference. Standard scRNA-seq exploration."
 license: "CC-BY-4.0"
 ---
 

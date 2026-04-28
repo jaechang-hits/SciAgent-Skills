@@ -1,6 +1,6 @@
 ---
 name: "unichem-database"
-description: "Cross-reference chemical compound identifiers across 50+ databases (ChEMBL, DrugBank, PubChem, ChEBI, PDB, KEGG) using the UniChem REST API. Resolve InChIKeys to database-specific IDs, find all sources for a compound, discover related compounds by structural connectivity, and batch-translate compound lists between naming systems. No authentication required."
+description: "Cross-reference compound IDs across 50+ databases (ChEMBL, DrugBank, PubChem, ChEBI, PDB, KEGG) via UniChem REST API. Resolve InChIKeys to source IDs, find structurally related compounds by connectivity, batch-translate between naming systems. No auth required."
 license: "Apache-2.0"
 ---
 

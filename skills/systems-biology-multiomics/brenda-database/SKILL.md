@@ -1,6 +1,6 @@
 ---
 name: "brenda-database"
-description: "Query BRENDA Enzyme Database for kinetic parameters (Km, Vmax, kcat, Ki), enzyme classifications, substrate specificity, inhibitors, cofactors, and organism-specific enzyme data via SOAP/REST API. 80,000+ enzyme entries, 7M+ kinetic values. Requires free academic registration. For metabolic pathway modeling use cobrapy-metabolic-modeling; for metabolite structures use hmdb-database."
+description: "BRENDA Enzyme DB SOAP/REST queries: kinetic parameters (Km, Vmax, kcat, Ki), EC classes, substrate specificity, inhibitors, cofactors, organism data. 80K+ enzymes, 7M+ values. Free academic registration. For metabolic modeling use cobrapy-metabolic-modeling; metabolites use hmdb-database."
 license: "CC-BY-4.0"
 ---
 

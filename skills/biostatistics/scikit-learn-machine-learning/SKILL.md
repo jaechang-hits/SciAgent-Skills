@@ -1,6 +1,6 @@
 ---
 name: "scikit-learn-machine-learning"
-description: "Classical machine learning in Python. Use for classification, regression, clustering, dimensionality reduction, model evaluation, hyperparameter tuning, and preprocessing pipelines. Covers linear models, tree ensembles, SVMs, K-Means, PCA, t-SNE. For deep learning use PyTorch/TensorFlow; for gradient boosting at scale use XGBoost/LightGBM."
+description: "Classical ML in Python: classification, regression, clustering, dim reduction, evaluation, tuning, preprocessing pipelines. Linear models, tree ensembles, SVMs, K-Means, PCA, t-SNE. Use PyTorch/TF for deep learning; XGBoost/LightGBM for scale."
 license: "BSD-3-Clause"
 ---
 

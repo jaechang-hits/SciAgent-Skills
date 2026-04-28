@@ -1,6 +1,6 @@
 ---
 name: "sgrna-design-guide"
-description: "Decision guide for finding or designing sgRNAs using a three-tiered strategy: (1) validated sequences from Addgene or literature, (2) pre-computed designs from the Broad Institute CRISPick database, (3) de novo design with CRISPOR/Benchling as a last resort. Covers PAM requirements for SpCas9, SaCas9, AsCas12a, and enAsCas12a; sgRNA quality metrics; application-specific targeting rules for knockout, CRISPRa, CRISPRi, base editing, and prime editing; and computational filtering criteria. Use when planning any CRISPR experiment and unsure which sgRNA source or design approach to use."
+description: "Decision guide for finding/designing sgRNAs via three tiers: (1) validated from Addgene/literature, (2) pre-computed from Broad CRISPick, (3) de novo via CRISPOR/Benchling as last resort. Covers PAM rules (SpCas9, SaCas9, AsCas12a, enAsCas12a), quality metrics, and targeting rules for knockout, CRISPRa/i, base and prime editing. Use when planning CRISPR and unsure which sgRNA source to pick."
 license: "CC-BY-4.0"
 ---
 

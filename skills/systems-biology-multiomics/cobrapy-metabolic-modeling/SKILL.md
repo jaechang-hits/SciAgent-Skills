@@ -1,6 +1,6 @@
 ---
 name: cobrapy-metabolic-modeling
-description: "Constraint-based reconstruction and analysis (COBRA) of genome-scale metabolic models. FBA, FVA, gene/reaction knockouts, flux sampling, production envelopes, gapfilling, and media optimization. Use for metabolic engineering strain design, essential gene identification, and flux distribution analysis. For kinetic modeling use tellurium; for pathway visualization use Escher."
+description: "Constraint-based (COBRA) analysis of genome-scale metabolic models: FBA, FVA, knockouts, flux sampling, production envelopes, gapfilling, media optimization. Use for strain design, essential gene ID, flux analysis. For kinetic modeling use tellurium; for visualization use Escher."
 license: GPL-2.0
 ---
 

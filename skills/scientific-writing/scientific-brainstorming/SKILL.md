@@ -1,6 +1,6 @@
 ---
 name: "scientific-brainstorming"
-description: "Structured ideation methods for scientific research: SCAMPER, Six Thinking Hats, Morphological Analysis, TRIZ, Biomimicry, and 4 more techniques. Decision framework for choosing methods by challenge type (stuck, improving existing, systematic exploration, contradiction resolution). Use when generating research ideas, exploring interdisciplinary connections, or challenging assumptions."
+description: "Structured ideation methods: SCAMPER, Six Thinking Hats, Morphological Analysis, TRIZ, Biomimicry, plus more. Decision framework for picking methods by challenge type (stuck, improving, systematic exploration, contradiction). Use when generating research ideas or exploring interdisciplinary connections."
 license: "CC-BY-4.0"
 ---
 

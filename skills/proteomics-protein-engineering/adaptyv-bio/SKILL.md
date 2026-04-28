@@ -1,6 +1,6 @@
 ---
 name: "adaptyv-bio"
-description: "Adaptyv Bio provides an API and Python SDK for ordering and managing cell-free protein expression and binding assay experiments. Use it to submit protein sequences for expression (scale 10–100 µg), characterize binding affinity (KD) against target proteins, track experiment status, and retrieve results — all programmatically without wet-lab setup. Designed for protein engineers, ML-guided directed evolution, and antibody/nanobody optimization workflows. Requires an Adaptyv Bio account and API key."
+description: "API + Python SDK for ordering cell-free protein expression and binding assays. Submit sequences for expression (10–100 µg), measure binding affinity (KD) against targets, track status, and retrieve results programmatically — no wet-lab setup. Built for ML-guided directed evolution and antibody/nanobody optimization. Requires Adaptyv account and API key."
 license: "MIT"
 ---
 

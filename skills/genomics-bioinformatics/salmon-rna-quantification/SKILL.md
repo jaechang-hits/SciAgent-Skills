@@ -1,6 +1,6 @@
 ---
 name: "salmon-rna-quantification"
-description: "Ultra-fast RNA-seq transcript and gene-level quantification using quasi-mapping (no BAM required). Builds a k-mer index from a transcriptome FASTA, then quantifies reads in minutes. Outputs transcript-level TPM/count tables (quant.sf) with optional GC-bias and sequence-bias correction. Integrates directly with tximeta/tximport for DESeq2 or edgeR. Use STAR instead when a genome-aligned BAM is required for variant calling or visualization."
+description: "Ultra-fast RNA-seq transcript/gene quantification via quasi-mapping (no BAM). Builds a k-mer index from transcriptome FASTA, quantifies in minutes. Outputs TPM/count tables (quant.sf) with optional GC- and sequence-bias correction. Integrates with tximeta/tximport for DESeq2/edgeR. Use STAR when a genome-aligned BAM is needed."
 license: "GPL-3.0"
 ---
 

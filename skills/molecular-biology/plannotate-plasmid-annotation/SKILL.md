@@ -1,6 +1,6 @@
 ---
 name: "plannotate-plasmid-annotation"
-description: "Automatically annotate plasmid sequences with functional features (promoters, terminators, resistance genes, origins of replication, tags, fluorescent proteins) using BLAST-based detection against curated databases (Addgene, fpbase, SnapGene). Accepts FASTA or raw sequence; outputs annotated GenBank files, interactive HTML maps, and CSV feature tables. Handles circular topology correctly. Use for verifying synthetic plasmid construction, preparing Addgene submissions, sharing plasmid maps, or batch-annotating a cloning library."
+description: "Auto-annotate plasmids with features (promoters, terminators, resistance, origins, tags, fluorescent proteins) via BLAST against curated DBs (Addgene, fpbase, SnapGene). FASTA or raw sequence in; annotated GenBank, interactive HTML maps, CSV tables out. Handles circular topology. Use to verify synthetic constructs, prep Addgene submissions, share maps, or batch-annotate cloning libraries."
 license: "GPL-3.0"
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "matplotlib-scientific-plotting"
-description: "Low-level Python plotting library for full customization of scientific figures. Use for publication-quality plots (line, scatter, bar, heatmap, contour, 3D), multi-panel subplot layouts, and fine-grained control over every visual element. Export to PNG/PDF/SVG. For quick statistical plots use seaborn; for interactive plots use plotly."
+description: "Low-level Python plotting for scientific figures: publication-quality line, scatter, bar, heatmap, contour, 3D; multi-panel layouts; fine control of every element. PNG/PDF/SVG export. Use seaborn for quick stats, plotly for interactive."
 license: "PSF-based"
 ---
 

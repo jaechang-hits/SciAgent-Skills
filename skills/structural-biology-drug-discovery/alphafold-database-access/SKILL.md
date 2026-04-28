@@ -1,10 +1,9 @@
 ---
 name: alphafold-database-access
 description: >
-  Access AlphaFold DB's 200M+ AI-predicted protein structures. Retrieve structures by UniProt ID,
-  download PDB/mmCIF files, analyze confidence metrics (pLDDT, PAE), bulk-download proteomes via
-  Google Cloud. For experimental structures use PDB directly; for structure prediction use
-  ColabFold or ESMFold.
+  Access AlphaFold DB's 200M+ predicted structures by UniProt ID. Download PDB/mmCIF,
+  analyze pLDDT/PAE, bulk-fetch proteomes via Google Cloud. For experimental structures
+  use PDB; for prediction use ColabFold or ESMFold.
 license: CC-BY-4.0
 ---
 

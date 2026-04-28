@@ -1,6 +1,6 @@
 ---
 name: "muon-multiomics-singlecell"
-description: "Multi-modal single-cell analysis with muon and MuData. Joint RNA+ATAC (10x Multiome), CITE-seq (RNA+protein), and other multi-omics combinations. MuData container holds modality-specific AnnData objects with shared obs. Weighted Nearest Neighbor (WNN) graph for joint embedding, per-modality preprocessing, cross-modal factor analysis with MOFA. Use scanpy-scrna-seq for single-modality RNA analysis; use muon when combining two or more omics modalities from the same cells."
+description: "Multi-modal single-cell analysis with muon/MuData. Joint RNA+ATAC (10x Multiome), CITE-seq (RNA+protein), other multi-omics. MuData holds per-modality AnnData with shared obs. WNN joint embedding, per-modality preprocessing, MOFA factor analysis. Use scanpy-scrna-seq for single-modality RNA; use muon when combining 2+ omics from the same cells."
 license: "BSD-3-Clause"
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "pathml"
-description: "PathML is an open-source toolkit for computational pathology. Use it to process whole-slide images (WSIs): load slides, extract tiles, apply stain normalization and nuclear segmentation preprocessing, extract features, and train machine learning models. Supports H&E and multiplex imaging. Ideal for building end-to-end digital pathology pipelines from raw WSI files to quantitative outputs."
+description: "Computational pathology toolkit for whole-slide images (WSIs): load slides, extract tiles, stain normalization, nuclear segmentation, feature extraction, and ML training. Supports H&E and multiplex. For end-to-end pipelines from raw WSIs to quantitative outputs."
 license: "GPL-2.0"
 ---
 

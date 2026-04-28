@@ -1,6 +1,6 @@
 ---
 name: "protocolsio-integration"
-description: "Access protocols.io public library via REST API. Search and retrieve experimental protocols (wet-lab, bioinformatics, clinical) by keyword, DOI, or category. Download step-by-step protocol content including reagents, materials, equipment, and timing. Free public access; authentication needed for private protocols or publishing. Use alongside opentrons-integration or benchling-integration to programmatically execute downloaded protocols."
+description: "protocols.io REST API: search and fetch wet-lab, bioinformatics, and clinical protocols by keyword, DOI, or category, with steps, reagents, materials, equipment, timing. Public access free; auth needed for private or publishing. Pair with opentrons-integration or benchling-integration to execute."
 license: "CC-BY-4.0"
 ---
 

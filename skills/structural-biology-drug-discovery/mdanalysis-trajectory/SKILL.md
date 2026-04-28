@@ -1,6 +1,6 @@
 ---
 name: "mdanalysis-trajectory"
-description: "Python library for analyzing molecular dynamics (MD) trajectories from GROMACS, AMBER, NAMD, CHARMM, and LAMMPS. Reads topology and trajectory files into Universe objects; supports RMSD, RMSF, radius of gyration, contact maps, hydrogen bond analysis, PCA, and custom distance/angle calculations across millions of frames. Use for structural analysis after MD simulations; use OpenMM or GROMACS directly for running simulations."
+description: "Analyze MD trajectories from GROMACS, AMBER, NAMD, CHARMM, LAMMPS. Reads topology/trajectory into Universe objects; supports RMSD, RMSF, radius of gyration, contact maps, H-bonds, PCA, and custom distance/angle calculations. Use for post-simulation structural analysis; use OpenMM/GROMACS for running simulations."
 license: "GPL-2.0"
 ---
 

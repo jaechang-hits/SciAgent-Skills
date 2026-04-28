@@ -1,6 +1,6 @@
 ---
 name: "torchdrug"
-description: "TorchDrug is a PyTorch-based machine learning platform for drug discovery. Use it for graph-based molecular representation learning, molecular property prediction (ADMET, activity), retrosynthesis prediction, drug-target interaction (DTI) modeling, and pretraining on large molecular datasets. Provides GNN layers (GraphConv, GAT, MPNN), pretrained models, and benchmark datasets in a unified PyTorch-compatible API."
+description: "PyTorch-based ML platform for drug discovery: graph molecular representation learning, property prediction (ADMET, activity), retrosynthesis, drug-target interaction (DTI), and pretraining on large molecular datasets. Provides GNN layers (GraphConv, GAT, MPNN), pretrained models, and benchmark datasets."
 license: "Apache-2.0"
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "featurecounts-rna-counting"
-description: "Counts aligned RNA-seq reads overlapping gene features in a GTF annotation. Takes sorted BAM files from STAR alignment and a GTF file; outputs a tab-delimited count matrix per gene across all samples. Handles strandedness (0=unstranded, 1=stranded, 2=reverse-stranded), paired-end, and multi-sample batch counting in a single command. Use Salmon instead for alignment-free quantification; use featureCounts when STAR BAMs already exist and a gene-level count matrix is needed."
+description: "Counts RNA-seq reads overlapping GTF gene features. Takes sorted STAR BAMs plus GTF; outputs a per-gene tab-delimited matrix across samples. Handles strandedness (0/1/2), paired-end, multi-sample batch counting in one command, and outputs assignment statistics. Use Salmon for alignment-free quantification; use featureCounts when STAR BAMs already exist."
 license: "GPL-3.0"
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "monarch-database"
-description: "Query disease-gene-phenotype associations, entity details, and cross-species orthology from the Monarch Initiative knowledge graph REST API. Retrieve MONDO disease-to-gene and disease-to-phenotype mappings, HP phenotype profiles, and cross-species phenotype comparisons. Use for rare disease gene prioritization, phenotype-based candidate gene ranking, and building disease-phenotype networks. For GWAS associations use gwas-database; for clinical pathogenicity use clinvar-database."
+description: "Monarch Initiative knowledge graph REST API for disease-gene-phenotype associations and cross-species orthology. MONDO disease-to-gene/phenotype, HP phenotype profiles, cross-species comparisons. Use for rare disease gene prioritization and phenotype-based candidate ranking. For GWAS use gwas-database; for clinical pathogenicity use clinvar-database."
 license: "BSD-3-Clause"
 ---
 

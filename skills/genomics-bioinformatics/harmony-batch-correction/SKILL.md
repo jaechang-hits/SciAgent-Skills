@@ -1,6 +1,6 @@
 ---
 name: "harmony-batch-correction"
-description: "Batch correction for single-cell RNA-seq (and other omics) with Harmony. Removes technical batch effects from PCA embeddings while preserving biological variation. Use after PCA, before UMAP/neighbors. Fast and scalable to millions of cells. Python (harmonypy, scanpy integration) and R (Seurat) APIs."
+description: "Harmony batch correction for scRNA-seq and other omics. Removes batch effects from PCA embeddings while preserving biology. Run after PCA, before UMAP. Scales to millions of cells. Python (harmonypy, scanpy) and R (Seurat)."
 license: "MIT"
 ---
 

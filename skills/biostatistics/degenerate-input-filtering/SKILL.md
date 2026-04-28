@@ -1,6 +1,6 @@
 ---
 name: degenerate-input-filtering
-description: "Mandatory filtering of degenerate and uninformative data points before statistical tests. Covers single-sequence alignments, empty files, constant-value features, zero-variance inputs, and all-NaN columns. For NaN-aware correlation computation, see the nan-safe-correlation skill. For broader statistical testing guidance, see the statistical-analysis skill."
+description: "Filter degenerate, uninformative inputs before statistical tests: single-sequence alignments, empty files, constant features, zero-variance inputs, all-NaN columns. See nan-safe-correlation for NaN-aware correlation; statistical-analysis for test guidance."
 license: CC-BY-4.0
 ---
 

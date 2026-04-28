@@ -1,6 +1,6 @@
 ---
 name: "histolab-wsi-processing"
-description: "Whole slide image processing for digital pathology. Tissue detection, tile extraction (random, grid, score-based), filter pipelines for H&E/IHC preprocessing. Use for dataset preparation, tile-based deep learning, and slide quality assessment. For advanced spatial proteomics or multiplexed imaging use pathml."
+description: "WSI processing for digital pathology. Tissue detection, tile extraction (random, grid, score-based), filter pipelines for H&E/IHC. For dataset prep, tile-based DL, slide QC. Use pathml for multiplexed imaging."
 license: Apache-2.0
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "uspto-database"
-description: "Access US Patent and Trademark Office (USPTO) patent data via the PatentsView REST API and Google Patents Public Data (BigQuery). Use it to search patents by inventor, assignee, CPC classification, or keywords; download full patent metadata and claims; analyze patent portfolios; and track technology trends. Ideal for IP landscape analysis, competitor monitoring, prior art searches, and technology forecasting in life sciences and biotech."
+description: "Access USPTO patent data via PatentsView REST API and Google Patents Public Data (BigQuery). Search by inventor, assignee, CPC, or keywords; download metadata and claims; analyze portfolios; track tech trends. For IP landscape analysis, competitor monitoring, prior art search, and tech forecasting in life sciences and biotech."
 license: "CC0-1.0"
 ---
 

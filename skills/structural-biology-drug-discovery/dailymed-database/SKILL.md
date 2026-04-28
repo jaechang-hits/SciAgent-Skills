@@ -1,6 +1,6 @@
 ---
 name: "dailymed-database"
-description: "Query FDA-approved drug labeling from DailyMed (NLM) via REST API. Search structured product labels (SPLs) by drug name, NDC code, set ID, or RxCUI. Retrieve indications, contraindications, dosage, warnings, adverse reactions, and packaging information. No authentication required. For adverse event reports use fda-database; for drug-drug interactions use ddinter-database."
+description: "Query FDA drug labels (DailyMed) via REST API. Search structured product labels (SPLs) by name, NDC, set ID, or RxCUI; get indications, dosage, warnings, adverse reactions, packaging. No auth. For adverse events use fda-database; for DDIs use ddinter-database."
 license: "CC0-1.0"
 ---
 

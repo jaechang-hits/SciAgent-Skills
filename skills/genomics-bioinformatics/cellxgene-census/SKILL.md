@@ -1,6 +1,6 @@
 ---
 name: cellxgene-census
-description: "Query CELLxGENE Census (61M+ cells) programmatically. Search by cell type, tissue, disease, organism. Get expression matrices as AnnData, stream large queries out-of-core, train PyTorch models on single-cell data. For analyzing your own data use scanpy; for annotated data manipulation use anndata."
+description: "Query CELLxGENE Census (61M+ cells). Search by cell type/tissue/disease/organism; get AnnData, stream out-of-core, train PyTorch models. For your own data use scanpy; for annotated data use anndata."
 license: MIT
 ---
 

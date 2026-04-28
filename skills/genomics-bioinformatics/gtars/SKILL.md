@@ -1,6 +1,6 @@
 ---
 name: "gtars"
-description: "GTARS is a Rust-backed Python library for fast genomic token arithmetic and BED file processing. Perform high-performance BED file I/O, genomic interval set operations (intersect, merge, complement, subtract), tokenization of genomic regions against a universe, and universe construction. Use for preprocessing large BED file collections, building token vocabularies for ML pipelines, and computing interval statistics at scale."
+description: "Rust-backed Python library for fast genomic token arithmetic and BED processing. High-performance BED I/O, interval set ops (intersect, merge, complement, subtract), region tokenization against a universe, universe construction. Use for preprocessing large BED collections and ML token vocabularies."
 license: "MIT"
 ---
 

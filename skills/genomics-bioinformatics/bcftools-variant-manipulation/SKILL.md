@@ -1,6 +1,6 @@
 ---
 name: "bcftools-variant-manipulation"
-description: "Command-line toolkit for VCF/BCF variant file manipulation. Filter, merge, annotate, query, normalize, and compute statistics on variant call files. Essential for post-variant-calling pipelines: quality filtering, multi-sample merging, rsID annotation, and genotype extraction. Companion to samtools in the HTSlib ecosystem. Use GATK instead for complex indel realignment during variant calling; use VCFtools instead for population genetics statistics."
+description: "CLI for VCF/BCF: filter, merge, annotate, query, normalize, compute stats. Core post-variant-calling: quality filtering, multi-sample merging, rsID annotation, genotype extraction. Samtools companion in HTSlib. Use GATK for complex indel realignment during calling; use VCFtools for population genetics stats."
 license: "MIT"
 ---
 

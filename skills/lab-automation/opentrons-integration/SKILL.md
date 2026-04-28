@@ -1,6 +1,6 @@
 ---
 name: opentrons-integration
-description: "Opentrons Protocol API v2 for OT-2 and Flex liquid handling robots. Write Python protocols for automated pipetting, serial dilutions, PCR setup, plate replication. Control hardware modules (thermocycler, heater-shaker, magnetic, temperature). For multi-vendor lab automation use pylabrobot."
+description: "Opentrons Protocol API v2 for OT-2/Flex: Python protocols for pipetting, serial dilutions, PCR, plate replication; control thermocycler, heater-shaker, magnetic, temperature modules. Use pylabrobot for multi-vendor."
 license: Apache-2.0
 ---
 

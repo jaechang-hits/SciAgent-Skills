@@ -1,6 +1,6 @@
 ---
 name: busco-status-interpretation
-description: "Guide to correctly interpreting BUSCO (Benchmarking Universal Single-Copy Orthologs) completeness statuses. Covers why Duplicated BUSCOs count as complete, how to parse BUSCO output files, how to compute and compare completeness across proteomes and genomes, and common counting mistakes. Relevant when running genome or proteome quality assessments with BUSCO, comparing assemblies, or reporting completeness statistics. See also: prokka-genome-annotation for annotation workflows that feed into BUSCO assessment."
+description: "Guide to interpreting BUSCO completeness statuses: why Duplicated BUSCOs count as complete, parsing output files, computing/comparing completeness across proteomes/genomes, common counting mistakes. Use when running BUSCO QC, comparing assemblies, or reporting completeness. See also: prokka-genome-annotation for annotation workflows feeding BUSCO."
 license: CC-BY-4.0
 ---
 

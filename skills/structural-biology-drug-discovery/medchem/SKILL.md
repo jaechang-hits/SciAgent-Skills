@@ -1,13 +1,11 @@
 ---
 name: medchem
 description: >-
-  Medicinal chemistry filters for drug discovery compound triage. Drug-likeness rules
-  (Lipinski Ro5, Veber, Oprea, CNS, leadlike, REOS, Golden Triangle, Rule of Three),
-  structural alerts (PAINS, NIBR, Lilly Demerits, Common Alerts), chemical group detection
-  (hinge binders, Michael acceptors), molecular complexity metrics, property constraints,
-  and a query language for composing filter logic. Built on RDKit and datamol. Use for
-  hit-to-lead filtering, library design, and ADMET pre-screening. For molecular I/O and
-  descriptors use rdkit-cheminformatics or datamol-cheminformatics instead.
+  Medicinal chemistry filters for compound triage. Drug-likeness rules (Lipinski Ro5,
+  Veber, Oprea, CNS, leadlike, REOS, Golden Triangle, Ro3), structural alerts (PAINS,
+  NIBR, Lilly Demerits), chemical group detectors, complexity metrics, and filter
+  composition query language. Built on RDKit/datamol. For hit-to-lead filtering, library
+  design, ADMET pre-screening. For molecular I/O use rdkit-cheminformatics or datamol.
 license: Apache-2.0
 ---
 

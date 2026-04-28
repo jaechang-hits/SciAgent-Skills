@@ -1,6 +1,6 @@
 ---
 name: molfeat-molecular-featurization
-description: Molecular featurization hub (100+ featurizers) for ML. Convert SMILES to numerical representations via fingerprints (ECFP, MACCS, MAP4), descriptors (RDKit 2D, Mordred), pretrained models (ChemBERTa, GIN, Graphormer), and pharmacophore features. Scikit-learn compatible transformers with parallelization, caching, and state persistence. For QSAR, virtual screening, similarity search, and deep learning on molecules.
+description: Molecular featurization hub (100+ featurizers) for ML. SMILES to fingerprints (ECFP, MACCS, MAP4), descriptors (RDKit 2D, Mordred), pretrained embeddings (ChemBERTa, GIN, Graphormer), pharmacophores. Scikit-learn compatible with parallelization/caching. For QSAR, virtual screening, similarity, and molecular DL.
 license: Apache-2.0
 ---
 

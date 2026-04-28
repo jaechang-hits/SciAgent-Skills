@@ -1,6 +1,6 @@
 ---
 name: "omero-integration"
-description: "OMERO is an open-source platform for biological image data management. Use the omero-py Python client to connect to an OMERO server, search and retrieve images as numpy arrays, annotate images with tags and key-value pairs, manage ROIs, and integrate OMERO image data into downstream analysis pipelines — all programmatically without the OMERO desktop GUI."
+description: "Open-source bio-image data management. Use the omero-py client to connect to an OMERO server, retrieve images as numpy arrays, annotate with tags and key-value pairs, manage ROIs, and feed image data into Python analysis pipelines — programmatically, no GUI."
 license: "GPL-2.0"
 ---
 

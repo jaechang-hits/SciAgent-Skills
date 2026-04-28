@@ -1,6 +1,6 @@
 ---
 name: "scvi-tools-single-cell"
-description: "Deep generative models for single-cell omics. Probabilistic batch correction (scVI), semi-supervised annotation (scANVI), CITE-seq RNA+protein modeling (totalVI), transfer learning to new datasets (scARCHES), and differential expression with uncertainty quantification. Unified setup→train→extract API on AnnData. Use harmony-batch-correction for fast linear batch correction without deep learning; use muon for multi-modal MuData workflows; use scVI for probabilistic, deep learning-based integration with uncertainty quantification."
+description: "Deep generative models for single-cell omics: probabilistic batch correction (scVI), semi-supervised annotation (scANVI), CITE-seq RNA+protein (totalVI), transfer learning (scARCHES), and DE with uncertainty. Unified setup→train→extract API on AnnData. Use harmony-batch-correction for fast linear correction without deep learning; muon for multi-modal MuData workflows."
 license: "BSD-3-Clause"
 ---
 

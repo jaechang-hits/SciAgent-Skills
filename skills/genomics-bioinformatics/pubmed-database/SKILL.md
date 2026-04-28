@@ -1,13 +1,11 @@
 ---
 name: pubmed-database
 description: >-
-  Programmatic access to PubMed biomedical literature via NCBI E-utilities
-  REST API. Covers advanced Boolean/MeSH query construction, field-tagged
-  searching, E-utilities endpoints (ESearch, EFetch, ESummary, EPost,
-  ELink), history server for batch processing, citation matching, and
-  systematic review search strategies. Use when searching biomedical
-  literature, building automated literature pipelines, or conducting
-  systematic reviews.
+  Programmatic PubMed access via NCBI E-utilities REST API. Covers
+  Boolean/MeSH queries, field-tagged search, endpoints (ESearch,
+  EFetch, ESummary, EPost, ELink), history server for batches,
+  citation matching, systematic review strategies. Use for biomedical
+  literature search or automated pipelines.
 license: CC-BY-4.0
 ---
 

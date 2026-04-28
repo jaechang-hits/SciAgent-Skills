@@ -1,6 +1,6 @@
 ---
 name: "imaging-data-commons"
-description: "Query NCI Imaging Data Commons (IDC) for cancer radiology and pathology imaging datasets hosted on Google Cloud. Search DICOM collections by modality, anatomical site, cancer type, or collection name. Download images via Google Cloud Storage or IDAT tool. 50TB+ of publicly accessible DICOM images. Requires Google Cloud account for large downloads; small queries work without billing. For local DICOM processing use pydicom-medical-imaging; for whole-slide pathology use histolab."
+description: "Query NCI Imaging Data Commons (IDC) for cancer radiology and pathology datasets on Google Cloud. Search DICOM by modality, anatomical site, or cancer type; download via GCS or IDAT. 50TB+ public DICOM. GCS account needed for large downloads; metadata queries free. Use pydicom-medical-imaging for local DICOM; histolab for WSI."
 license: "CC0-1.0"
 ---
 

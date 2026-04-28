@@ -1,6 +1,6 @@
 ---
 name: deeptools-ngs-analysis
-description: "NGS analysis CLI toolkit for ChIP-seq, RNA-seq, ATAC-seq. BAM→bigWig conversion with normalization (RPGC, CPM, RPKM), sample correlation/PCA, heatmaps and profile plots around genomic features, enrichment fingerprints. For alignment use STAR/BWA; for peak calling use MACS2."
+description: "NGS CLI for ChIP/RNA/ATAC-seq. BAM→bigWig with RPGC/CPM/RPKM, sample correlation/PCA, heatmaps/profiles around features, fingerprints. For alignment use STAR/BWA; for peak calling use MACS2."
 license: BSD-3-Clause
 ---
 
