@@ -1,6 +1,6 @@
 ---
 name: general-figure-guide
-description: "General scientific figure quality checklist for generated plots. Covers visual inspection for overlapping labels, clipped text, missing axes/legends, empty plot areas, overcrowded data, and resolution/format best practices across journals."
+description: "Universal QA checklist for generated scientific plots: overlapping labels, clipped text, missing axes/legends, overcrowded data, and cross-journal resolution/format guidance."
 license: CC-BY-4.0
 ---
 

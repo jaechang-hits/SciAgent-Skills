@@ -1,6 +1,6 @@
 ---
 name: torch-geometric-graph-neural-networks
-description: "PyTorch Geometric (PyG) for graph neural networks. Node classification, graph classification, link prediction with GCN, GAT, GraphSAGE, GIN layers. Message passing framework, mini-batch processing, heterogeneous graphs, neighbor sampling for large-scale learning, model explainability. Supports molecular property prediction (QM9, MoleculeNet), social networks, knowledge graphs, 3D point clouds. For non-graph deep learning use PyTorch directly; for traditional graph algorithms use NetworkX."
+description: "PyTorch Geometric (PyG) for graph neural networks: node/graph classification, link prediction with GCN, GAT, GraphSAGE, GIN. Message passing, mini-batches, heterogeneous graphs, neighbor sampling, explainability. Supports molecules (QM9, MoleculeNet), social/knowledge graphs, 3D point clouds. For non-graph DL use PyTorch; for classical graph algorithms use NetworkX."
 license: MIT
 ---
 

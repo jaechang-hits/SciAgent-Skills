@@ -1,6 +1,6 @@
 ---
 name: "gtopdb-database"
-description: "Query the IUPHAR/BPS Guide to Pharmacology (GtoPdb) REST API for receptor-ligand interaction data, target pharmacology, and quantitative affinity metrics. Retrieve pKi/pIC50/pEC50 values, ligand classifications (approved drugs, biologics, natural products), target families (GPCRs, ion channels, nuclear receptors, kinases), and selectivity profiles across the pharmacological target space."
+description: "Query IUPHAR/BPS Guide to Pharmacology (GtoPdb) REST API for receptor-ligand interactions and affinity (pKi/pIC50/pEC50). Get ligand classes (drugs, biologics, natural products), target families (GPCRs, ion channels, nuclear receptors, kinases), selectivity profiles."
 license: "ODbL-1.0"
 ---
 

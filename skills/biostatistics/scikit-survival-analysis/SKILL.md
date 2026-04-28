@@ -1,6 +1,6 @@
 ---
 name: scikit-survival-analysis
-description: "Survival analysis and time-to-event modeling with scikit-survival. Cox proportional hazards (standard/elastic net), Random Survival Forests, Gradient Boosting, SVMs for censored data. C-index (Harrell/Uno), Brier score, time-dependent AUC evaluation. Kaplan-Meier, Nelson-Aalen, competing risks. scikit-learn Pipeline/GridSearchCV compatible. For frequentist regression use statsmodels; for Bayesian survival use pymc; for simpler parametric models use lifelines."
+description: "Time-to-event modeling with scikit-survival: Cox PH (elastic net), Random Survival Forests, Boosting, SVMs for censored data. C-index, Brier, time-dependent AUC; Kaplan-Meier, Nelson-Aalen, competing risks. Pipeline/GridSearchCV compatible. Use statsmodels for frequentist, pymc for Bayesian, lifelines for parametric."
 license: GPL-3.0
 ---
 

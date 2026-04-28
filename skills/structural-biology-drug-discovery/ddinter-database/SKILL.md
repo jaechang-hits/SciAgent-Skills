@@ -1,6 +1,6 @@
 ---
 name: "ddinter-database"
-description: "Query drug-drug interaction (DDI) data from DDInter via REST API. Search interactions by drug name or ID, retrieve severity levels (major/moderate/minor), interaction mechanisms, and clinical recommendations for drug pairs. Covers 1.7M+ interactions across 2,400+ drugs. No authentication required. For FDA drug labeling use dailymed-database; for pharmacogenomics use clinpgx-database."
+description: "Query DDInter drug-drug interactions via REST API (1.7M+ interactions, 2,400+ drugs). Search by drug name/ID for severity (major/moderate/minor), mechanisms, and clinical recommendations. No auth. For FDA labeling use dailymed-database; for pharmacogenomics use clinpgx-database."
 license: "CC-BY-4.0"
 ---
 

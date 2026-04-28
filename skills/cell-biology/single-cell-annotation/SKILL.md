@@ -1,6 +1,6 @@
 ---
 name: single-cell-annotation
-description: "Guide to annotating cell types in single-cell RNA-seq data. Covers manual marker-based, automated (CellTypist, scAnnotate), and reference-based (scArches, Azimuth, SingleR) approaches with decision framework for tool selection. Includes key marker genes for blood/immune, epithelial, and stromal lineages, validation checklist, and common pitfalls. Cross-references: scanpy-scrna-seq for preprocessing, celltypist-cell-annotation for automated classification, scvi-tools-single-cell for deep-learning-based label transfer."
+description: "Guide to annotating cell types in scRNA-seq. Covers manual marker-based, automated (CellTypist, scAnnotate), and reference-based (scArches, Azimuth, SingleR) approaches with a decision framework. Markers for blood/immune, epithelial, stromal lineages; validation and pitfalls. See scanpy-scrna-seq (prep), celltypist-cell-annotation (auto), scvi-tools (DL transfer)."
 license: CC-BY-4.0
 ---
 

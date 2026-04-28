@@ -1,6 +1,6 @@
 ---
 name: ena-database
-description: "European Nucleotide Archive (ENA) REST API access for genomic sequences, raw reads, assemblies, and annotations. Portal API search with query syntax, Browser API retrieval (XML/FASTA/EMBL), file reports for FASTQ/BAM download URLs, taxonomy queries, cross-references. For multi-database Python queries prefer bioservices; for NCBI-specific queries use pubmed-database or Biopython Entrez."
+description: "ENA REST API for sequences, reads, assemblies, and annotations. Portal API search, Browser API retrieval (XML/FASTA/EMBL), file reports for FASTQ/BAM URLs, taxonomy, cross-refs. For multi-DB Python use bioservices; for NCBI-only use pubmed-database or Biopython Entrez."
 license: Unknown
 ---
 

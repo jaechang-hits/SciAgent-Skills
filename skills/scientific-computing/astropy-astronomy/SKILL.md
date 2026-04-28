@@ -1,6 +1,6 @@
 ---
 name: astropy-astronomy
-description: "Core Python library for astronomy and astrophysics. Units & quantities with dimensional analysis, celestial coordinate transformations (ICRS/Galactic/AltAz/FK5), FITS file handling, table operations (FITS/HDF5/VOTable/CSV), cosmological calculations (Planck18, distance/age/volume), precise time handling (UTC/TAI/TT/TDB, Julian dates, barycentric corrections), WCS pixel-world mapping, model fitting, image visualization. For general data tables use pandas/polars; for radio astronomy interferometry use CASA."
+description: "Core Python library for astronomy/astrophysics: units with dimensional analysis, celestial coordinate transforms (ICRS/Galactic/AltAz/FK5), FITS I/O, tables (FITS/HDF5/VOTable/CSV), cosmology (Planck18, distance/age), precise time (UTC/TAI/TT/TDB, Julian, barycentric), WCS pixel-world mapping, model fitting. For general tables use pandas/polars; for radio interferometry use CASA."
 license: BSD-3-Clause
 ---
 

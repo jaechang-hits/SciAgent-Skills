@@ -1,6 +1,6 @@
 ---
 name: "libsbml-network-modeling"
-description: "Build, read, validate, and modify SBML biological network models using libSBML Python API. Supports all SBML Levels (1–3), reactions with kinetic laws, species/compartments, rules (assignment/rate/algebraic), the FBC extension for flux balance analysis models, and model conversion utilities. Integrates with COBRApy, Tellurium/RoadRunner, and COPASI for simulation. Use when programmatically constructing ODE-based or constraint-based metabolic/signaling models in the standard SBML format."
+description: "Build, read, validate, modify SBML biological network models via the libSBML Python API. SBML Levels 1–3, reactions/kinetic laws, species, rules, FBC extension for flux balance, conversion. Interoperates with COBRApy, Tellurium/RoadRunner, COPASI. Use when programmatically constructing ODE or constraint-based metabolic/signaling models in SBML."
 license: "LGPL-2.1"
 ---
 

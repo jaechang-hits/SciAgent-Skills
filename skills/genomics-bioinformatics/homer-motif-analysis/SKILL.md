@@ -1,6 +1,6 @@
 ---
 name: "homer-motif-analysis"
-description: "De novo motif discovery and known TF motif enrichment in ChIP-seq and ATAC-seq peak sets using HOMER. findMotifsGenome.pl searches for over-represented sequence patterns against a background; annotatePeaks.pl assigns genomic context (TSS distance, gene, repeat). Use after MACS3 peak calling to identify which transcription factors are enriched in your peaks, annotate peaks with nearest genes, and validate ChIP-seq quality by checking the target TF's own motif."
+description: "De novo and known TF motif enrichment in ChIP-seq/ATAC-seq peaks via HOMER. findMotifsGenome.pl finds over-represented patterns vs background; annotatePeaks.pl assigns context (TSS distance, gene, repeat). Use after MACS3 to identify enriched TFs, annotate peaks with nearest genes, and validate ChIP-seq via the target motif."
 license: "GPL-3.0"
 ---
 

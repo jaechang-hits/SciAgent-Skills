@@ -1,6 +1,6 @@
 ---
 name: "hypogenic-hypothesis-generation"
-description: "LLM-driven hypothesis generation and testing on tabular datasets. Three methods: HypoGeniC (data-driven), HypoRefine (literature+data synergy), Union (mechanistic combination). Iterative refinement, Redis caching, multi-hypothesis inference. For manual hypothesis formulation use hypothesis-generation knowhow; for creative ideation use scientific-brainstorming."
+description: "LLM-driven hypothesis generation/testing on tabular data. Three methods: HypoGeniC (data-driven), HypoRefine (literature+data), Union. Iterative refinement, Redis caching, multi-hypothesis inference. Manual: hypothesis-generation; ideation: scientific-brainstorming."
 license: "MIT"
 ---
 

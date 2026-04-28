@@ -1,14 +1,12 @@
 ---
 name: umap-learn
 description: >-
-  UMAP dimensionality reduction for visualization, clustering preprocessing, and feature
+  UMAP dimensionality reduction for visualization, clustering prep, and feature
   engineering. Fast nonlinear manifold learning preserving local and global structure.
-  Standard UMAP (fit/transform, scikit-learn compatible), supervised/semi-supervised
-  with labels, Parametric UMAP (neural network encoder/decoder, TensorFlow), DensMAP
-  (density preservation), AlignedUMAP (temporal/batch datasets). Supports 15+ distance
-  metrics, custom Numba metrics, precomputed distances. Use for 2D/3D visualization,
-  HDBSCAN clustering prep, ML feature pipelines. For linear reduction use PCA; for
-  neighborhood graphs without embedding use scikit-learn NearestNeighbors.
+  Standard UMAP (fit/transform, sklearn-compatible), supervised/semi-supervised,
+  Parametric UMAP (NN encoder/decoder, TensorFlow), DensMAP (density), AlignedUMAP
+  (temporal/batch). 15+ distance metrics, custom Numba metrics, precomputed distances.
+  For linear reduction use PCA; for neighborhood graphs use sklearn NearestNeighbors.
 license: BSD-3-Clause
 ---
 

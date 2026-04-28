@@ -1,6 +1,6 @@
 ---
 name: esm-protein-language-model
-description: "Protein language models (ESM3, ESM C) for sequence generation, structure prediction, inverse folding, and protein embeddings. Use when designing novel proteins, extracting sequence representations for downstream ML, or predicting structure from sequence. Local GPU or EvolutionaryScale Forge cloud API. For traditional structure prediction use AlphaFold; for small-molecule cheminformatics use RDKit."
+description: "Protein language models (ESM3, ESM C) for sequence generation, structure prediction, inverse folding, and embeddings. Design novel proteins, extract ML features, or fold sequences. Local GPU or EvolutionaryScale Forge API. Use AlphaFold for traditional folding; RDKit for small molecules."
 license: MIT
 ---
 

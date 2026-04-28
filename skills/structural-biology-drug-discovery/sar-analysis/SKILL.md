@@ -1,6 +1,6 @@
 ---
 name: sar-analysis
-description: "Guide for performing Structure-Activity Relationship (SAR) analysis using RDKit. Covers core scaffold identification via Maximum Common Substructure (MCS), R-group decomposition, molecular alignment for visualization, activity heatmap generation, and interpretive SAR text output. For general cheminformatics operations, see rdkit-cheminformatics. For bioactivity data retrieval, see chembl-database-bioactivity."
+description: "Structure-Activity Relationship (SAR) analysis with RDKit: scaffold detection via MCS, R-group decomposition, aligned visualization, activity heatmaps, interpretive SAR output. For general cheminformatics see rdkit-cheminformatics; for bioactivity see chembl-database-bioactivity."
 license: CC-BY-4.0
 ---
 

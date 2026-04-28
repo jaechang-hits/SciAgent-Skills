@@ -1,6 +1,6 @@
 ---
 name: scientific-slides
-description: "Create effective scientific presentations for conferences, seminars, thesis defenses, and grant pitches. Slide design principles, talk structure, timing, data visualization for slides, quality assurance. Works with PowerPoint and LaTeX Beamer. For poster creation use latex-research-posters."
+description: "Scientific presentations for conferences, seminars, thesis defenses, and grant pitches. Slide design, talk structure, timing, data viz for slides, QA. PowerPoint and LaTeX Beamer. For posters use latex-research-posters."
 license: CC-BY-4.0
 ---
 

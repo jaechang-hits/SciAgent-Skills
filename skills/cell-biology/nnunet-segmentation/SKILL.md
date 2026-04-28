@@ -1,6 +1,6 @@
 ---
 name: "nnunet-segmentation"
-description: "Train and deploy automated medical image segmentation models using nnU-Net's self-configuring framework that auto-selects optimal architecture, preprocessing, and training for any modality. Supports CT, MRI, microscopy, and ultrasound with 2D, 3D full-res, 3D low-res, and cascade configurations. Pipeline: convert dataset → plan and preprocess → train (5-fold cross-validation) → find best configuration → predict → ensemble. Use when classical segmentation fails and annotated training data is available."
+description: "Medical image segmentation with nnU-Net's self-configuring framework — auto-selects architecture, preprocessing, training for any modality. CT, MRI, microscopy, ultrasound in 2D, 3D full-res, 3D low-res, cascade. Pipeline: convert → plan/preprocess → train (5-fold CV) → best config → predict → ensemble. Use when classical segmentation fails and annotated data exists."
 license: "Apache-2.0"
 ---
 

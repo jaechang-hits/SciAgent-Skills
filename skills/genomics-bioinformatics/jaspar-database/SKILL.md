@@ -1,6 +1,6 @@
 ---
 name: "jaspar-database"
-description: "Query the JASPAR 2024 TF binding profile database via REST API and pyJASPAR. Retrieve position frequency matrices (PFMs) and position weight matrices (PWMs) by TF name, JASPAR ID, species, or structural class. Scan DNA sequences for transcription factor binding sites (TFBS). Browse profiles by taxon (Homo sapiens, Mus musculus) or TF family (bHLH, zinc finger). Use for motif enrichment input, TFBS scanning, and regulatory sequence analysis. For ChIP-seq peak-based motif discovery use homer-motif-analysis; for regulatory variant scoring use regulomedb-database."
+description: "JASPAR 2024 TF binding profiles via REST API and pyJASPAR. Retrieve PFMs/PWMs by TF name, JASPAR ID, species, or structural class. Scan DNA for TFBS; browse by taxon (human, mouse) or TF family (bHLH, zinc finger). Use for motif enrichment input, TFBS scanning, and regulatory sequence analysis. For ChIP-seq peak motif discovery use homer-motif-analysis; for regulatory variant scoring use regulomedb-database."
 license: "CC-BY-4.0"
 ---
 

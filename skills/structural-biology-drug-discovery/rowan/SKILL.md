@@ -1,6 +1,6 @@
 ---
 name: "rowan"
-description: "Rowan is a cloud-based computational chemistry platform providing quantum chemistry calculations via a Python SDK. Use it to run geometry optimization, conformer generation, torsional scans, and energy minimization with DFT or semiempirical methods, and retrieve molecular properties (dipole moment, partial charges, frontier orbital energies) — without managing local quantum chemistry software or HPC clusters."
+description: "Cloud quantum chemistry platform with Python SDK. Run geometry optimization, conformer generation, torsional scans, and energy minimization (DFT/semiempirical), and retrieve properties (dipole, partial charges, frontier orbitals) — no local QC software or HPC needed."
 license: "Proprietary"
 ---
 

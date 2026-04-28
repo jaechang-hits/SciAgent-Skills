@@ -1,6 +1,6 @@
 ---
 name: "simpleitk-image-registration"
-description: "Register, segment, filter, and resample 3D medical images (MRI, CT, microscopy) using SimpleITK's Python API with support for DICOM, NIfTI, and multi-modal image analysis. Provides rigid/affine/deformable registration, threshold and region-growing segmentation, Gaussian and morphological filtering, label statistics, and format conversion. Use when aligning volumetric images across timepoints or modalities, automating segmentation of fluorescence microscopy, or converting DICOM series to NIfTI for analysis pipelines."
+description: "Register, segment, filter, resample 3D medical images (MRI, CT, microscopy) via SimpleITK Python; DICOM, NIfTI, multi-modal. Rigid/affine/deformable registration, threshold/region-growing segmentation, Gaussian/morph filtering, label stats, format conversion. Use to align volumes across timepoints/modalities, segment fluorescence, or convert DICOM→NIfTI."
 license: "Apache-2.0"
 ---
 

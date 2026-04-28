@@ -1,11 +1,11 @@
 ---
 name: statistical-analysis
 description: >-
-  Guided statistical analysis: test selection, assumption checking, effect sizes, power analysis, and APA reporting.
-  Use when choosing appropriate tests for your data, verifying assumptions, calculating effect sizes,
-  or formatting results for publication. Covers frequentist (t-test, ANOVA, chi-square, regression, correlation,
-  survival, count models, agreement/reliability) and Bayesian alternatives.
-  For implementing specific models use statsmodels or pymc-bayesian-modeling.
+  Guided statistical analysis: test choice, assumption checks, effect
+  sizes, power, APA reporting. Pick tests, verify assumptions, or
+  format results for publication. Covers frequentist (t-test, ANOVA,
+  chi-square, regression, correlation, survival, count, reliability)
+  and Bayesian. Use statsmodels or pymc-bayesian-modeling to fit.
 license: CC-BY-4.0
 ---
 

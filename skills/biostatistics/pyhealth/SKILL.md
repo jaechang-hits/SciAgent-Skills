@@ -1,6 +1,6 @@
 ---
 name: "pyhealth"
-description: "PyHealth is a Python library for healthcare machine learning. Build clinical prediction models from EHR (Electronic Health Record) data: process MIMIC-III/IV, eICU, and OMOP-CDM datasets, encode medical codes (ICD, ATC, NDC), construct patient-level datasets, and train models (Transformer, RETAIN, GRASP, MedBERT) for tasks including mortality prediction, drug recommendation, readmission, and diagnosis prediction. Alternatives: FIDDLE (EHR preprocessing only), clinical-longformer (NLP on clinical notes only), ehr-ml (EHR embedding only)."
+description: "Python library for healthcare ML on EHR data: process MIMIC-III/IV, eICU, OMOP-CDM; encode medical codes (ICD, ATC, NDC); build patient-level datasets; train Transformer, RETAIN, GRASP, MedBERT for mortality, drug recommendation, readmission, diagnosis prediction. Alternatives: FIDDLE (preprocessing), clinical-longformer (clinical NLP), ehr-ml (embeddings)."
 license: "BSD-3-Clause"
 ---
 

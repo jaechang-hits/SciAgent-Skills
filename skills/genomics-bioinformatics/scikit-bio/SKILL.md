@@ -1,13 +1,11 @@
 ---
 name: scikit-bio
 description: >-
-  Python library for biological data analysis covering sequence manipulation
-  (DNA, RNA, protein), pairwise/multiple alignment, phylogenetic tree
-  construction (NJ, UPGMA), diversity metrics (alpha: Shannon, Faith PD;
-  beta: Bray-Curtis, UniFrac), ordination (PCoA, CCA, RDA), statistical
-  testing (PERMANOVA, ANOSIM, Mantel), and biological file I/O (FASTA,
-  FASTQ, Newick, BIOM). Use for microbiome analysis, community ecology,
-  phylogenetics, or biological sequence processing.
+  Python library for biology: sequence manipulation (DNA/RNA/protein),
+  pairwise/multiple alignment, phylogenetic trees (NJ, UPGMA), diversity
+  (Shannon, Faith PD, Bray-Curtis, UniFrac), ordination (PCoA, CCA, RDA),
+  stats (PERMANOVA, ANOSIM, Mantel), file I/O (FASTA, FASTQ, Newick,
+  BIOM). Use for microbiome, community ecology, or phylogenetics.
 license: BSD-3-Clause
 ---
 

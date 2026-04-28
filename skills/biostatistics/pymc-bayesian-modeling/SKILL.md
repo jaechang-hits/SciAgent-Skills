@@ -1,6 +1,6 @@
 ---
 name: "pymc-bayesian-modeling"
-description: "Bayesian modeling with PyMC 5. 8-step workflow: define model, set priors, define likelihood, sample (NUTS/ADVI), diagnose (R-hat, ESS, divergences), interpret posteriors, compare models (LOO/WAIC), predict. Hierarchical, logistic, GP model variants. Prior/posterior predictive checks."
+description: "Bayesian modeling with PyMC 5: priors, likelihood, NUTS/ADVI sampling, diagnostics (R-hat, ESS), LOO/WAIC comparison, prediction. Hierarchical, logistic, GP variants; predictive checks."
 license: "Apache-2.0"
 ---
 

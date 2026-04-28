@@ -1,6 +1,6 @@
 ---
 name: "opencv-bioimage-analysis"
-description: "Computer vision library for bio-image preprocessing, feature detection, and real-time microscopy analysis. Performs color space conversion, morphological operations, contour/blob detection, template matching, and optical flow on fluorescence and brightfield images. 10-100× faster than pure Python implementations using optimized C++ kernels. Use scikit-image for scientific morphometry and regionprops; use OpenCV for real-time processing, video, and classical feature extraction pipelines."
+description: "Computer vision for bio-image preprocessing, feature detection, real-time microscopy. Color conversion, morphology, contour/blob detection, template matching, optical flow on fluorescence/brightfield. 10-100× faster than pure Python via C++. Use scikit-image for scientific morphometry/regionprops; OpenCV for real-time, video, classical feature extraction."
 license: "Apache-2.0"
 ---
 

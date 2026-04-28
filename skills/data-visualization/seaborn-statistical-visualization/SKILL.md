@@ -1,6 +1,6 @@
 ---
 name: seaborn-statistical-visualization
-description: "Statistical visualization built on matplotlib with pandas integration. Distribution plots (histplot, kdeplot, violinplot, boxplot), relational plots (scatterplot, lineplot), categorical comparisons, regression, correlation heatmaps. Automatic aggregation and CI. For interactive plots use plotly; for low-level control use matplotlib."
+description: "Statistical visualization on matplotlib + pandas. Distributions (histplot, kdeplot, violin, box), relational (scatter, line), categorical, regression, correlation heatmaps. Auto aggregation/CIs. Use plotly for interactive; matplotlib for low-level."
 license: BSD-3-Clause
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "pymoo"
-description: "pymoo is a Python framework for single- and multi-objective optimization using evolutionary algorithms. Define problems as vectorized objective functions and constraints, then solve with NSGA-II, NSGA-III, MOEA/D, genetic algorithms, or differential evolution. Analyze Pareto fronts, visualize trade-off surfaces, and customize operators and callbacks. Ideal for engineering design, hyperparameter search, process optimization, and any problem with multiple conflicting objectives. Alternatives: scipy.optimize (single-objective, gradient-based), platypus (fewer algorithms), jMetalPy (Java-based, more algorithms)."
+description: "Python framework for single- and multi-objective optimization with evolutionary algorithms. Define vectorized objectives and constraints; solve with NSGA-II, NSGA-III, MOEA/D, GAs, or differential evolution. Analyze Pareto fronts, visualize trade-offs, customize operators and callbacks. For engineering design, hyperparameter search, and conflicting objectives. Alternatives: scipy.optimize (single-objective, gradient), platypus, jMetalPy (Java)."
 license: "Apache-2.0"
 ---
 

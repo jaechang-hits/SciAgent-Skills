@@ -1,6 +1,6 @@
 ---
 name: kegg-pathway-analysis
-description: "Guide to KEGG pathway enrichment analysis for differential expression results. Covers over-representation analysis (ORA) vs gene set enrichment analysis (GSEA), mandatory directionality splitting, KEGG organism codes, API failure handling with offline fallbacks, cross-condition pathway comparisons, and answer-first reporting. Consult this when running pathway enrichment with clusterProfiler or gseapy on DEG results."
+description: "Guide to KEGG pathway enrichment for DEG results. Covers ORA vs GSEA, mandatory directionality splitting, KEGG organism codes, API failure handling with offline fallbacks, cross-condition comparisons, and answer-first reporting. Consult when running enrichment with clusterProfiler or gseapy."
 license: CC-BY-4.0
 ---
 

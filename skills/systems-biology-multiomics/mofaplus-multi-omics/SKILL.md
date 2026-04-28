@@ -1,6 +1,6 @@
 ---
 name: "mofaplus-multi-omics"
-description: "Multi-Omics Factor Analysis v2 (MOFA+) with mofapy2. Jointly decompose multiple omics layers (scRNA-seq, ATAC-seq, proteomics, methylation) into latent factors that capture major sources of biological variation. Supports multi-group designs (patients, conditions). Pipeline: prepare AnnData views → create MOFA object → train → inspect variance explained → correlate factors with metadata → visualize and cluster → enrichment of top loadings."
+description: "Multi-Omics Factor Analysis v2 (MOFA+) with mofapy2. Jointly decompose omics layers (scRNA, ATAC, proteomics, methylation) into latent factors capturing major variation. Multi-group designs. AnnData views → MOFA object → train → variance explained → correlate factors with metadata → visualize/cluster → enrich top loadings."
 license: "LGPL-3.0"
 ---
 

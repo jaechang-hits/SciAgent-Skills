@@ -1,6 +1,6 @@
 ---
 name: "regulomedb-database"
-description: "Query RegulomeDB v2 REST API to score genetic variants for regulatory function and retrieve overlapping regulatory evidence (TF binding sites, histone marks, DNase-seq peaks, eQTLs, motifs). Score a single rsID or genomic position, batch-score variant lists, search regions for all regulatory variants, and retrieve full annotation details. Scores range from 1a (strongest: eQTL + TF + DNase + motif) to 7 (no known regulatory function). Use for GWAS hit prioritization, regulatory variant annotation, and cis-regulatory element discovery. For clinical pathogenicity use clinvar-database; for GWAS associations use gwas-database."
+description: "Query RegulomeDB v2 REST API to score variants for regulatory function and retrieve overlapping evidence (TF binding, histone marks, DNase peaks, eQTLs, motifs). Score single rsID/position, batch lists, region searches, and full annotations. Scores range 1a (strongest: eQTL+TF+DNase+motif) to 7 (none). Use for GWAS hit prioritization, regulatory variant annotation, cis-regulatory discovery. Use clinvar-database for pathogenicity; gwas-database for trait associations."
 license: "CC-BY-4.0"
 ---
 

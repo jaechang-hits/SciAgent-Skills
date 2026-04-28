@@ -1,11 +1,10 @@
 ---
 name: bioservices-multi-database
 description: >
-  Unified Python interface to 40+ bioinformatics web services via bioservices library. Query
-  UniProt proteins, KEGG pathways, ChEMBL/ChEBI/PubChem compounds, run BLAST searches, map
-  identifiers across databases, retrieve GO annotations, and find protein-protein interactions.
-  For single-database deep queries use dedicated tools (gget for Ensembl, pubchempy for PubChem);
-  bioservices excels at cross-database integration workflows.
+  Unified Python interface to 40+ bioinformatics web services: UniProt proteins, KEGG
+  pathways, ChEMBL/ChEBI/PubChem, BLAST, cross-database ID mapping, GO annotations, PPI.
+  For deep single-DB queries use dedicated tools (gget for Ensembl, pubchempy for
+  PubChem); bioservices excels at cross-database workflows.
 license: GPLv3
 ---
 

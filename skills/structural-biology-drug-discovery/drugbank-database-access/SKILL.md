@@ -1,6 +1,6 @@
 ---
 name: "drugbank-database-access"
-description: "Parse and query DrugBank local XML database for drug information, interactions, targets, and chemical properties. Search drugs by ID/name/CAS, extract drug-drug interactions with severity, map targets/enzymes/transporters, compute molecular similarity from SMILES. Primary access via local XML (downloaded); REST API available but rate-limited (3,000/month dev tier). For live bioactivity queries use chembl-database-bioactivity; for compound property lookups use pubchem-compound-search."
+description: "Parse local DrugBank XML for drug info, interactions, targets, and properties. Search by ID/name/CAS, extract DDIs with severity, map targets/enzymes/transporters, compute SMILES similarity. Primary via local XML; REST API rate-limited (3k/month dev). For live bioactivity use chembl-database-bioactivity; for compound properties use pubchem-compound-search."
 license: "Unknown"
 ---
 

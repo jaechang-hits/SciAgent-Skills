@@ -1,6 +1,6 @@
 ---
 name: matchms-spectral-matching
-description: Mass spectrometry spectral matching and metabolite identification with matchms. Use for importing spectra (mzML, MGF, MSP, JSON), filtering/normalizing peaks, computing spectral similarity (cosine, modified cosine, fingerprint), building reproducible processing pipelines, and identifying unknown metabolites from spectral libraries. For full LC-MS/MS proteomics pipelines, use pyopenms instead.
+description: MS spectral matching and metabolite ID with matchms. Import spectra (mzML, MGF, MSP, JSON), filter/normalize peaks, score similarity (cosine, modified cosine, fingerprint), build reproducible pipelines, identify unknowns vs spectral libraries. Use pyopenms for full LC-MS/MS proteomics.
 license: Apache-2.0
 ---
 

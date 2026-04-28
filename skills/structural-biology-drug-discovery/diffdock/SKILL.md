@@ -1,6 +1,6 @@
 ---
 name: "diffdock"
-description: "DiffDock is a diffusion-based molecular docking tool that predicts protein-ligand binding poses without requiring a predefined binding site. Use it when the binding site is unknown, when traditional docking fails, or when exploring multiple binding modes. Pipeline: prepare protein (PDB) and ligand (SMILES/SDF) inputs → run DiffDock inference → analyze confidence-ranked poses → visualize in PyMOL or NGLview."
+description: "Diffusion-based docking that predicts protein-ligand poses without a predefined site. Use for blind docking, when traditional docking fails, or exploring multiple binding modes. Pipeline: prep protein (PDB) and ligand (SMILES/SDF), run inference, analyze confidence-ranked poses."
 license: "MIT"
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "etetoolkit"
-description: "ETE Toolkit (ETE3) is a Python environment for phylogenetic tree analysis, manipulation, and visualization. Parse Newick/NHX/PhyloXML trees, traverse and annotate nodes, render publication-quality figures with TreeStyle/NodeStyle, integrate NCBI taxonomy for taxon-aware operations, and run PhyloTree workflows for comparative genomics. Use for building species trees, gene family evolution analysis, and annotated tree figures."
+description: "ETE Toolkit (ETE3): Python phylogenetic tree analysis and visualization. Parse Newick/NHX/PhyloXML, traverse/annotate nodes, render figures with TreeStyle/NodeStyle, integrate NCBI taxonomy, run PhyloTree comparative genomics. Use for species trees, gene family evolution, annotated tree figures."
 license: "GPL-3.0"
 ---
 

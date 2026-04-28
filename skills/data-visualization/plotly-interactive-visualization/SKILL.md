@@ -1,6 +1,6 @@
 ---
 name: plotly-interactive-visualization
-description: "Interactive visualization with Plotly. 40+ chart types (scatter, line, bar, heatmap, 3D, statistical, geographic) with hover, zoom, and pan. Use for exploratory analysis, dashboards, and presentations. Two APIs: Plotly Express (quick, DataFrame-oriented) and Graph Objects (fine-grained control). For static publication figures use matplotlib; for statistical grammar use seaborn."
+description: "Interactive visualization with Plotly. 40+ chart types (scatter, line, heatmap, 3D, geographic) with hover, zoom, pan. Two APIs: Plotly Express (DataFrame) and Graph Objects (fine control). For static publication figures use matplotlib; for statistical grammar use seaborn."
 license: MIT
 ---
 

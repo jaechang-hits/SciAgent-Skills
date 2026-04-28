@@ -1,6 +1,6 @@
 ---
 name: "neurokit2"
-description: "NeuroKit2 is a Python toolkit for neurophysiological signal processing. Process ECG (heart rate, HRV, R-peak detection), EEG (complexity, power spectral density), EMG (muscle activation onset), EDA/GSR (skin conductance, SCR decomposition), PPG (photoplethysmography), and RSP (respiration) signals. Simulate synthetic signals for testing. Alternatives: BioSPPy (older, less maintained), MNE (EEG/MEG specialist), heartpy (ECG only), scipy.signal (raw DSP without biosignal abstraction)."
+description: "Python toolkit for neurophysiological signal processing: ECG (HR, HRV, R-peaks), EEG (complexity, PSD), EMG (activation onset), EDA/GSR (SCR decomposition), PPG, and RSP. Includes synthetic signal simulation. Alternatives: BioSPPy (less maintained), MNE (EEG/MEG specialist), heartpy (ECG only), scipy.signal (raw DSP)."
 license: "MIT"
 ---
 

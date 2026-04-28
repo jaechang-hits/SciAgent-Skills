@@ -1,6 +1,6 @@
 ---
 name: "biopython-molecular-biology"
-description: "Computational molecular biology toolkit for sequence manipulation, file I/O (FASTA/GenBank/PDB), NCBI database access (Entrez), BLAST automation, pairwise/multiple sequence alignment, protein structure analysis (Bio.PDB), and phylogenetic tree construction. Use for batch sequence processing, custom bioinformatics pipelines, format conversion, and programmatic PubMed/GenBank queries. For quick gene lookups use gget; for multi-service REST APIs use bioservices."
+description: "Molecular biology toolkit: sequence manipulation, FASTA/GenBank/PDB I/O, NCBI Entrez, BLAST automation, pairwise/MSA alignment, Bio.PDB, phylogenetic trees. Use for batch processing, custom pipelines, format conversion, PubMed/GenBank queries. For quick gene lookups use gget; for multi-service REST APIs use bioservices."
 license: "Biopython License (BSD-like)"
 ---
 

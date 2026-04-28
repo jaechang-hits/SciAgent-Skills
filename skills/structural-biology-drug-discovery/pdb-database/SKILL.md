@@ -1,6 +1,6 @@
 ---
 name: "pdb-database"
-description: "Query RCSB PDB (200K+ experimental structures) via rcsb-api Python SDK. Text, attribute, sequence, and structure similarity search. Fetch metadata via Schema or GraphQL. Download PDB/mmCIF coordinate files. For AlphaFold predicted structures use alphafold-database-access."
+description: "Query RCSB PDB (200K+ structures) via rcsb-api SDK. Text/attribute/sequence/3D similarity search; metadata via GraphQL; download PDB/mmCIF. For AlphaFold predictions use alphafold-database-access."
 license: "BSD-3-Clause"
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: matlab-scientific-computing
-description: "MATLAB/GNU Octave numerical computing for matrix operations, linear algebra, differential equations, signal processing, optimization, statistics, and scientific visualization. Code examples in MATLAB syntax (runs on both MATLAB and Octave). For Python-based scientific computing use numpy/scipy; for statistical modeling use statsmodels."
+description: "MATLAB/GNU Octave numerical computing: matrices, linear algebra, ODEs, signal processing, optimization, statistics, scientific visualization. MATLAB-syntax examples run on both. For Python use numpy/scipy; for statistical modeling use statsmodels."
 license: "GPL-3.0 (GNU Octave); MATLAB requires commercial license"
 ---
 

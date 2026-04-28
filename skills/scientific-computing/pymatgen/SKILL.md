@@ -1,6 +1,6 @@
 ---
 name: "pymatgen"
-description: "pymatgen (Python Materials Genomics) is a materials science Python library for structure analysis, thermodynamics, and electronic property calculation. Parse and create crystal structures (CIF, POSCAR, CIF), query the Materials Project database for DFT-computed properties, analyze phase diagrams and pourbaix diagrams, compute X-ray diffraction patterns, and generate DFT input files for VASP, Quantum ESPRESSO, and CP2K. Alternatives: ASE (Atomic Simulation Environment) for MD/geometry; AFLOW for high-throughput; OVITO for visualization."
+description: "Python Materials Genomics library for structure analysis, thermodynamics, and electronic properties. Parse/create crystal structures (CIF, POSCAR), query Materials Project for DFT-computed properties, analyze phase and Pourbaix diagrams, compute XRD patterns, generate DFT inputs for VASP, Quantum ESPRESSO, CP2K. Alternatives: ASE (MD/geometry), AFLOW (high-throughput), OVITO (visualization)."
 license: "MIT"
 ---
 

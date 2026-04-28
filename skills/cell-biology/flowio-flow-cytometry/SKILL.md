@@ -1,6 +1,6 @@
 ---
 name: flowio-flow-cytometry
-description: "Parse and create FCS (Flow Cytometry Standard) files v2.0-3.1. Read event data as NumPy arrays, extract channel metadata, handle multi-dataset files, export to CSV/FCS. For advanced gating and compensation use FlowKit."
+description: "Parse/write FCS (Flow Cytometry) files v2.0-3.1. Events as NumPy, channel metadata, multi-dataset files, CSV/FCS export. Use FlowKit for gating/compensation."
 license: BSD-3-Clause
 ---
 

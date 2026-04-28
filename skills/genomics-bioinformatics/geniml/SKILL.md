@@ -1,6 +1,6 @@
 ---
 name: "geniml"
-description: "Geniml is a Python library for genomic interval machine learning. Train and apply region2vec embeddings to convert BED file regions into numeric vectors, load and index genomic interval datasets for ML pipelines, search embedding spaces with BEDSpace, and evaluate embedding quality. Use for chromatin accessibility clustering, regulatory element classification, cross-sample region comparison, and building ML models on genomic intervals."
+description: "Python library for genomic interval ML. Train/apply region2vec embeddings turning BED regions into vectors, index interval datasets for ML, search embedding space with BEDSpace, and evaluate embedding quality. Use for chromatin accessibility clustering, regulatory element classification, and cross-sample region comparison."
 license: "BSD-2-Clause"
 ---
 

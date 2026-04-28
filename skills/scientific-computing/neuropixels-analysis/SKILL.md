@@ -1,6 +1,6 @@
 ---
 name: "neuropixels-analysis"
-description: "Pipeline for analyzing Neuropixels extracellular electrophysiology recordings. Covers probe geometry loading (ProbeInterface), spike sorting with Kilosort via SpikeInterface, quality metrics computation, unit curation (ISI violations, firing rate, signal-to-noise), and post-sort analysis (PSTH, tuning curves, population decoding) using pandas and matplotlib. Designed for acute and chronic Neuropixels 1.0/2.0/Ultra recordings from rodent and primate experiments."
+description: "Pipeline for Neuropixels extracellular electrophysiology: probe geometry (ProbeInterface), Kilosort sorting via SpikeInterface, quality metrics, unit curation (ISI, firing rate, SNR), post-sort analysis (PSTH, tuning curves, population decoding). Supports Neuropixels 1.0/2.0/Ultra in rodent/primate experiments."
 license: "MIT"
 ---
 

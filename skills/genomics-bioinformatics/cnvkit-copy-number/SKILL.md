@@ -1,6 +1,6 @@
 ---
 name: "cnvkit-copy-number"
-description: "Detect somatic copy number variants (CNVs) from WES, WGS, or targeted sequencing BAM files with CNVkit v0.9.x. Pipeline: calculate bin-level coverage in target/antitarget regions, normalize against a reference, segment copy ratios with CBS or HMM, call amplifications and deletions, generate scatter/diagram plots, estimate tumor purity and ploidy, and export to VCF/SEG. Both CLI and Python API (cnvlib) shown. Use GATK CNV instead for deep WGS with population-scale controls; use CNVkit for targeted or exome sequencing where antitarget bins are critical."
+description: "Detect somatic CNVs from WES/WGS/targeted BAMs (CNVkit v0.9.x). Bin coverage in target/antitarget regions, normalize vs reference, segment with CBS/HMM, call amps/dels, scatter/diagram plots, purity/ploidy, VCF/SEG export. CLI plus Python API (cnvlib). Use GATK CNV for deep WGS with population controls; use CNVkit for targeted/exome where antitarget bins matter."
 license: "Apache-2.0"
 ---
 

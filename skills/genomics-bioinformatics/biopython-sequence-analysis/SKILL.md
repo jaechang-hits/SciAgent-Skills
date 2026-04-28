@@ -1,6 +1,6 @@
 ---
 name: "biopython-sequence-analysis"
-description: "Biopython toolkit for sequence analysis workflows: parse FASTA/FASTQ/GenBank/GFF with SeqIO, query NCBI databases via Entrez (esearch/efetch/elink), run remote and local BLAST with result parsing, perform pairwise and multiple sequence alignment (PairwiseAligner, MUSCLE/ClustalW), and build/visualize phylogenetic trees (Phylo module). Use for gene family studies, phylogenomics, comparative genomics, and programmatic NCBI pipelines. For PCR design, restriction digestion, and cloning workflows use biopython-molecular-biology; for SAM/BAM alignments use pysam."
+description: "Biopython sequence analysis: parse FASTA/FASTQ/GenBank/GFF (SeqIO), NCBI Entrez (esearch/efetch/elink), remote/local BLAST, pairwise/MSA alignment (PairwiseAligner, MUSCLE/ClustalW), phylogenetic trees (Phylo). Use for gene family studies, phylogenomics, comparative genomics, NCBI pipelines. For PCR/restriction/cloning use biopython-molecular-biology; for SAM/BAM use pysam."
 license: "Biopython License (BSD-like)"
 ---
 

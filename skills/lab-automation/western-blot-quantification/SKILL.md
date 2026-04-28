@@ -1,6 +1,6 @@
 ---
 name: western-blot-quantification
-description: "Guide to quantitative Western blot analysis covering band detection, two-step normalization, fold change calculation, statistical aggregation across biological replicates, and publication-ready visualization. Consult when analyzing blot images with multiple conditions and repetitions, choosing normalization strategies, or preparing densitometry figures for publication."
+description: "Quantitative Western blot analysis: band detection, two-step normalization, fold change, replicate aggregation, publication-ready figures. Use for multi-condition, multi-replicate blots, picking a normalization strategy, or preparing densitometry figures."
 license: CC-BY-4.0
 ---
 

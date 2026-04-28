@@ -1,6 +1,6 @@
 ---
 name: lancet-figure-guide
-description: "Figure and image preparation guide for The Lancet. Covers resolution (300+ DPI at 120% size), file formats (PowerPoint, Word, SVG preferred), column widths (75/154 mm), Times New Roman font, and Lancet in-house redraw policy."
+description: "The Lancet figure preparation: resolution (300+ DPI at 120%), preferred editable formats (PowerPoint/Word/SVG), column widths (75/154 mm), Times New Roman, in-house redraw policy."
 license: CC-BY-4.0
 compatibility: Python 3.10+, Pillow, Matplotlib
 metadata:

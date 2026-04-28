@@ -1,6 +1,6 @@
 ---
 name: "cellpose-cell-segmentation"
-description: "Deep learning cell and nucleus segmentation from fluorescence and brightfield microscopy images. Uses pre-trained models (cyto3, nuclei, tissuenet) and a generalist flow-based algorithm that segments cells without requiring retraining on new image types. Outputs label masks for downstream morphology measurement and tracking. Use scikit-image watershed for rule-based segmentation; use Cellpose when deep learning generalization across staining conditions is needed."
+description: "DL cell/nucleus segmentation for fluorescence and brightfield microscopy. Pre-trained models (cyto3, nuclei, tissuenet) and a generalist flow-based algorithm segment cells without retraining. Outputs label masks for morphology and tracking. Use scikit-image watershed for rule-based; Cellpose when DL generalization across staining is needed."
 license: "BSD-3-Clause"
 ---
 

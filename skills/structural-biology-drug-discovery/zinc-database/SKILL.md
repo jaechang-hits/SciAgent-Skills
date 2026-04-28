@@ -1,6 +1,6 @@
 ---
 name: "zinc-database"
-description: "Query ZINC15/ZINC22 virtual compound libraries for drug discovery. Search purchasable lead-like, fragment-like, and drug-like compounds by molecular weight, logP, reactivity class, or SMILES similarity. Download 3D compound sets for docking, retrieve SMILES for in-silico screening. ZINC20 contains 1.4B compounds; purchasable subset is 750M. For bioactivity data use chembl-database-bioactivity; for approved drugs use drugbank-database-access."
+description: "Query ZINC15/ZINC22 virtual compound libraries (1.4B compounds, 750M purchasable). Search lead/fragment/drug-like compounds by MW, logP, reactivity, or SMILES similarity; download 3D sets for docking. For bioactivity use chembl-database-bioactivity; for approved drugs use drugbank-database-access."
 license: "CC-BY-4.0"
 ---
 

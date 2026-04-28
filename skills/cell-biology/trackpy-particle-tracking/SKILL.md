@@ -1,6 +1,6 @@
 ---
 name: "trackpy-particle-tracking"
-description: "Python library for tracking particles (fluorescent spots, colloids, vesicles, cells) in video microscopy using the Crocker-Grier algorithm. Core modules: locate particles in single frames, batch-process image sequences, link positions into trajectories, filter short-lived tracks, and compute mean squared displacement (MSD) for diffusion analysis. Supports 2D and 3D tracking with subpixel accuracy. Integrates with pims for reading TIF stacks, AVI, and image series. Use when you need quantitative single-particle tracking (SPT) from fluorescence or brightfield video and downstream diffusion coefficient extraction."
+description: "Python library for single-particle tracking (SPT) in video microscopy via the Crocker-Grier algorithm. Locate particles (fluorescent spots, colloids, vesicles, cells) per frame, link into trajectories, filter short tracks, and compute MSD for diffusion analysis. 2D/3D with subpixel accuracy; reads TIF stacks, AVI, image series via pims. Use for quantitative SPT and diffusion coefficient extraction from fluorescence or brightfield video."
 license: "BSD-3-Clause"
 ---
 

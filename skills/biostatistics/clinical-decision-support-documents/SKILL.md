@@ -1,6 +1,6 @@
 ---
 name: clinical-decision-support-documents
-description: "Guidelines for generating clinical decision support (CDS) documents: patient cohort analyses (biomarker-stratified outcomes) and treatment recommendation reports (GRADE-graded evidence). Covers document structure, executive summary design, evidence grading (GRADE 1A–2C), statistical reporting (HR, CI, survival), and biomarker integration. Use when creating pharmaceutical research documents, clinical guidelines, or regulatory submissions."
+description: "Guidelines for clinical decision support (CDS) documents: biomarker-stratified cohort analyses and GRADE-graded treatment reports. Covers structure, executive summaries, evidence grading (1A–2C), stats (HR, CI, survival), and biomarker integration. Use for pharma research docs, clinical guidelines, regulatory submissions."
 license: CC-BY-4.0
 ---
 

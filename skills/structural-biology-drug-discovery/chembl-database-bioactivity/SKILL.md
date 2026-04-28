@@ -1,6 +1,6 @@
 ---
 name: chembl-database-bioactivity
-description: Query ChEMBL bioactive molecules and drug discovery data using the Python SDK. Search compounds by structure/properties, retrieve bioactivity data (IC50, Ki, EC50), find inhibitors for targets, perform SAR studies, and access drug mechanism/indication data for medicinal chemistry research.
+description: Query ChEMBL via Python SDK. Search compounds by structure/properties, retrieve bioactivity (IC50, Ki, EC50), find target inhibitors, run SAR, access drug mechanism/indication data.
 license: CC-BY-SA-3.0
 ---
 

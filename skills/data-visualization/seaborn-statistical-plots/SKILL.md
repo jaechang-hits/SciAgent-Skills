@@ -1,6 +1,6 @@
 ---
 name: "seaborn-statistical-plots"
-description: "Statistical visualization library built on matplotlib with native pandas DataFrame support. Automatic aggregation, confidence intervals, and grouping for distribution plots (histplot, kdeplot), categorical comparisons (boxplot, violinplot, stripplot), relational plots (scatterplot, lineplot), regression plots (regplot, lmplot), matrix plots (heatmap, clustermap), and multi-variable grids (pairplot, jointplot, FacetGrid). Use seaborn for statistical summaries with minimal code; use matplotlib for fine-grained figure control; use plotly for interactive HTML output."
+description: "Statistical visualization on matplotlib with native pandas support. Auto aggregation, CIs, grouping for distributions (histplot, kdeplot), categorical (boxplot, violinplot), relational (scatterplot, lineplot), regression (regplot, lmplot), matrix (heatmap, clustermap), grids (pairplot, FacetGrid). Use for quick statistical summaries; matplotlib for fine control; plotly for interactive HTML."
 license: BSD-3-Clause
 ---
 

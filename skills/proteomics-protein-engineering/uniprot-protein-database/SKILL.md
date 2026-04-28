@@ -1,6 +1,6 @@
 ---
 name: uniprot-protein-database
-description: "Query UniProt protein database via REST API. Search by gene/protein name, retrieve FASTA sequences, map IDs across databases (Ensembl, PDB, RefSeq), access Swiss-Prot annotations. For unified multi-database access use bioservices; for protein structure use alphafold-database."
+description: "Query UniProt REST API: search by gene/protein name, fetch FASTA, map IDs (Ensembl, PDB, RefSeq), access Swiss-Prot annotations. Use bioservices for multi-DB access; alphafold-database for structures."
 license: CC-BY-4.0
 ---
 

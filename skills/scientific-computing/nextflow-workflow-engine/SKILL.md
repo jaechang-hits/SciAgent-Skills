@@ -1,6 +1,6 @@
 ---
 name: "nextflow-workflow-engine"
-description: "Dataflow-based scientific workflow engine for scalable bioinformatics pipelines. Nextflow defines processes (containerized tasks) connected by channels (data queues); supports local, HPC (SLURM/SGE), cloud (AWS/GCP/Azure), and Kubernetes execution with a single config change. Powers the nf-core community pipeline library. Use Snakemake instead for rule-based workflows with Python integration; use Nextflow for containerized, cloud-native, and nf-core-based pipelines."
+description: "Dataflow workflow engine for scalable bioinformatics pipelines. Defines processes (containerized tasks) connected by channels; runs local, HPC (SLURM/SGE), cloud (AWS/GCP/Azure), or Kubernetes via a single config change. Powers nf-core. Use Snakemake for rule-based Python workflows; use Nextflow for containerized, cloud-native, and nf-core pipelines."
 license: "Apache-2.0"
 ---
 

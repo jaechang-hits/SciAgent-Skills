@@ -1,6 +1,6 @@
 ---
 name: "pylabrobot"
-description: "PyLabRobot is a hardware-agnostic Python library for liquid handling robots. Use it to write portable automation scripts that run on Hamilton STAR, Tecan Freedom EVO, Opentrons OT-2, or a simulation backend — without vendor lock-in. Ideal for protocol automation, method development, plate reformatting, serial dilutions, and integrating liquid handlers into larger Python-based lab workflows."
+description: "Hardware-agnostic Python liquid-handler library: portable scripts run on Hamilton STAR, Tecan Freedom EVO, Opentrons OT-2, or a simulator without vendor lock-in. For protocol automation, method dev, plate reformatting, serial dilutions, and Python lab workflows."
 license: "MIT"
 ---
 

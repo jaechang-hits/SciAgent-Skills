@@ -1,6 +1,6 @@
 ---
 name: "mouse-phenome-database"
-description: "Retrieve quantitative phenotype measurements across inbred mouse strains from the Mouse Phenome Database (MPD) for metabolic, behavioral, and physiological traits. Query strain means and raw individual measurements for body weight, glucose, blood pressure, behavioral assays, and 40+ additional procedures. Use for QTL analysis support, cross-strain phenotype comparison, and identifying mouse models for metabolic or behavioral traits. For mouse gene-disease-phenotype associations use monarch-database; for mouse genome annotations use ensembl-database."
+description: "Retrieve quantitative phenotypes across inbred mouse strains from MPD: metabolic, behavioral, physiological traits. Query strain means and raw measurements for body weight, glucose, blood pressure, behavioral assays, 40+ procedures. Use for QTL support, cross-strain comparison, mouse model selection. Use monarch-database for gene-disease associations; ensembl-database for genome annotations."
 license: "CC-BY-4.0"
 ---
 

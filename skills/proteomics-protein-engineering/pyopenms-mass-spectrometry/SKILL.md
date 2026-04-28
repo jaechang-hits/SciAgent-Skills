@@ -1,6 +1,6 @@
 ---
 name: pyopenms-mass-spectrometry
-description: Mass spectrometry data processing with PyOpenMS. Use for LC-MS/MS proteomics and metabolomics workflows — mzML/mzXML file I/O, signal processing (smoothing, peak picking, centroiding), feature detection and linking across samples, peptide/protein identification with FDR control, untargeted metabolomics pipelines. For simple spectral matching and metabolite ID, use matchms instead.
+description: MS data processing with PyOpenMS for LC-MS/MS proteomics and metabolomics — mzML/mzXML I/O, signal processing (smoothing, peak picking, centroiding), feature detection/linking, peptide/protein ID with FDR, untargeted metabolomics. Use matchms for simple spectral matching.
 license: BSD-3-Clause
 ---
 

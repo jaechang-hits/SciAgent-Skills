@@ -1,6 +1,6 @@
 ---
 name: benchling-integration
-description: "Benchling R&D platform Python SDK. CRUD operations on registry entities (DNA, RNA, proteins, custom entities), inventory management (containers, boxes, transfers), electronic lab notebook entries, workflow automation. Requires Benchling account and API key. For local sequence analysis use biopython; for chemical databases use pubchem."
+description: "Benchling R&D Python SDK: CRUD on registry entities (DNA, RNA, proteins, custom), inventory, ELN, workflow automation. Needs Benchling account and API key. Use biopython for local sequence analysis; pubchem for chemical DBs."
 license: "Apache-2.0"
 ---
 

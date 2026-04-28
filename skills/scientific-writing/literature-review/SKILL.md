@@ -1,6 +1,6 @@
 ---
 name: "literature-review"
-description: "Guide for conducting systematic, scoping, and narrative literature reviews. Covers PRISMA and PRISMA-ScR protocols, structured search strategy design (Boolean operators, MeSH terms), database selection (PubMed, Scopus, Web of Science, Embase), title/abstract/full-text screening, data extraction templates, evidence synthesis (narrative, meta-analysis, thematic), and reporting standards. Use when planning or executing a formal literature review."
+description: "Conducting systematic, scoping, and narrative literature reviews. Covers PRISMA/PRISMA-ScR protocols, search strategy (Boolean, MeSH), database selection (PubMed, Scopus, Web of Science, Embase), screening, data extraction, evidence synthesis (narrative, meta-analysis, thematic), and reporting. Use when planning or executing a formal literature review."
 license: "CC-BY-4.0"
 ---
 

@@ -1,11 +1,10 @@
 ---
 name: vaex-dataframes
 description: >-
-  Out-of-core DataFrame library for billion-row datasets using lazy evaluation and memory-mapped files.
-  Use when data exceeds available RAM (10 GB to terabytes) and needs fast aggregation, filtering,
-  virtual columns, and visualization without loading into memory. Supports HDF5, Apache Arrow, Parquet,
-  CSV I/O with cloud storage (S3, GCS, Azure). Built-in ML transformers (scaling, encoding, PCA, K-means)
-  with scikit-learn bridge. For in-memory speed use polars; for distributed computing use dask.
+  Out-of-core DataFrame for billion-row data via lazy evaluation and memory-mapped files.
+  Use when data exceeds RAM (10 GB–TB) for fast aggregation, filtering, virtual columns,
+  and visualization without loading. Supports HDF5, Arrow, Parquet, CSV with cloud (S3,
+  GCS, Azure). Built-in ML transformers (scaling, PCA, K-means). In-memory: polars; distributed: dask.
 license: MIT
 ---
 

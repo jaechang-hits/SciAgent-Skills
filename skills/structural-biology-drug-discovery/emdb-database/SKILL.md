@@ -1,6 +1,6 @@
 ---
 name: "emdb-database"
-description: "Search and retrieve cryo-EM density maps, fitted atomic models, and metadata from the Electron Microscopy Data Bank (EMDB) REST API. Query by keyword, resolution, method, or organism; fetch entry details, map download URLs, associated PDB models, and publications. No authentication required. For experimental atomic coordinates use pdb-database; for AlphaFold predicted structures use alphafold-database-access."
+description: "Search EMDB cryo-EM density maps, fitted atomic models, and metadata via REST API. Query by keyword, resolution, method, or organism; fetch entries, map URLs, linked PDB models, and publications. No auth. For atomic coordinates use pdb-database; for AlphaFold predictions use alphafold-database-access."
 license: "CC-BY-4.0"
 ---
 

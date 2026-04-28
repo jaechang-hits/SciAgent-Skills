@@ -1,6 +1,6 @@
 ---
 name: "pride-database"
-description: "Search and retrieve proteomics datasets, peptide identifications, and mass spectrometry raw data files from the PRIDE Archive REST API. Find experiments by organism, tissue, disease, or instrument; download RAW/mzML files; retrieve peptide and PSM identifications; access protein-level evidence. For protein domain architecture use interpro-database; for protein sequences and annotations use uniprot-protein-database."
+description: "Search PRIDE Archive REST API for proteomics datasets, peptide IDs, and MS raw files. Find experiments by organism, tissue, disease, or instrument; download RAW/mzML; retrieve peptide/PSM IDs and protein-level evidence. Use interpro-database for domains; uniprot-protein-database for sequences."
 license: "Apache-2.0"
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: latex-research-posters
-description: "Create professional research posters in LaTeX using beamerposter, tikzposter, or baposter. Layout design, typography, color schemes, figure integration, accessibility, and quality control for conference presentations. Includes ready-to-use templates. For programmatic figure generation use matplotlib-scientific-plotting or plotly-interactive-visualization."
+description: "Research posters in LaTeX using beamerposter, tikzposter, or baposter. Layout, typography, color schemes, figure integration, accessibility, and QA for conferences. Includes templates. For figure generation use matplotlib-scientific-plotting or plotly-interactive-visualization."
 license: CC-BY-4.0
 ---
 

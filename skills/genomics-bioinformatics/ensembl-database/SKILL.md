@@ -1,6 +1,6 @@
 ---
 name: "ensembl-database"
-description: "Query Ensembl REST API for gene/transcript/variant annotations across 300+ species. Retrieve gene info by symbol/ID, sequence, cross-references (HGNC, RefSeq, UniProt), variants, regulatory features, comparative genomics. For bulk local access use pyensembl; for pathway lookups use kegg-database or reactome-database."
+description: "Ensembl REST API for gene/transcript/variant annotations in 300+ species. Gene info by symbol/ID, sequence, cross-refs (HGNC, RefSeq, UniProt), regulatory features. For bulk local use pyensembl; for pathways use kegg-database."
 license: "Apache-2.0"
 ---
 

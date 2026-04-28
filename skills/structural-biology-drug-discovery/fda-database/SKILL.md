@@ -1,6 +1,6 @@
 ---
 name: "fda-database"
-description: "Query openFDA REST API for drug adverse event reports (FAERS), drug labeling, product information, recalls, and enforcement actions. Search by drug name, active ingredient, adverse event term (MedDRA), or NDC code. No API key needed for 1000 req/day; free key for 120,000 req/day. For clinical trial data use clinicaltrials-database-search; for drug structures use drugbank-database-access or chembl-database-bioactivity."
+description: "Query openFDA REST API for adverse events (FAERS), labeling, product info, recalls, enforcement. Search by drug name, ingredient, MedDRA, or NDC. 1k req/day no key; 120k with free key. For trials use clinicaltrials-database-search; for structures use drugbank-database-access or chembl-database-bioactivity."
 license: "CC0-1.0"
 ---
 

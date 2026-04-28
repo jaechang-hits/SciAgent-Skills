@@ -1,6 +1,6 @@
 ---
 name: "spikeinterface-electrophysiology"
-description: "Unified Python framework for extracellular electrophysiology. Load recordings from 20+ formats (SpikeGLX, OpenEphys, NWB, Intan, Maxwell, Blackrock), preprocess signals, run 10+ spike sorters (Kilosort4, SpykingCircus2, Tridesclous, MountainSort5) with a single API, compute quality metrics (SNR, ISI violations, firing rate, amplitude cutoff), compare sorter outputs, and export to NWB or Phy. Use for format-agnostic and multi-sorter workflows. For a Neuropixels-specific Kilosort4 pipeline with PSTH and population decoding, use neuropixels-analysis instead."
+description: "Unified Python framework for extracellular electrophysiology. Load 20+ formats (SpikeGLX, OpenEphys, NWB, Intan, Maxwell, Blackrock), preprocess, run 10+ sorters (Kilosort4, SpykingCircus2, Tridesclous, MountainSort5) via one API, compute quality metrics (SNR, ISI, firing rate), compare sorters, export NWB/Phy. For format-agnostic multi-sorter workflows. For Neuropixels-specific PSTH/decoding use neuropixels."
 license: "MIT"
 ---
 

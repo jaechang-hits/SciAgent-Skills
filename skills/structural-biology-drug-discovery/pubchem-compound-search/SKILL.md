@@ -1,6 +1,6 @@
 ---
 name: "pubchem-compound-search"
-description: "Query PubChem database (110M+ compounds) via PubChemPy and PUG-REST API. Search compounds by name/CID/SMILES, retrieve molecular properties (MW, LogP, TPSA), perform similarity and substructure searches, access bioactivity data. For local cheminformatics computation use rdkit; for multi-database queries use bioservices."
+description: "Query PubChem (110M+ compounds) via PubChemPy/PUG-REST. Search by name/CID/SMILES, get properties (MW, LogP, TPSA), similarity/substructure search, bioactivity. For local cheminformatics use rdkit; for multi-DB queries use bioservices."
 license: "CC-BY-4.0"
 ---
 

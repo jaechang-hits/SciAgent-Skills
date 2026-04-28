@@ -1,6 +1,6 @@
 ---
 name: "samtools-bam-processing"
-description: "Command-line toolkit for SAM/BAM/CRAM alignment file manipulation. Sort, index, convert, filter, and QC sequencing alignments. Core commands: view (filter/convert), sort, index, flagstat, stats, depth, markdup, merge. Required for all NGS pipelines between alignment and variant calling or peak calling. Use pysam for Python-native BAM access; use deeptools for normalized coverage tracks."
+description: "CLI toolkit for SAM/BAM/CRAM: sort, index, convert, filter, QC alignments. Core commands: view, sort, index, flagstat, stats, depth, markdup, merge. Required between alignment and variant/peak calling. Use pysam for Python-native BAM access; deeptools for normalized coverage tracks."
 license: "MIT"
 ---
 

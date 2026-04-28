@@ -1,6 +1,6 @@
 ---
 name: simpy-discrete-event-simulation
-description: "Process-based discrete-event simulation framework. Model systems with queues, shared resources, and time-based events: manufacturing lines, service operations, network traffic, logistics. Processes are Python generators that yield events. Resource types include capacity-limited (Resource, PriorityResource, PreemptiveResource), bulk material (Container), and object storage (Store, FilterStore). For continuous simulation use SciPy ODE solvers; for agent-based modeling use Mesa."
+description: "Process-based discrete-event simulation. Model queues, shared resources, timed events: manufacturing, service ops, network traffic, logistics. Processes are Python generators yielding events. Resources: capacity-limited (Resource/Priority/Preemptive), bulk (Container), objects (Store, FilterStore). For continuous use SciPy ODEs; for agent-based use Mesa."
 license: MIT
 ---
 

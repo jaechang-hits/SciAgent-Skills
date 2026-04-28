@@ -1,6 +1,6 @@
 ---
 name: "aeon"
-description: "aeon is a scikit-learn compatible Python toolkit for time series machine learning and data mining. Classify, cluster, regress, segment, and transform time series using 30+ algorithms including ROCKET, InceptionTime, KNN-DTW, HIVE-COTE, and WEASEL. Supports panel (multi-instance), multivariate, and unequal-length time series. Designed as the maintained successor to sktime. Alternatives: sktime (older, larger ecosystem), tslearn (less algorithms), catch22 (feature extraction only)."
+description: "scikit-learn compatible Python toolkit for time series ML: classify, cluster, regress, segment, transform with 30+ algorithms (ROCKET, InceptionTime, KNN-DTW, HIVE-COTE, WEASEL). Handles panel, multivariate, and unequal-length series. Maintained successor to sktime. Alternatives: sktime (larger ecosystem), tslearn (fewer algorithms), catch22 (features only)."
 license: "BSD-3-Clause"
 ---
 

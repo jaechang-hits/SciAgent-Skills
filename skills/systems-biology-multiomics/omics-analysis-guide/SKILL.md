@@ -1,6 +1,6 @@
 ---
 name: omics-analysis-guide
-description: "Comprehensive decision guide for analyzing omics data (transcriptomics, proteomics) using a three-tiered approach: validated pipelines first, standard workflows second, custom analysis last. Covers quality control strategies, normalization method selection, missing value imputation, statistical test selection based on data properties, and result visualization. Consult this guide when planning a bulk RNA-seq or proteomics differential analysis to choose the right tools, tests, and preprocessing steps."
+description: "Decision guide for omics analysis (transcriptomics, proteomics) using a three-tiered approach: validated pipelines first, standard workflows second, custom last. Covers QC, normalization choice, missing value imputation, statistical test selection by data properties, and visualization. Consult when planning bulk RNA-seq or proteomics differential analysis."
 license: CC-BY-4.0
 ---
 

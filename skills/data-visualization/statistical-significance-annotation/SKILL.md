@@ -1,6 +1,6 @@
 ---
 name: "statistical-significance-annotation"
-description: "Guide for annotating statistical significance (p-value asterisk notation) on comparison plots. Covers standard notation conventions (ns, *, **, ***, ****), when to annotate, matplotlib bracket+asterisk implementation, and integration with seaborn box/violin/bar plots. Use when generating publication-ready comparison figures that need significance markers to support statistical claims made in the analysis."
+description: "Guide for annotating statistical significance (p-value asterisks) on comparison plots. Covers standard notation (ns, *, **, ***, ****), matplotlib bracket+asterisk implementation, and use with seaborn box/violin/bar plots. Use when preparing publication-ready figures with significance markers."
 license: "CC-BY-4.0"
 ---
 
