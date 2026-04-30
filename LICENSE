@@ -21,3 +21,9 @@ Full license text: https://creativecommons.org/licenses/by/4.0/legalcode
 This project references claude-scientific-skills
 (https://github.com/K-Dense-AI/claude-scientific-skills),
 Copyright (c) 2025 K-Dense-AI, licensed under the MIT License.
+
+This project references Biomni
+(https://github.com/snap-stanford/Biomni),
+Copyright (c) 2025 Biomni Team (Stanford SNAP), licensed under the Apache License 2.0.
+The sgRNA Design Guide content adapted in `skills/molecular-biology/sgrna-design-guide`
+is licensed under CC BY 4.0.

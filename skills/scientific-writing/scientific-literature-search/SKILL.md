@@ -35,15 +35,15 @@ Literature search is most effective when approached in tiers of increasing bread
 
 Query established academic databases (PubMed, arXiv, Google Scholar) for peer-reviewed, indexed content. This is the most reliable tier and should always be the starting point.
 
-- PubMed (`query_pubmed`): Primary database for biomedical and life science literature. Supports MeSH controlled vocabulary and advanced field tags.
-- arXiv (`query_arxiv`): Preprint server for physics, mathematics, computer science, and quantitative biology. Results appear faster than peer-reviewed journals.
-- Google Scholar (`query_scholar`): Broadest coverage across all academic disciplines. Note: has aggressive rate limits on automated queries.
+- PubMed (via Biopython `Bio.Entrez`): Primary database for biomedical and life science literature. Supports MeSH controlled vocabulary and advanced field tags.
+- arXiv (via the `arxiv` package): Preprint server for physics, mathematics, computer science, and quantitative biology. Results appear faster than peer-reviewed journals.
+- Google Scholar (via the `scholarly` package): Broadest coverage across all academic disciplines. Note: has aggressive rate limits on automated queries.
 
 Best for: finding specific papers, systematic reviews, clinical evidence, preprints.
 
 **Tier 2 -- AI-Assisted Web Search (Comprehensive)**
 
-Use AI tools (`advanced_web_search_claude`) to synthesize broader context, identify research trends, and surface recent developments not yet indexed in databases. Also use general web search (`search_google`) for protocols, tutorials, and software documentation.
+Use the Claude API with the `web_search_20250305` server-side tool to synthesize broader context, identify research trends, and surface recent developments not yet indexed in databases. Also use general web search (e.g. via the `duckduckgo-search` package) for protocols, tutorials, and software documentation.
 
 Best for: understanding the research landscape, complex multi-faceted questions, finding recent developments, identifying key researchers.
 
@@ -51,7 +51,7 @@ Avoid for: specific paper lookups (use Tier 1), citation counts (use Google Scho
 
 **Tier 3 -- Direct Content Extraction (Deep Dive)**
 
-Extract and analyze full-text content, PDFs, and supplementary materials from identified papers using `extract_url_content`, `extract_pdf_content`, and `fetch_supplementary_info_from_doi`.
+Extract and analyze full-text content, PDFs, and supplementary materials from identified papers using `trafilatura` (HTML article extraction), `pypdf` (PDF text), and the Crossref API (DOI → supplementary file URLs).
 
 Best for: detailed methodology extraction, data retrieval, protocol identification, supplementary data access.
 
@@ -225,31 +225,47 @@ What type of question are you answering?
    - Begin with a broad query using 2-3 core terms
    - Refine with MeSH terms, field tags, date filters, and publication type filters
    ```python
-   from biomni.tool.literature import query_pubmed, query_arxiv, query_scholar
+   from Bio import Entrez
+   import arxiv
+   from scholarly import scholarly
+
+   Entrez.email = "your.email@example.com"  # NCBI requires a contact email
 
    # PubMed: biomedical literature
-   results = query_pubmed(
-       '"CRISPR-Cas Systems"[MeSH] AND "Gene Editing"[MeSH]',
-       max_papers=20
+   handle = Entrez.esearch(
+       db="pubmed",
+       term='"CRISPR-Cas Systems"[MeSH] AND "Gene Editing"[MeSH]',
+       retmax=20,
    )
+   pubmed_ids = Entrez.read(handle)["IdList"]
+   handle.close()
 
    # arXiv: computational biology preprints
-   results = query_arxiv("protein structure prediction", max_papers=10)
+   arxiv_results = list(
+       arxiv.Search(query="protein structure prediction", max_results=10).results()
+   )
 
    # Google Scholar: broad cross-disciplinary coverage
-   result = query_scholar("single cell RNA sequencing analysis methods")
+   scholar_results = scholarly.search_pubs("single cell RNA sequencing analysis methods")
    ```
 
 3. **Step 3: Supplement with AI-assisted search (Tier 2)**
    - Use AI-assisted web search for landscape overviews and recent developments
    - Use general web search for protocols, tutorials, and documentation
    ```python
-   from biomni.tool.literature import advanced_web_search_claude
+   from anthropic import Anthropic
 
-   results = advanced_web_search_claude(
-       "What are the latest developments in CAR-T cell therapy for solid tumors in 2024?",
-       max_searches=3
+   client = Anthropic()
+   response = client.messages.create(
+       model="claude-opus-4-7",
+       max_tokens=4096,
+       tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
+       messages=[{
+           "role": "user",
+           "content": "What are the latest developments in CAR-T cell therapy for solid tumors in 2024?",
+       }],
    )
+   print(response.content)
    ```
 
 4. **Step 4: Evaluate and filter results**
@@ -264,19 +280,35 @@ What type of question are you answering?
    - Download supplementary materials for data and protocols
    - Check reference lists for additional relevant papers
    ```python
-   from biomni.tool.literature import extract_url_content, extract_pdf_content, fetch_supplementary_info_from_doi
+   import io
+   import os
+   from pathlib import Path
+   from urllib.parse import urlparse
 
-   # Extract article content from URL
-   content = extract_url_content("https://www.nature.com/articles/nature12373")
+   import requests
+   import trafilatura
+   from pypdf import PdfReader
 
-   # Extract text from PDF
-   content = extract_pdf_content("https://arxiv.org/pdf/1706.03762.pdf")
+   # Extract article content from URL (clean main text, drops nav/ads)
+   downloaded = trafilatura.fetch_url("https://www.nature.com/articles/nature12373")
+   article_text = trafilatura.extract(downloaded)
 
-   # Download supplementary files using DOI
-   log = fetch_supplementary_info_from_doi(
-       "10.1038/nature12373",
-       output_dir="./supplementary_materials"
-   )
+   # Extract text from a PDF
+   pdf_bytes = requests.get("https://arxiv.org/pdf/1706.03762.pdf", timeout=30).content
+   reader = PdfReader(io.BytesIO(pdf_bytes))
+   pdf_text = "\n".join(page.extract_text() or "" for page in reader.pages)
+
+   # Download supplementary files via Crossref DOI metadata
+   doi = "10.1038/nature12373"
+   meta = requests.get(f"https://api.crossref.org/works/{doi}", timeout=30).json()
+   out_dir = Path("./supplementary_materials")
+   out_dir.mkdir(exist_ok=True)
+   for link in meta.get("message", {}).get("link", []):
+       url = link.get("URL")
+       if not url:
+           continue
+       fname = os.path.basename(urlparse(url).path) or "supplement.bin"
+       (out_dir / fname).write_bytes(requests.get(url, timeout=60).content)
    ```
 
 6. **Step 6: Document and iterate**
@@ -293,16 +325,22 @@ The following scenarios illustrate how to combine the three tiers for typical re
 Start with PubMed for published methodology papers, then supplement with web search for step-by-step protocols from resources like protocols.io.
 
 ```python
-from biomni.tool.literature import query_pubmed, search_google
+from Bio import Entrez
+from duckduckgo_search import DDGS
+
+Entrez.email = "your.email@example.com"
 
 # Search for methodology papers in PubMed
-results = query_pubmed(
-    '"Western Blotting"[MeSH] AND (protocol OR method OR technique)',
-    max_papers=10
+handle = Entrez.esearch(
+    db="pubmed",
+    term='"Western Blotting"[MeSH] AND (protocol OR method OR technique)',
+    retmax=10,
 )
+pubmed_ids = Entrez.read(handle)["IdList"]
+handle.close()
 
 # Check web for step-by-step protocols
-results = search_google("Western blot protocol for membrane proteins", num_results=5)
+web_hits = DDGS().text("Western blot protocol for membrane proteins", max_results=5)
 ```
 
 ### Understanding Disease Mechanisms
@@ -346,19 +384,31 @@ results = query_pubmed(
 Combine AI-assisted search for synthesis with database searches for recent indexed publications.
 
 ```python
-from biomni.tool.literature import advanced_web_search_claude, query_pubmed
+from anthropic import Anthropic
+from Bio import Entrez
 
-# AI-assisted synthesis of recent advances
-results = advanced_web_search_claude(
-    "What are the most significant advances in CAR-T cell therapy in 2024?",
-    max_searches=3
+client = Anthropic()
+Entrez.email = "your.email@example.com"
+
+# AI-assisted synthesis of recent advances (Claude API web search tool)
+response = client.messages.create(
+    model="claude-opus-4-7",
+    max_tokens=4096,
+    tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
+    messages=[{
+        "role": "user",
+        "content": "What are the most significant advances in CAR-T cell therapy in 2024?",
+    }],
 )
 
 # Supplement with recent PubMed results
-results = query_pubmed(
-    '"Chimeric Antigen Receptor T-Cell Therapy"[MeSH] AND "2024"[Date - Publication]',
-    max_papers=20
+handle = Entrez.esearch(
+    db="pubmed",
+    term='"Chimeric Antigen Receptor T-Cell Therapy"[MeSH] AND "2024"[Date - Publication]',
+    retmax=20,
 )
+pubmed_ids = Entrez.read(handle)["IdList"]
+handle.close()
 ```
 
 ### Finding Specific Reagents and Materials
@@ -366,16 +416,24 @@ results = query_pubmed(
 Use AI-assisted search for validated reagent recommendations, supplemented by general web search.
 
 ```python
-from biomni.tool.literature import advanced_web_search_claude, search_google
+from anthropic import Anthropic
+from duckduckgo_search import DDGS
 
-# Search for validated reagents
-results = advanced_web_search_claude(
-    "validated antibodies for Western blot detection of p53 protein",
-    max_searches=2
+client = Anthropic()
+
+# Search for validated reagents (Claude API + web search tool)
+response = client.messages.create(
+    model="claude-opus-4-7",
+    max_tokens=4096,
+    tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 2}],
+    messages=[{
+        "role": "user",
+        "content": "validated antibodies for Western blot detection of p53 protein",
+    }],
 )
 
 # Search supplier databases
-results = search_google("p53 antibody Western blot validated", num_results=5)
+supplier_hits = DDGS().text("p53 antibody Western blot validated", max_results=5)
 ```
 
 ### Comparative Analysis Across Methods
@@ -383,13 +441,21 @@ results = search_google("p53 antibody Western blot validated", num_results=5)
 Use AI-assisted search for synthesized comparisons of techniques or tools.
 
 ```python
-from biomni.tool.literature import advanced_web_search_claude
+from anthropic import Anthropic
 
-# Compare approaches with AI synthesis
-results = advanced_web_search_claude(
-    "Compare different CRISPR delivery methods for in vivo gene editing: viral vectors vs lipid nanoparticles",
-    max_searches=5
+client = Anthropic()
+
+# Compare approaches with AI synthesis (Claude API web search tool)
+response = client.messages.create(
+    model="claude-opus-4-7",
+    max_tokens=4096,
+    tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 5}],
+    messages=[{
+        "role": "user",
+        "content": "Compare different CRISPR delivery methods for in vivo gene editing: viral vectors vs lipid nanoparticles",
+    }],
 )
+print(response.content)
 ```
 
 ## Quality Assessment Checklist
