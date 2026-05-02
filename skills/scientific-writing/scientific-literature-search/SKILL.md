@@ -1,192 +1,95 @@
 ---
 name: scientific-literature-search
-description: Systematic scientific literature search using PubMed, arXiv, Google Scholar queries, AI-assisted web search, and content extraction tools
-license: open
+description: "Systematic strategies for searching scientific literature across PubMed, arXiv, Google Scholar, and AI-assisted tools. Covers PICO framework for clinical questions, three-tiered search (database-specific, AI-assisted, content extraction), PubMed field tags and MeSH, boolean query construction, and full-text extraction. Use when planning a literature search or choosing a search tier."
+license: CC-BY-4.0
 ---
 
-# Scientific Literature Search Guide
-
----
-
-## Metadata
-
-**Short Description**: Best practices for searching, retrieving, and analyzing scientific literature using database-specific queries, structured search strategies, and AI-assisted tools.
-
-**Authors**: Ohagent Team, adapted from Consensus AI, Elicit, PubMed, and Semantic Scholar best practices
-
-**Version**: 1.0
-
-**Last Updated**: December 2025
-
-**License**: CC BY 4.0
-
-**Commercial Use**: Allowed
-
-**Source References**:
-- PubMed Search Guide (NCBI)
-- Semantic Scholar API Documentation
-- Consensus AI Search Guidelines
-- Elicit Research Assistant Best Practices
-
----
+# Scientific Literature Search
 
 ## Overview
 
-This guide provides a systematic approach to scientific literature search, combining database-specific query strategies with AI-assisted analysis. The workflow is designed to maximize recall (finding all relevant papers) while maintaining precision (avoiding irrelevant results).
+Scientific literature search is the foundation of evidence-based research. A well-executed search maximizes recall (finding all relevant papers) while maintaining precision (avoiding irrelevant results). This guide provides a systematic approach that combines database-specific query strategies, AI-assisted synthesis, and direct content extraction, organized into a three-tiered framework that scales from targeted lookups to comprehensive landscape reviews.
 
 ## Key Concepts
 
-### Recall vs. Precision
-**Recall** is the fraction of truly relevant papers your search retrieved; **precision** is the fraction of retrieved papers that are actually relevant. Broad queries (single keywords, OR-heavy) maximize recall at the cost of precision. Narrow queries (phrase searches, MeSH-restricted, NOT operators) maximize precision but may miss relevant work. Systematic reviews target high recall first, then filter; exploratory reading prefers high precision.
+### The PICO Framework
 
-### Controlled Vocabulary (MeSH and Subject Categories)
-Controlled vocabularies are curated term hierarchies (e.g., PubMed's MeSH, arXiv's subject categories) that group synonyms under a canonical term. A search on `"Neoplasms"[MeSH]` matches papers tagged with that term regardless of whether the author wrote "cancer," "tumor," or "neoplasm." Using controlled vocabulary dramatically improves recall and consistency over free-text search.
+For clinical and biomedical questions, structure queries using the PICO framework:
 
-### PICO Framework
-PICO structures clinical research questions into four components: **P**opulation, **I**ntervention, **C**omparison, **O**utcome. Each component becomes a Boolean clause connected with AND. PICO is most useful for therapeutic and diagnostic questions; mechanistic or exploratory questions may use simpler subject + method scaffolds.
+- **P** (Population): Who are you studying? (e.g., "Diabetes Mellitus"[MeSH])
+- **I** (Intervention): What treatment or exposure? (e.g., "Metformin"[MeSH])
+- **C** (Comparison): What is the alternative? (e.g., placebo, standard care)
+- **O** (Outcome): What result are you measuring? (e.g., "Cardiovascular Diseases"[MeSH])
 
-### Database vs. AI-Assisted Search
-**Database searches** (PubMed, arXiv, Google Scholar) return reproducible result sets keyed to explicit query strings — essential for systematic reviews and citation work. **AI-assisted searches** (Claude, Consensus, Elicit) synthesize across sources and generate natural-language summaries — useful for landscape scans and quick context, but the result set is not deterministic and is harder to audit.
+PICO queries can be combined with publication type filters to target specific evidence levels:
 
-## Decision Framework
-
-Use this tree to choose the right tool for your search task:
-
-```
-                  What is the goal of your search?
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-   Find specific         Survey landscape /     Extract content from
-   paper(s) /            recent advances         a known paper
-   evidence base                │                     │
-        │                       │                     │
-        ▼                       ▼                     ▼
-   Tier 1:                 Tier 2:              Tier 3:
-   Database search         AI-assisted          Content extraction
-        │                  web search                 │
-        │                       │                     ▼
-   ┌────┴────┐                  │              extract_pdf_content
-   │         │                  │              extract_url_content
-   │  Biomedical/             advanced_web_     fetch_supplementary_
-   │  clinical?              search_claude       info_from_doi
-   │     │
-   │   YES → query_pubmed (with MeSH + PICO)
-   │     │
-   │    NO → arXiv (preprint, quant) or
-   │          Google Scholar (broad)
-   │
-   └─ Cross-disciplinary or unknown? → query_scholar
-```
-
-### Decision Table
-
-| Goal | Best Tier | Primary Tool | Why |
-|------|-----------|--------------|-----|
-| Systematic review of clinical evidence | Tier 1 | `query_pubmed` with MeSH | Reproducible, peer-reviewed coverage |
-| Find recent preprints in computational biology | Tier 1 | `query_arxiv` (cat:q-bio.*) | Captures unpublished work |
-| Cross-disciplinary or general academic | Tier 1 | `query_scholar` | Broadest coverage, citation counts |
-| "What's new in field X this year?" | Tier 2 | `advanced_web_search_claude` | Synthesis across many sources |
-| Find a step-by-step protocol | Tier 2 | `search_google` | Protocols rarely indexed in PubMed |
-| Pull full text of a known paper | Tier 3 | `extract_pdf_content` | Direct content access |
-| Get supplementary data tables | Tier 3 | `fetch_supplementary_info_from_doi` | Tables are often not in main PDF |
-| Compare multiple methods qualitatively | Tier 2 then Tier 1 | AI search → PubMed verify | Synthesis first, citation evidence second |
-
-## Three-Tiered Search Strategy
-
-### Tier 1: Database-Specific Searches (Most Reliable)
-
-Start with established academic databases for peer-reviewed content.
-
-**Recommended for**: Finding specific papers, systematic reviews, clinical evidence
-
-### Tier 2: AI-Assisted Web Search (Comprehensive)
-
-Use AI tools for broader context and synthesis.
-
-**Recommended for**: Understanding research landscape, finding recent developments, complex multi-faceted questions
-
-### Tier 3: Direct Content Extraction (Deep Dive)
-
-Extract and analyze full-text content from papers and supplementary materials.
-
-**Recommended for**: Detailed methodology extraction, data retrieval, protocol identification
-
-## Tier 1: Database-Specific Searches
-
-### 1.1 PubMed Search (Biomedical Literature)
-
-PubMed is the primary database for biomedical and life science literature. Use `query_pubmed` from `ohagent.tool.literature`.
-
-```python
-from ohagent.tool.literature import query_pubmed
-
-# Basic search
-results = query_pubmed("CRISPR gene editing", max_papers=10)
-
-# Advanced search with MeSH terms
-results = query_pubmed(
-    '"CRISPR-Cas Systems"[MeSH] AND "Gene Editing"[MeSH]',
-    max_papers=20
-)
-```
-
-#### PubMed Query Syntax (PICO Framework)
-
-For clinical questions, structure your query using **PICO**:
-- **P**opulation: Who are you studying?
-- **I**ntervention: What treatment/exposure?
-- **C**omparison: Alternative treatment?
-- **O**utcome: What result?
-
-**Example**: Does metformin reduce cardiovascular events in diabetic patients?
 ```
 "Diabetes Mellitus"[MeSH] AND "Metformin"[MeSH] AND "Cardiovascular Diseases"[MeSH] AND ("clinical trial"[Publication Type] OR "meta-analysis"[Publication Type])
 ```
 
-#### PubMed Field Tags
+### Three-Tiered Search Strategy
+
+Literature search is most effective when approached in tiers of increasing breadth:
+
+**Tier 1 -- Database-Specific Searches (Most Reliable)**
+
+Query established academic databases (PubMed, arXiv, Google Scholar) for peer-reviewed, indexed content. This is the most reliable tier and should always be the starting point.
+
+- PubMed (via Biopython `Bio.Entrez`): Primary database for biomedical and life science literature. Supports MeSH controlled vocabulary and advanced field tags.
+- arXiv (via the `arxiv` package): Preprint server for physics, mathematics, computer science, and quantitative biology. Results appear faster than peer-reviewed journals.
+- Google Scholar (via the `scholarly` package): Broadest coverage across all academic disciplines. Note: has aggressive rate limits on automated queries.
+
+Best for: finding specific papers, systematic reviews, clinical evidence, preprints.
+
+**Tier 2 -- AI-Assisted Web Search (Comprehensive)**
+
+Use the Claude API with the `web_search_20250305` server-side tool to synthesize broader context, identify research trends, and surface recent developments not yet indexed in databases. Also use general web search (e.g. via the `duckduckgo-search` package) for protocols, tutorials, and software documentation.
+
+Best for: understanding the research landscape, complex multi-faceted questions, finding recent developments, identifying key researchers.
+
+Avoid for: specific paper lookups (use Tier 1), citation counts (use Google Scholar), systematic reviews requiring reproducibility, searches where exact query terms must be documented.
+
+**Tier 3 -- Direct Content Extraction (Deep Dive)**
+
+Extract and analyze full-text content, PDFs, and supplementary materials from identified papers using `trafilatura` (HTML article extraction), `pypdf` (PDF text), and the Crossref API (DOI → supplementary file URLs).
+
+Best for: detailed methodology extraction, data retrieval, protocol identification, supplementary data access.
+
+### PubMed Field Tags
+
+PubMed supports field-specific searching to improve precision:
 
 | Tag | Description | Example |
 |-----|-------------|---------|
-| `[MeSH]` | Medical Subject Heading | "Neoplasms"[MeSH] |
-| `[Title]` | Title only | "CRISPR"[Title] |
-| `[Title/Abstract]` | Title or Abstract | "gene therapy"[Title/Abstract] |
-| `[Author]` | Author name | "Zhang F"[Author] |
-| `[Journal]` | Journal name | "Nature"[Journal] |
-| `[Publication Type]` | Article type | "Review"[Publication Type] |
-| `[Date - Publication]` | Date range | "2020/01/01"[Date - Publication]:"2024/12/31"[Date - Publication] |
+| `[MeSH]` | Medical Subject Heading (controlled vocabulary) | `"Neoplasms"[MeSH]` |
+| `[Title]` | Title field only | `"CRISPR"[Title]` |
+| `[Title/Abstract]` | Title or abstract | `"gene therapy"[Title/Abstract]` |
+| `[Author]` | Author name | `"Zhang F"[Author]` |
+| `[Journal]` | Journal name | `"Nature"[Journal]` |
+| `[Publication Type]` | Article type filter | `"Review"[Publication Type]` |
+| `[Date - Publication]` | Publication date range | `"2020/01/01"[Date - Publication]:"2024/12/31"[Date - Publication]` |
+| `[MeSH Major Topic]` | MeSH term as major focus of the article | `"CRISPR-Cas Systems"[MeSH Major Topic]` |
 
-#### Boolean Operators
+### Boolean Operators
+
+Boolean operators control how search terms combine:
 
 ```python
-# AND: All terms must be present
+# AND: All terms must be present -- narrows results
 results = query_pubmed("CRISPR AND cancer AND therapy")
 
-# OR: Any term can be present (use for synonyms)
+# OR: Any term can be present -- broadens results (use for synonyms)
 results = query_pubmed("(tumor OR tumour OR neoplasm) AND immunotherapy")
 
-# NOT: Exclude terms (use sparingly)
+# NOT: Exclude terms -- use sparingly to avoid losing relevant papers
 results = query_pubmed("cancer immunotherapy NOT review")
 ```
 
-### 1.2 arXiv Search (Physics, Math, CS, Biology Preprints)
+Use parentheses to group OR terms together before combining with AND.
 
-Use `query_arxiv` for preprints in quantitative fields, including computational biology.
+### arXiv Subject Categories
 
-```python
-from ohagent.tool.literature import query_arxiv
-
-# Basic search
-results = query_arxiv("protein structure prediction", max_papers=10)
-
-# Author-specific search
-results = query_arxiv("au:Jumper AND AlphaFold", max_papers=5)
-
-# Subject category search
-results = query_arxiv("cat:q-bio.BM AND machine learning", max_papers=10)
-```
-
-#### arXiv Subject Categories (Biology-related)
+arXiv organizes preprints by subject category. Biology-related categories include:
 
 | Category | Description |
 |----------|-------------|
@@ -199,256 +102,253 @@ results = query_arxiv("cat:q-bio.BM AND machine learning", max_papers=10)
 | `cs.AI` | Artificial Intelligence |
 | `cs.LG` | Machine Learning |
 
-### 1.3 Google Scholar Search (Broad Academic Coverage)
+## Decision Framework
 
-Use `query_scholar` for broader academic searches across disciplines.
+Use this tree to determine which search tier and database to start with:
 
-```python
-from ohagent.tool.literature import query_scholar
-
-# Returns first most relevant result
-result = query_scholar("single cell RNA sequencing analysis methods")
+```
+What type of question are you answering?
+├── Clinical / biomedical question
+│   ├── Specific drug or treatment → Tier 1: PubMed with PICO query
+│   ├── Disease mechanism → Tier 1: PubMed with MeSH terms
+│   └── Clinical trial evidence → Tier 1: PubMed filtered by Publication Type
+├── Computational / quantitative methods
+│   ├── ML model or algorithm → Tier 1: arXiv (cs.LG, cs.AI)
+│   ├── Computational biology method → Tier 1: arXiv (q-bio.*) + PubMed
+│   └── Software tool or pipeline → Tier 2: AI-assisted web search
+├── Broad research landscape
+│   ├── Current state of a field → Tier 2: AI-assisted web search
+│   ├── Recent developments (last 6 months) → Tier 2: AI-assisted web search
+│   └── Cross-disciplinary question → Tier 1: Google Scholar + Tier 2
+├── Specific paper or data
+│   ├── Known paper details → Tier 1: any database by title/author/DOI
+│   ├── Methodology or protocol → Tier 3: full-text extraction
+│   └── Supplementary data → Tier 3: DOI-based supplementary fetch
+└── Protocols / reagents
+    ├── Lab protocol → Tier 2: web search for protocols.io, etc.
+    └── Validated reagents → Tier 2: AI-assisted web search
 ```
 
-**Note**: Google Scholar has rate limits. Use sparingly and consider delays between requests.
+| Scenario | Recommended Tier and Database | Rationale |
+|----------|-------------------------------|-----------|
+| Systematic review of clinical evidence | Tier 1: PubMed with MeSH + publication type filters | Reproducible, documented search strategy required |
+| Finding a preprint on a new ML method | Tier 1: arXiv with category and keyword search | Preprints appear on arXiv before journals |
+| Understanding the research landscape | Tier 2: AI-assisted web search | Requires synthesis across many sources |
+| Extracting a specific protocol from a paper | Tier 3: PDF content extraction | Need full-text access to methods section |
+| Finding papers across disciplines | Tier 1: Google Scholar | Broadest coverage across fields |
+| Identifying key researchers in a niche area | Tier 2: AI-assisted web search | Requires contextual synthesis |
+| Downloading supplementary data tables | Tier 3: DOI-based supplementary fetch | Direct access to supplementary files |
 
-## Tier 2: AI-Assisted Web Search
+## Best Practices
 
-### 2.1 Advanced Web Search with Claude
-
-Use `advanced_web_search_claude` for comprehensive, AI-synthesized research queries.
-
-```python
-from ohagent.tool.literature import advanced_web_search_claude
-
-# Complex research question
-results = advanced_web_search_claude(
-    "What are the latest developments in CAR-T cell therapy for solid tumors in 2024?",
-    max_searches=3
-)
-
-# Comparative analysis
-results = advanced_web_search_claude(
-    "Compare different CRISPR delivery methods for in vivo gene editing: viral vectors vs lipid nanoparticles",
-    max_searches=5
-)
-```
-
-#### When to Use AI-Assisted Search
-
-**Good use cases**:
-- Understanding research landscape and current state of the field
-- Finding recent developments not yet in academic databases
-- Complex questions requiring synthesis of multiple sources
-- Identifying key researchers, labs, and institutions
-- Finding methodology comparisons and reviews
-
-**Avoid for**:
-- Specific paper lookups (use database searches)
-- Citation counts and impact factors (use Google Scholar)
-- Systematic reviews requiring reproducibility
-- When exact search terms must be documented
-
-### 2.2 General Web Search
-
-Use `search_google` (via DuckDuckGo) for protocols, tutorials, and general information.
-
-```python
-from ohagent.tool.literature import search_google
-
-# Find protocols
-results = search_google("Western blot protocol step by step", num_results=5)
-
-# Find software documentation
-results = search_google("Seurat single cell analysis tutorial", num_results=3)
-```
-
-## Tier 3: Content Extraction
-
-### 3.1 Extract URL Content
-
-Use `extract_url_content` to get clean text from web pages.
-
-```python
-from ohagent.tool.literature import extract_url_content
-
-# Extract article content
-content = extract_url_content("https://www.nature.com/articles/nature12373")
-```
-
-### 3.2 Extract PDF Content
-
-Use `extract_pdf_content` to extract text from PDF files.
-
-```python
-from ohagent.tool.literature import extract_pdf_content
-
-# Direct PDF URL
-content = extract_pdf_content("https://arxiv.org/pdf/1706.03762.pdf")
-
-# Page with PDF link (will find and download PDF)
-content = extract_pdf_content("https://www.nature.com/articles/nature12373")
-```
-
-### 3.3 Fetch Supplementary Materials
-
-Use `fetch_supplementary_info_from_doi` to download supplementary data.
-
-```python
-from ohagent.tool.literature import fetch_supplementary_info_from_doi
-
-# Download supplementary files using DOI
-log = fetch_supplementary_info_from_doi(
-    "10.1038/nature12373",
-    output_dir="./supplementary_materials"
-)
-```
-
-## Recommended Search Workflow
-
-### Step 1: Define Your Research Question
-
-Before searching, clearly define:
-1. **Main concept**: What is the primary topic?
-2. **Population/Model**: Humans, mice, cell lines, etc.?
-3. **Intervention/Method**: What technique or treatment?
-4. **Outcome**: What results are you looking for?
-5. **Time frame**: Recent only or historical?
-
-**Example**: "Find recent papers on CRISPR base editing efficiency in human iPSCs"
-- Main concept: CRISPR base editing
-- Model: Human iPSCs
-- Outcome: Efficiency data
-- Time frame: Last 3 years
-
-### Step 2: Construct Search Queries
-
-#### Start Broad, Then Narrow
-
-```python
-# Step 1: Broad search to understand the field
-results = query_pubmed("CRISPR base editing iPSC", max_papers=20)
-
-# Step 2: Add specific terms based on initial results
-results = query_pubmed(
-    '"CRISPR-Cas Systems"[MeSH] AND "base editing" AND "induced pluripotent stem cells" AND efficiency',
-    max_papers=20
-)
-
-# Step 3: Filter by date and article type
-results = query_pubmed(
-    '"CRISPR-Cas Systems"[MeSH] AND "base editing" AND "induced pluripotent stem cells" AND efficiency AND ("2022"[Date - Publication]:"2024"[Date - Publication])',
-    max_papers=20
-)
-```
-
-### Step 3: Evaluate and Filter Results
-
-When reviewing results, prioritize:
-1. **Relevance**: Does the paper address your question?
-2. **Recency**: Is it recent enough for your needs?
-3. **Quality indicators**:
-   - Published in peer-reviewed journals
-   - High citation count
-   - Reputable authors/institutions
-4. **Study type**:
-   - For efficacy: RCTs, systematic reviews, meta-analyses
-   - For mechanisms: Basic research papers
-   - For methods: Protocol papers, method comparisons
-
-### Step 4: Deep Dive into Key Papers
-
-For important papers:
-```python
-# 1. Extract full text
-content = extract_pdf_content("paper_url.pdf")
-
-# 2. Get supplementary materials
-log = fetch_supplementary_info_from_doi("10.xxxx/xxxxx", "./supplements")
-
-# 3. Check references for additional papers
-# 4. Check citations to find follow-up work
-```
-
-## Query Formulation Best Practices
-
-### Do's:
-
-1. **Use synonyms and alternative terms**
+1. **Use controlled vocabulary (MeSH) for PubMed searches**: Free-text searches miss papers that use different terminology. MeSH terms map synonyms to a single concept, improving recall without sacrificing precision.
    ```python
-   # Bad: Too narrow
+   # Free text misses synonyms
    query_pubmed("heart attack treatment")
-
-   # Good: Includes medical terms
-   query_pubmed("(myocardial infarction OR heart attack) AND (treatment OR therapy)")
-   ```
-
-2. **Use controlled vocabulary (MeSH terms for PubMed)**
-   ```python
-   # Better recall with MeSH
+   # MeSH captures all synonyms
    query_pubmed('"Myocardial Infarction"[MeSH] AND "Drug Therapy"[MeSH]')
    ```
 
-3. **Specify study types when needed**
+2. **Include synonyms and alternative terms with OR**: Scientific concepts often have multiple names (e.g., tumor/tumour/neoplasm). Group synonyms with OR inside parentheses to avoid missing relevant papers.
    ```python
-   # Find clinical trials only
-   query_pubmed("COVID-19 vaccine efficacy AND clinical trial[Publication Type]")
+   query_pubmed("(myocardial infarction OR heart attack) AND (treatment OR therapy)")
    ```
 
-4. **Use phrase searching for exact matches**
+3. **Use phrase searching for multi-word concepts**: Quoting exact phrases prevents the search engine from splitting terms and matching them independently.
    ```python
-   # Use quotes for exact phrases
    query_pubmed('"single cell RNA sequencing" AND methods')
    ```
 
-5. **Iterate based on results**
-   - Too many results? Add more specific terms
-   - Too few results? Broaden terms, add synonyms
-   - Wrong focus? Adjust key concepts
-
-### Don'ts:
-
-1. **Don't use overly long queries**
+4. **Filter by publication type when seeking specific evidence**: Clinical trials, systematic reviews, and meta-analyses each answer different questions. Use `[Publication Type]` to target the evidence level you need.
    ```python
-   # Bad: Too specific, may miss relevant papers
-   query_pubmed("CRISPR Cas9 gene editing HEK293T cells 2024 efficiency optimization delivery")
+   query_pubmed("COVID-19 vaccine efficacy AND clinical trial[Publication Type]")
+   ```
 
-   # Good: Core concepts only
+5. **Start broad, then narrow iteratively**: Begin with core concepts (2-3 terms) and review initial results. Add specificity based on what you find -- more terms, date ranges, field tags, or publication types.
+   ```python
+   # Step 1: Broad
+   results = query_pubmed("CRISPR base editing iPSC", max_papers=20)
+   # Step 2: Add MeSH and specificity
+   results = query_pubmed(
+       '"CRISPR-Cas Systems"[MeSH] AND "base editing" AND "induced pluripotent stem cells" AND efficiency',
+       max_papers=20
+   )
+   # Step 3: Filter by date
+   results = query_pubmed(
+       '"CRISPR-Cas Systems"[MeSH] AND "base editing" AND "induced pluripotent stem cells" AND efficiency AND ("2022"[Date - Publication]:"2024"[Date - Publication])',
+       max_papers=20
+   )
+   ```
+
+6. **Cross-reference multiple databases**: No single database covers all literature. Use PubMed for biomedical content, arXiv for computational preprints, and Google Scholar for cross-disciplinary coverage.
+
+7. **Assess result quality systematically**: Evaluate papers for source reliability (peer-reviewed journal), author credentials, recency, study design appropriateness, sample size adequacy, reproducibility, declared conflicts of interest, and citation count.
+
+## Common Pitfalls
+
+1. **Overly long and specific queries**: Packing too many terms into a single query causes missed results because all terms must match simultaneously.
+   - *How to avoid*: Limit queries to core concepts (3-5 terms). Run separate searches for sub-topics and combine results manually.
+   ```python
+   # Too specific -- misses relevant papers
+   query_pubmed("CRISPR Cas9 gene editing HEK293T cells 2024 efficiency optimization delivery")
+   # Better -- core concepts only
    query_pubmed("CRISPR Cas9 gene editing optimization efficiency")
    ```
 
-2. **Don't rely on a single database**
-   - PubMed: Biomedical focus
-   - arXiv: Preprints, computational methods
-   - Google Scholar: Broader coverage
+2. **Relying on a single database**: PubMed has biomedical focus, arXiv covers preprints, Google Scholar spans disciplines. Using only one database guarantees blind spots.
+   - *How to avoid*: Always search at least two databases. For computational biology, combine PubMed and arXiv. For cross-disciplinary topics, include Google Scholar.
 
-3. **Don't ignore publication dates**
-   - Science moves fast; check for recent updates
-   - But don't exclude foundational older papers
+3. **Ignoring publication dates**: Scientific knowledge evolves rapidly. Foundational papers remain relevant, but methods and clinical evidence may be superseded.
+   - *How to avoid*: Check publication dates in all results. For methods papers, prefer the last 3-5 years. For foundational concepts, older papers are acceptable but verify with recent reviews.
 
-4. **Don't skip title/abstract review**
-   - Not all "relevant" search results are truly relevant
-   - Read abstracts before full papers
+4. **Skipping title and abstract review before deep-diving**: Not all search results that match keywords are actually relevant. Downloading and reading full texts without screening wastes time.
+   - *How to avoid*: Always screen titles and abstracts first. Only extract full text (Tier 3) for papers that pass screening.
+
+5. **Using NOT operators too aggressively**: The NOT operator can inadvertently exclude relevant papers that mention the excluded term in a different context.
+   - *How to avoid*: Use NOT sparingly. Prefer adding positive terms to narrow results rather than excluding terms. When you must use NOT, verify that excluded results are genuinely irrelevant.
+
+6. **Ignoring Google Scholar rate limits**: Google Scholar aggressively rate-limits automated queries, which can block further searches.
+   - *How to avoid*: Use Google Scholar sparingly. Add delays between requests. Prefer PubMed or arXiv for bulk searching and reserve Google Scholar for cross-disciplinary checks.
+
+7. **Not documenting the search strategy**: For systematic reviews and reproducible research, an undocumented search cannot be verified or reproduced.
+   - *How to avoid*: Record your search terms, databases queried, date ranges, and number of results at each stage. This is essential for systematic reviews and good practice for all searches.
+
+## Workflow
+
+1. **Step 1: Define the research question**
+   - Identify the main concept, population/model, intervention/method, desired outcome, and time frame
+   - For clinical questions, map to the PICO framework
+   - Example: "Find recent papers on CRISPR base editing efficiency in human iPSCs" decomposes to: main concept = CRISPR base editing, model = human iPSCs, outcome = efficiency, time frame = last 3 years
+
+2. **Step 2: Construct and execute database queries (Tier 1)**
+   - Start with PubMed for biomedical topics, arXiv for computational topics
+   - Begin with a broad query using 2-3 core terms
+   - Refine with MeSH terms, field tags, date filters, and publication type filters
+   ```python
+   from Bio import Entrez
+   import arxiv
+   from scholarly import scholarly
+
+   Entrez.email = "your.email@example.com"  # NCBI requires a contact email
+
+   # PubMed: biomedical literature
+   handle = Entrez.esearch(
+       db="pubmed",
+       term='"CRISPR-Cas Systems"[MeSH] AND "Gene Editing"[MeSH]',
+       retmax=20,
+   )
+   pubmed_ids = Entrez.read(handle)["IdList"]
+   handle.close()
+
+   # arXiv: computational biology preprints
+   arxiv_results = list(
+       arxiv.Search(query="protein structure prediction", max_results=10).results()
+   )
+
+   # Google Scholar: broad cross-disciplinary coverage
+   scholar_results = scholarly.search_pubs("single cell RNA sequencing analysis methods")
+   ```
+
+3. **Step 3: Supplement with AI-assisted search (Tier 2)**
+   - Use AI-assisted web search for landscape overviews and recent developments
+   - Use general web search for protocols, tutorials, and documentation
+   ```python
+   from anthropic import Anthropic
+
+   client = Anthropic()
+   response = client.messages.create(
+       model="claude-opus-4-7",
+       max_tokens=4096,
+       tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
+       messages=[{
+           "role": "user",
+           "content": "What are the latest developments in CAR-T cell therapy for solid tumors in 2024?",
+       }],
+   )
+   print(response.content)
+   ```
+
+4. **Step 4: Evaluate and filter results**
+   - Screen titles and abstracts for relevance
+   - Prioritize by recency, journal quality, citation count, and study design
+   - For clinical evidence, prioritize RCTs, systematic reviews, and meta-analyses
+   - For methods, prioritize protocol papers and method comparisons
+   - Decision point: If too many results, add more specific terms or filters. If too few, broaden terms and add synonyms.
+
+5. **Step 5: Deep dive into key papers (Tier 3)**
+   - Extract full text from high-priority papers
+   - Download supplementary materials for data and protocols
+   - Check reference lists for additional relevant papers
+   ```python
+   import io
+   import os
+   from pathlib import Path
+   from urllib.parse import urlparse
+
+   import requests
+   import trafilatura
+   from pypdf import PdfReader
+
+   # Extract article content from URL (clean main text, drops nav/ads)
+   downloaded = trafilatura.fetch_url("https://www.nature.com/articles/nature12373")
+   article_text = trafilatura.extract(downloaded)
+
+   # Extract text from a PDF
+   pdf_bytes = requests.get("https://arxiv.org/pdf/1706.03762.pdf", timeout=30).content
+   reader = PdfReader(io.BytesIO(pdf_bytes))
+   pdf_text = "\n".join(page.extract_text() or "" for page in reader.pages)
+
+   # Download supplementary files via Crossref DOI metadata
+   doi = "10.1038/nature12373"
+   meta = requests.get(f"https://api.crossref.org/works/{doi}", timeout=30).json()
+   out_dir = Path("./supplementary_materials")
+   out_dir.mkdir(exist_ok=True)
+   for link in meta.get("message", {}).get("link", []):
+       url = link.get("URL")
+       if not url:
+           continue
+       fname = os.path.basename(urlparse(url).path) or "supplement.bin"
+       (out_dir / fname).write_bytes(requests.get(url, timeout=60).content)
+   ```
+
+6. **Step 6: Document and iterate**
+   - Record all search terms, databases, filters, and result counts
+   - If gaps remain, revisit Steps 2-3 with refined queries
+   - For systematic reviews, follow PRISMA guidelines for reporting
 
 ## Common Search Scenarios
 
-### Scenario 1: Finding Methods/Protocols
+The following scenarios illustrate how to combine the three tiers for typical research questions.
+
+### Finding Methods and Protocols
+
+Start with PubMed for published methodology papers, then supplement with web search for step-by-step protocols from resources like protocols.io.
 
 ```python
-# Search for methodology papers
-results = query_pubmed(
-    '"Western Blotting"[MeSH] AND (protocol OR method OR technique)',
-    max_papers=10
+from Bio import Entrez
+from duckduckgo_search import DDGS
+
+Entrez.email = "your.email@example.com"
+
+# Search for methodology papers in PubMed
+handle = Entrez.esearch(
+    db="pubmed",
+    term='"Western Blotting"[MeSH] AND (protocol OR method OR technique)',
+    retmax=10,
 )
+pubmed_ids = Entrez.read(handle)["IdList"]
+handle.close()
 
 # Check web for step-by-step protocols
-results = search_google("Western blot protocol for membrane proteins", num_results=5)
+web_hits = DDGS().text("Western blot protocol for membrane proteins", max_results=5)
 ```
 
-### Scenario 2: Understanding Disease Mechanism
+### Understanding Disease Mechanisms
+
+Begin with review articles for a broad overview, then drill into specific mechanistic studies.
 
 ```python
-# Find review articles first
+# Find review articles first for an overview
 results = query_pubmed(
     '"Alzheimer Disease"[MeSH] AND pathophysiology AND review[Publication Type]',
     max_papers=10
@@ -461,162 +361,126 @@ results = query_pubmed(
 )
 ```
 
-### Scenario 3: Finding Drug/Treatment Information
+### Finding Drug and Treatment Information
+
+Use publication type filters to separate clinical trial evidence from systematic reviews.
 
 ```python
-# Clinical trials
+# Clinical trials for a specific drug-condition pair
 results = query_pubmed(
     '"Drug Name"[Substance Name] AND "Condition"[MeSH] AND clinical trial[Publication Type]',
     max_papers=20
 )
 
-# Systematic reviews
+# Systematic reviews and meta-analyses
 results = query_pubmed(
     '"Drug Name" AND "Condition" AND (systematic review[Publication Type] OR meta-analysis[Publication Type])',
     max_papers=10
 )
 ```
 
-### Scenario 4: Latest Developments in a Field
+### Tracking Latest Developments
+
+Combine AI-assisted search for synthesis with database searches for recent indexed publications.
 
 ```python
-# Use AI-assisted search for synthesis
-results = advanced_web_search_claude(
-    "What are the most significant advances in CAR-T cell therapy in 2024?",
-    max_searches=3
+from anthropic import Anthropic
+from Bio import Entrez
+
+client = Anthropic()
+Entrez.email = "your.email@example.com"
+
+# AI-assisted synthesis of recent advances (Claude API web search tool)
+response = client.messages.create(
+    model="claude-opus-4-7",
+    max_tokens=4096,
+    tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
+    messages=[{
+        "role": "user",
+        "content": "What are the most significant advances in CAR-T cell therapy in 2024?",
+    }],
 )
 
-# Supplement with recent PubMed searches
-results = query_pubmed(
-    '"Chimeric Antigen Receptor T-Cell Therapy"[MeSH] AND "2024"[Date - Publication]',
-    max_papers=20
+# Supplement with recent PubMed results
+handle = Entrez.esearch(
+    db="pubmed",
+    term='"Chimeric Antigen Receptor T-Cell Therapy"[MeSH] AND "2024"[Date - Publication]',
+    retmax=20,
 )
+pubmed_ids = Entrez.read(handle)["IdList"]
+handle.close()
 ```
 
-### Scenario 5: Finding Specific Reagents/Materials
+### Finding Specific Reagents and Materials
+
+Use AI-assisted search for validated reagent recommendations, supplemented by general web search.
 
 ```python
-# Search for validated reagents
-results = advanced_web_search_claude(
-    "validated antibodies for Western blot detection of p53 protein",
-    max_searches=2
+from anthropic import Anthropic
+from duckduckgo_search import DDGS
+
+client = Anthropic()
+
+# Search for validated reagents (Claude API + web search tool)
+response = client.messages.create(
+    model="claude-opus-4-7",
+    max_tokens=4096,
+    tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 2}],
+    messages=[{
+        "role": "user",
+        "content": "validated antibodies for Western blot detection of p53 protein",
+    }],
 )
 
-# Search databases
-results = search_google("p53 antibody Western blot validated", num_results=5)
+# Search supplier databases
+supplier_hits = DDGS().text("p53 antibody Western blot validated", max_results=5)
+```
+
+### Comparative Analysis Across Methods
+
+Use AI-assisted search for synthesized comparisons of techniques or tools.
+
+```python
+from anthropic import Anthropic
+
+client = Anthropic()
+
+# Compare approaches with AI synthesis (Claude API web search tool)
+response = client.messages.create(
+    model="claude-opus-4-7",
+    max_tokens=4096,
+    tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 5}],
+    messages=[{
+        "role": "user",
+        "content": "Compare different CRISPR delivery methods for in vivo gene editing: viral vectors vs lipid nanoparticles",
+    }],
+)
+print(response.content)
 ```
 
 ## Quality Assessment Checklist
 
-When evaluating search results:
+When evaluating search results, apply these criteria:
 
-- [ ] **Source reliability**: Is it from a peer-reviewed journal?
-- [ ] **Author credentials**: Are authors experts in the field?
-- [ ] **Recency**: Is the information up-to-date?
-- [ ] **Study design**: Appropriate for the question?
-- [ ] **Sample size**: Adequate for conclusions drawn?
-- [ ] **Reproducibility**: Methods described clearly?
-- [ ] **Conflicts of interest**: Any declared conflicts?
-- [ ] **Citation count**: Well-cited by others?
+- **Source reliability**: Is the paper from a peer-reviewed journal?
+- **Author credentials**: Are the authors established experts in the field?
+- **Recency**: Is the information current enough for your purpose?
+- **Study design**: Is the design appropriate for the question (e.g., RCT for efficacy, cohort for risk)?
+- **Sample size**: Is it adequate for the conclusions drawn?
+- **Reproducibility**: Are methods described clearly enough to replicate?
+- **Conflicts of interest**: Are any conflicts declared?
+- **Citation count**: Has the paper been well-cited by subsequent work?
 
-## Troubleshooting
+## Further Reading
 
-### Issue: No Results Found
+- [PubMed Help](https://pubmed.ncbi.nlm.nih.gov/help/) -- Official guide to PubMed search syntax, field tags, filters, and advanced features
+- [arXiv Help Pages](https://info.arxiv.org/help/index.html) -- Documentation on arXiv search, subject categories, and submission process
+- [MeSH Browser](https://meshb.nlm.nih.gov/) -- NLM tool for browsing and searching the Medical Subject Headings controlled vocabulary
+- [PRISMA Statement](http://www.prisma-statement.org/) -- Guidelines for transparent reporting of systematic reviews and meta-analyses
+- [Cochrane Handbook for Systematic Reviews](https://training.cochrane.org/handbook) -- Gold-standard methodology for systematic literature reviews
 
-**Solutions**:
-1. Broaden search terms
-2. Remove restrictive filters (date, publication type)
-3. Try alternative databases
-4. Use synonyms and alternative terminology
-5. Check spelling of scientific terms
+## Related Skills
 
-### Issue: Too Many Results
-
-**Solutions**:
-1. Add more specific terms
-2. Use MeSH terms instead of free text
-3. Restrict to specific publication types
-4. Limit date range
-5. Add [Title] or [Title/Abstract] field tags
-
-### Issue: Results Not Relevant
-
-**Solutions**:
-1. Use phrase searching ("exact phrase")
-2. Use NOT to exclude irrelevant topics
-3. Focus on MeSH major topic ([MeSH Major Topic])
-4. Review and refine key concepts
-
-### Issue: API Rate Limiting
-
-**Solutions**:
-1. Add delays between requests (`time.sleep(2)`)
-2. Use different databases
-3. Cache results for repeated searches
-4. Reduce number of results requested
-
-## Best Practices
-
-1. **Start with controlled vocabulary, then broaden.** Begin a PubMed search with relevant MeSH terms before adding free-text synonyms. Rationale: MeSH gives you reproducible recall against a curated index; free-text adds papers not yet indexed but introduces noise.
-
-2. **Iterate on the same query rather than running many disjoint queries.** Track each refinement (added term, narrowed date, added publication type) and keep the result count log. Rationale: deliberate iteration converges on a high-quality set; scattered queries waste effort and cannot be reproduced.
-
-3. **Triangulate across at least two databases.** Always cross-check PubMed (biomedical) with arXiv or Google Scholar (preprints, broader coverage) for any non-trivial topic. Rationale: each database has known gaps — preprints, non-MEDLINE journals, and conference proceedings all have different coverage.
-
-4. **Prefer review articles and meta-analyses for orientation, then drill to primary studies.** Use `Review[Publication Type]` or `Meta-Analysis[Publication Type]` filters early in a new topic. Rationale: reviews map the landscape and highlight key primary papers, saving you from re-discovering them.
-
-5. **Document every search query that informs your conclusions.** Save the exact query string, database, date searched, and number of results. Rationale: required for systematic reviews (PRISMA) and lets you re-run searches as the literature grows.
-
-6. **Use AI-assisted search for synthesis, but verify every cited claim with the primary source.** AI tools may hallucinate citations or misattribute findings. Rationale: AI summaries are starting points, not citations.
-
-7. **Read titles and abstracts before downloading PDFs.** Title/abstract review filters out 60-80% of false positives. Rationale: full-text extraction is expensive (rate limits, paywalls) and unnecessary for most retrieved hits.
-
-## Common Pitfalls
-
-1. **Relying on a single database.**
-   *Problem*: PubMed misses preprints, conference proceedings, and many engineering/CS journals; arXiv lacks peer review; Google Scholar is noisy and not reproducible.
-   *How to avoid*: Always run the same conceptual query across at least two complementary databases (e.g., PubMed + bioRxiv for life sciences, arXiv + Google Scholar for computational topics).
-
-2. **Over-specifying the query and missing relevant work.**
-   *Problem*: Adding too many AND clauses (organism, year, technique, exact disease subtype) shrinks results to zero or near-zero, hiding adjacent useful papers.
-   *How to avoid*: Start with 2-3 core concepts. Add filters only after seeing the broader result set. If results drop below ~10, remove the most recently added clause.
-
-3. **Ignoring synonyms and alternate spellings.**
-   *Problem*: "Tumor" vs. "tumour", "color blindness" vs. "achromatopsia", drug brand vs. generic name — single-spelling queries miss large fractions of the literature.
-   *How to avoid*: Wrap synonyms in `(termA OR termB OR termC)` groups, or use MeSH which automatically maps synonyms to canonical terms.
-
-4. **Trusting AI-synthesized summaries without verification.**
-   *Problem*: AI-assisted search tools can fabricate citations, conflate findings, or misattribute authors. Acting on these summaries propagates errors.
-   *How to avoid*: For any AI-derived claim that will appear in your work, retrieve the primary source via PubMed/DOI and confirm the finding directly.
-
-5. **Skipping date filters for fast-moving fields.**
-   *Problem*: A 2015 review of CRISPR delivery is severely outdated; using it without checking recent literature leads to wrong conclusions.
-   *How to avoid*: For any field with rapid methodological change (genomics, ML, CRISPR, immunotherapy), explicitly include a recent date filter (e.g., last 3-5 years) and pair with a separate scan of the last 12 months for recent advances.
-
-6. **Confusing citation count with quality or relevance.**
-   *Problem*: High-citation papers may be old, popular for the wrong reasons, or in adjacent fields. Low-citation papers may be excellent but recent.
-   *How to avoid*: Use citation count as one signal among many (journal quality, methodology, recency, author reputation) — never as the sole filter.
-
-7. **Failing to save and re-run queries.**
-   *Problem*: Queries lost after the session can't be reproduced; the literature grows weekly and your search becomes stale within months.
-   *How to avoid*: Save query strings + database + date in a search log. Re-run before submitting any manuscript or report.
-
-## References
-
-### Databases:
-- **PubMed**: https://pubmed.ncbi.nlm.nih.gov/
-- **arXiv**: https://arxiv.org/
-- **Google Scholar**: https://scholar.google.com/
-- **Semantic Scholar**: https://www.semanticscholar.org/
-- **bioRxiv**: https://www.biorxiv.org/
-
-### Reference Management:
-- **Zotero**: https://www.zotero.org/ (Free, open-source)
-- **Mendeley**: https://www.mendeley.com/ (Free with premium features)
-- **EndNote**: https://endnote.com/ (Commercial, institutional licenses)
-
-### Search Guides:
-- **PubMed User Guide**: https://pubmed.ncbi.nlm.nih.gov/help/
-- **MeSH Browser**: https://meshb.nlm.nih.gov/
-- **arXiv Help**: https://arxiv.org/help/
-- **PRISMA Statement (Systematic Review Reporting)**: https://www.prisma-statement.org/
+- `pubmed-database` -- Direct PubMed API access for programmatic literature retrieval
+- `scientific-manuscript-writing` -- Structuring literature review sections within manuscripts
+- `research-question-formulation` -- Frameworks for defining answerable research questions
