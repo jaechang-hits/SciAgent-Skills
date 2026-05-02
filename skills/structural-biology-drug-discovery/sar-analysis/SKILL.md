@@ -1,293 +1,309 @@
 ---
 name: sar-analysis
-description: "Structure-Activity Relationship (SAR) analysis with RDKit: scaffold detection via MCS, R-group decomposition, aligned visualization, activity heatmaps, interpretive SAR output. For general cheminformatics see rdkit-cheminformatics; for bioactivity see chembl-database-bioactivity."
-license: CC-BY-4.0
+description: Structure-activity relationship (SAR) analysis guide for drug discovery including molecular descriptor analysis, scaffold analysis, and activity cliff detection.
+license: open
 ---
 
 # SAR Analysis
 
+---
+
+## Metadata
+
+**Short Description**: Comprehensive guide for performing Structure-Activity Relationship (SAR) analysis using RDKit.
+
+**Authors**: Ohagent Team
+
+**Version**: 1.0
+
+**Last Updated**: December 2025
+
+**License**: CC BY 4.0
+
+**Commercial Use**: ✅ Allowed
+
+---
+
 ## Overview
 
-Structure-Activity Relationship (SAR) analysis is a foundational technique in medicinal chemistry that systematically relates chemical modifications to changes in biological activity. By identifying a common scaffold across a compound series and decomposing each molecule into its core and variable substituents (R-groups), SAR analysis reveals which structural features drive potency, selectivity, and other pharmacological properties. This guide covers the complete computational SAR workflow using RDKit: from automatic core identification through MCS, to R-group decomposition, aligned molecular visualization, interactive HTML report generation with activity heatmaps, and interpretive SAR text output.
+Structure-Activity Relationship (SAR) analysis is a core medicinal-chemistry workflow that relates systematic structural variations of a chemical series to changes in biological activity. The goal is to (1) identify a common scaffold (Maximum Common Substructure, MCS) shared by a series of analogues, (2) decompose each molecule into the scaffold plus its R-group substituents, (3) align all molecules so substituents at equivalent positions are visually comparable, and (4) connect substituent variation to potency to derive testable design hypotheses.
+
+This guide formalizes a reproducible RDKit-based SAR workflow that produces an interactive HTML report (compound table with aligned core/R-groups and an activity heatmap) and a written SAR narrative that explicitly contrasts substituents at the same R-position. It is intended for use on activity tables containing SMILES, a compound identifier, and a numeric potency value (IC50, Ki, EC50, %inhibition, etc.).
 
 ## Key Concepts
 
 ### Maximum Common Substructure (MCS)
 
-The Maximum Common Substructure is the largest substructure shared by all (or a threshold fraction of) molecules in a dataset. In SAR analysis, MCS serves as the automatic scaffold detection method. RDKit provides `rdFMCS.FindMCS` which accepts parameters controlling match stringency: `threshold` (fraction of molecules that must contain the substructure), `ringMatchesRingOnly` (ring atoms match only ring atoms), `completeRingsOnly` (partial ring matches are disallowed), and atom/bond comparison modes. The MCS result is returned as a SMARTS string that can be converted to a molecule object for downstream use.
-
-```python
-from rdkit.Chem import rdFMCS, AllChem, Chem
-
-mols_for_mcs = [Chem.AddHs(m) for m in mols]
-mcs_res = rdFMCS.FindMCS(
-    mols_for_mcs,
-    threshold=0.8,
-    ringMatchesRingOnly=True,
-    completeRingsOnly=True,
-    atomCompare=rdFMCS.AtomCompare.CompareElements,
-    bondCompare=rdFMCS.BondCompare.CompareOrder
-)
-core_mol = Chem.MolFromSmarts(mcs_res.smartsString)
-AllChem.Compute2DCoords(core_mol)
-```
+MCS is the largest connected substructure shared by all (or a configurable threshold of) molecules in a set. RDKit's `rdFMCS.FindMCS` searches for this scaffold under tunable atom/bond comparison rules. For SAR, MCS provides the anchor template against which every analogue is decomposed and aligned. A `threshold=0.8` allows MCS to be defined when only 80% of molecules contain the candidate substructure, which is more robust to outliers than `threshold=1.0`. `ringMatchesRingOnly=True` and `completeRingsOnly=True` prevent partial-ring fragments that look chemically meaningless.
 
 ### R-Group Decomposition
 
-R-group decomposition breaks each molecule into the common core scaffold and its variable substituents at defined attachment points. RDKit's `rdRGroupDecomposition.RGroupDecompose` takes the core molecule and a list of target molecules, returning a dictionary mapping each R-group position (R1, R2, etc.) to its fragment for each compound. After decomposition, constant R-groups (identical across all molecules) should be excluded from the analysis since they carry no SAR information. These constant positions should also be visually merged back into the core representation.
+R-group decomposition (`rdRGroupDecomposition.RGroupDecompose`) maps each molecule onto the MCS core and assigns the non-core fragments to enumerated R-positions (R1, R2, …). The output is a per-molecule dictionary `{Core, R1, R2, …}`. Constant R-positions (where every molecule carries the same fragment) are uninformative for SAR and should be pruned from the report so attention focuses on the variable positions that actually drive activity.
 
-```python
-from rdkit.Chem import rdRGroupDecomposition
+### Substructure Alignment for Comparable 2D Depiction
 
-matches, unmatched_indices = rdRGroupDecomposition.RGroupDecompose(
-    [core_mol], mols, asSmiles=False, asRows=False
-)
-```
+For SAR visualization to be interpretable, the core and each R-group must be drawn in the same orientation as the parent molecule. The recommended pattern uses three fall-back strategies in order: (1) a direct `GetSubstructMatch`, (2) a re-match after `AdjustQueryProperties(makeDummiesQueries=True)` so R-group dummy atoms are treated as queries, and (3) a final attempt with `useChirality=False`. Once a match is found, atom coordinates are copied from the parent conformer onto the fragment. Without this, R-group cells are drawn in arbitrary canonical orientations and visual SAR is essentially impossible to read.
 
-### Molecular Alignment and Visualization
+### Activity Heatmap and Comparative Analysis
 
-Proper molecular alignment ensures that the core scaffold and R-group fragments are visually superimposed on the parent molecule, making structural comparisons intuitive. RDKit's `GenerateDepictionMatching2DStructure` aligns a molecule's 2D coordinates to match a template (the core). For fragments, coordinate extraction from the parent molecule guarantees pixel-perfect overlay. SVG output is preferred over raster formats for resolution independence and scalability in HTML reports.
-
-```python
-from rdkit.Chem.Draw import rdMolDraw2D
-
-drawer = rdMolDraw2D.MolDraw2DSVG(-1, -1)
-rdMolDraw2D.DrawMoleculeACS1996(drawer, mol)
-drawer.FinishDrawing()
-svg = drawer.GetDrawingText()
-
-svg = svg.replace("width='", "width='100%' data-original-width='")
-svg = svg.replace("height='", "height='100%' data-original-height='")
-```
-
-### Activity Heatmaps
-
-Activity heatmaps apply color gradients to activity values in a tabular report, providing an immediate visual summary of potency trends across the compound series. A logarithmic scale is typically used because biological activity values (IC50, EC50, Ki) often span several orders of magnitude. The conventional color scheme maps green to high potency (low IC50 values) and red to low potency (high IC50 values), aligning with the medicinal chemistry convention that lower values indicate more active compounds.
+A logarithmic-scale color gradient (green = high potency / low IC50, red = low potency / high IC50) on the activity column lets a reader spot trends across the series at a glance. The accompanying narrative must justify every claim about a substituent's effect by *explicit pairwise contrast at the same R-position* — the unit of SAR evidence is "compound A (R1=X, IC50=…) vs compound B (R1=Y, IC50=…)", never an unsupported generalization.
 
 ## Decision Framework
 
-When setting up a SAR analysis, the first decision is how to define the core scaffold:
-
 ```
-Question: How do you define the common scaffold?
-|-- Compound series is congeneric (shared ring system)
-|   |-- >80% share the same core -> MCS with threshold=0.8
-|   |-- 60-80% share the same core -> MCS with threshold=0.6
-|   +-- <60% share a core -> Manual scaffold or cluster first
-|-- You have a known pharmacophore scaffold
-|   +-- Use manual SMARTS definition
-+-- Highly diverse set with no obvious shared core
-    +-- Cluster by fingerprint similarity first, then MCS per cluster
+SAR analysis pipeline
+└── Have SMILES + activity for >= 4 analogues?
+    ├── No  -> Insufficient data; collect more analogues first
+    └── Yes -> Run rdFMCS.FindMCS(threshold=0.8, ringMatchesRingOnly=True)
+        ├── MCS too small (<5 atoms) -> Series is too diverse;
+        │                               cluster first, then run SAR per cluster
+        └── MCS reasonable -> RGroupDecompose
+            └── For each fragment alignment to parent:
+                ├── Strategy 1: GetSubstructMatch(direct)  -- works for canonical cases
+                │   └── No match -> Strategy 2
+                ├── Strategy 2: AdjustQueryProperties(makeDummiesQueries=True)
+                │               -- handles dummy R-group atoms
+                │   └── No match -> Strategy 3
+                ├── Strategy 3: GetSubstructMatch(useChirality=False)
+                │               -- handles stereochemistry mismatches
+                │   └── No match -> Compute2DCoords as fallback (lose alignment)
+                └── Drop constant R-positions, build HTML, draw with DrawMoleculeACS1996
 ```
 
-| Scenario | Recommended Approach | Rationale |
-|----------|---------------------|-----------|
-| Congeneric series (>10 compounds, shared ring system) | MCS with `threshold=0.8`, `completeRingsOnly=True` | Automatic detection avoids manual bias; high threshold ensures meaningful core |
-| Small series (<10 compounds) | MCS with `threshold=1.0` or manual scaffold | Every compound must match; manual review is feasible |
-| Known target with published scaffold | Manual SMARTS-defined core | Preserves medicinal chemistry knowledge; avoids MCS finding a suboptimal core |
-| Mixed scaffolds in one dataset | Cluster by Tanimoto similarity, then per-cluster MCS | Prevents MCS from returning a trivially small common fragment |
-| MCS returns a very small fragment (<6 heavy atoms) | Lower threshold or switch to manual scaffold | A tiny MCS lacks SAR interpretive value |
-| Ring-open / ring-closed analogue pairs | Set `ringMatchesRingOnly=False` | Allows matching of ring atoms to non-ring atoms across the pair |
+| Situation | Recommended choice | Rationale |
+|-----------|--------------------|-----------|
+| Standard congeneric series with a clear scaffold | MCS `threshold=0.8`, `ringMatchesRingOnly=True`, `completeRingsOnly=True` | Tolerates a small minority of outliers while keeping rings intact |
+| Highly diverse set (e.g., HTS hit list) | Cluster (Tanimoto/Murcko) first, then SAR per cluster | A single MCS will be too small to be useful across diverse chemotypes |
+| Stereoisomers in the series | Try Strategy 1 first; fall back to Strategy 3 (`useChirality=False`) | Chirality differences should not break depiction alignment |
+| Analogues with R-group attachment dummies in queries | Strategy 2 with `AdjustQueryProperties(makeDummiesQueries=True)` | Dummy atoms are treated as queries so they match real heavy atoms |
+| One R-position constant across all analogues | Drop from report and from core depiction | Constant positions are uninformative and clutter the table |
+| Activity spans many orders of magnitude | Color heatmap on `log10(activity)` | Linear scale collapses the dynamic range visually |
+| Drawing for publication or report | `DrawMoleculeACS1996` via `MolDraw2DSVG` | ACS1996 is the de facto standard for medicinal chemistry figures |
 
 ## Best Practices
 
-1. **Pre-process molecules with explicit hydrogens before MCS**: Apply `Chem.AddHs` to all molecules before calling `FindMCS`. This ensures hydrogen-bearing positions are correctly identified as substitution points, preventing missed R-groups in the decomposition step.
-
-2. **Remove constant R-groups from the analysis**: After R-group decomposition, identify columns where every molecule has the identical substituent. Exclude these from both the data table and the core visualization. Constant R-groups add visual clutter without contributing SAR insight.
-
-3. **Align all molecules to the core template before generating images**: Use `AllChem.GenerateDepictionMatching2DStructure(mol, core_mol)` for each molecule. Then extract coordinates from the aligned parent molecule to position fragments. This guarantees visual consistency across the entire report.
-
-4. **Use SVG output with DrawMoleculeACS1996 for publication-quality rendering**: SVG scales without pixelation and integrates cleanly into HTML reports. The ACS 1996 drawing style produces structures that conform to American Chemical Society publication standards, with proper bond lengths and atom label sizes.
-
-5. **Apply logarithmic scaling for activity heatmaps**: Biological activity values often span orders of magnitude. Linear color mapping compresses the interesting range; log-scale mapping distributes colors more evenly across the potency spectrum, making subtle differences visible.
-
-6. **Set minimum column widths of 300px for structure images in HTML tables**: Molecular structures become unreadable when compressed into narrow table cells. Enforce `min-width: 300px` on columns containing SVG or image content to maintain legibility.
-
-7. **Validate image generation before embedding**: Check that each SVG or Base64 image string is non-empty and well-formed before inserting it into the HTML table. Use a text placeholder (e.g., "No Image") for any failed rendering to prevent broken layout.
-
-8. **Always include compound identifiers in SAR text analysis**: Reference specific compound IDs when describing activity trends (e.g., "Compound 7, R1=F, IC50=0.5 uM showed 10-fold improvement over Compound 1"). Unnamed claims about substituent effects are not verifiable.
+1. **Inspect the dataframe before assuming column names.** Real-world activity tables vary; auto-detect the SMILES, activity, and ID columns from `df.head()` rather than hard-coding names. This avoids silent failures on user data.
+2. **Add explicit hydrogens before MCS.** `Chem.AddHs` lets MCS reason correctly about heavy-atom valence and ring closures; without it, otherwise-identical scaffolds can be missed.
+3. **Prune constant R-positions.** Any R-position whose fragment is identical across every analogue contributes no SAR information; remove that column from the table and remove the constant attachment point from the core depiction so the variable positions stand out.
+4. **Always align fragments to the parent molecule, not the other way around.** Copy coordinates *from the parent* onto each fragment via the matched atom map. Drawing the parent canonically and then re-drawing fragments from scratch loses comparability between rows.
+5. **Use a log-scale activity heatmap.** Potency typically spans 2–4 orders of magnitude; a linear color scale collapses the interesting low-IC50 region. Map green to low IC50 (high potency) and red to high IC50 (low potency).
+6. **Justify every SAR claim with a pairwise contrast at the same R-position.** Statements like "small electron-withdrawing groups improve activity at R1" must be backed by a direct comparison such as "compound 7 (R1=F, IC50=0.5 µM) vs compound 1 (R1=Me, IC50=5.2 µM)". Unsupported generalizations are not acceptable evidence.
+7. **Test 3-4 analogues per design hypothesis.** A single substitution change can be confounded by experimental noise; multiple analogues at the same position give a defensible trend.
+8. **Render with `DrawMoleculeACS1996`.** ACS1996 styling produces consistent bond lengths, atom labels, and font choices that match medicinal-chemistry publication norms; avoid mixing styles within a single report.
 
 ## Common Pitfalls
 
-1. **MCS returns a trivially small fragment (e.g., a single ring or chain)**: This happens when the compound set is too structurally diverse for the chosen threshold, or when `completeRingsOnly` is not set.
-   - *How to avoid*: Inspect the MCS result before proceeding. If the core has fewer than 6 heavy atoms, either lower the threshold parameter, pre-cluster the molecules by fingerprint similarity and run MCS per cluster, or define the scaffold manually.
+- **Pitfall: Hard-coding column names like `"SMILES"` or `"IC50"`.** Different vendors and ELNs export different headers; the script breaks on the first user that uses `Smiles` or `Standard Value`.
+  - *How to avoid*: Inspect `df.columns` and `df.head()` and detect the SMILES/activity/ID columns by content (valid SMILES parse rate, numeric values, unique strings).
 
-2. **R-group decomposition fails silently for some molecules**: Molecules that do not match the core are returned in `unmatched_indices` but no error is raised, leading to incomplete reports.
-   - *How to avoid*: Always check `unmatched_indices` after `RGroupDecompose`. Log which molecules failed to match and report them separately. Consider whether the core definition needs adjustment.
+- **Pitfall: Skipping `Chem.AddHs` before MCS.** Implicit-H molecules can yield a smaller-than-expected MCS because valence and ring perception differ.
+  - *How to avoid*: Always preprocess with `mols_for_mcs = [Chem.AddHs(m) for m in mols]` before calling `rdFMCS.FindMCS`.
 
-3. **Misaligned structures in the HTML report**: Fragments appear shifted or rotated relative to the parent molecule because independent 2D coordinate generation was used instead of coordinate extraction.
-   - *How to avoid*: Use the `align_substructure_to_parent` function (see Workflow Step 4) to copy atom positions from the aligned parent molecule to each fragment. Never call `Compute2DCoords` independently on fragments that should overlay the parent.
+- **Pitfall: Setting `threshold=1.0` on a noisy series.** A single outlier with an unusual scaffold collapses the MCS to a tiny fragment and ruins R-group decomposition for everyone else.
+  - *How to avoid*: Use `threshold=0.8` (or lower) so the MCS is defined when 80% of the series contains it; review the outlier(s) separately.
 
-4. **Activity heatmap colors are misleading due to linear scaling**: When activity values range from 1 nM to 100 uM, linear color mapping assigns nearly identical colors to 1 nM and 100 nM (both near the green end), obscuring meaningful differences.
-   - *How to avoid*: Apply `math.log10` or `numpy.log10` to activity values before mapping to the color gradient. Verify the color scale by checking that the most and least potent compounds receive clearly distinct colors.
+- **Pitfall: Drawing each fragment with `Compute2DCoords` independently.** Each fragment receives its own canonical 2D layout, so equivalent atoms appear in different positions across rows and visual SAR becomes unreadable.
+  - *How to avoid*: Match each fragment to the parent (with the 3-strategy fallback) and copy coordinates from the parent's conformer onto the fragment's conformer.
 
-5. **Forgetting to handle dummy atoms in substructure matching**: R-group fragments contain dummy atoms (`[*]`, `[#0]`) at attachment points. Standard substructure matching does not recognize these, causing alignment failures.
-   - *How to avoid*: Use `Chem.AdjustQueryParameters` with `makeDummiesQueries=True` as a fallback matching strategy. Implement a multi-strategy alignment approach (direct match, then dummy-adjusted match, then chirality-relaxed match).
+- **Pitfall: Failing on dummy R-group atoms.** `GetSubstructMatch` returns no match when the fragment contains R-group dummy atoms (`*`) because dummies are not treated as queries by default.
+  - *How to avoid*: Apply `AdjustQueryProperties(params)` with `makeDummiesQueries=True` before retrying the match (Strategy 2).
 
-6. **Unsupported SAR claims in the text analysis**: Stating that a substituent "improves activity" without contrasting it against other substituents at the same position is a common analytical error.
-   - *How to avoid*: For every SAR claim, explicitly name at least two compounds being compared, their R-group differences at a single position, and their measured activity values. If no direct comparison exists, flag the gap and suggest an analogue to synthesize.
+- **Pitfall: Reporting only a single error metric (e.g., mean only).** A trend reported without dispersion is not interpretable; equally, claims about substituent effects without same-position contrasts are not SAR.
+  - *How to avoid*: For every R-position, list each unique substituent and the activities of the compounds carrying it; derive every claim from a pairwise comparison.
 
-7. **HTML report breaks with special characters in compound names or SMILES**: Unescaped angle brackets, ampersands, or quotes in data fields corrupt the HTML structure.
-   - *How to avoid*: HTML-escape all text content before embedding in the report. Use Python's `html.escape()` on compound names and any text fields inserted into the HTML template.
+- **Pitfall: Using a linear-scale heatmap on IC50 in nM.** Most of the interesting potency range collapses into one or two color bins.
+  - *How to avoid*: Color by `log10(IC50)` or `pIC50 = -log10(IC50_in_M)`; this gives uniform color separation across orders of magnitude.
+
+- **Pitfall: Treating every column of the R-group decomposition as a SAR axis.** Constant R-positions (every analogue has the same fragment) and the core itself are not SAR variables.
+  - *How to avoid*: After decomposition, programmatically drop columns where every entry is identical and remove those attachment points from the core image.
 
 ## Workflow
 
-### Step 1: Data Loading and Column Identification
+You are an expert in Cheminformatics and Python. Perform a SAR (Structure-Activity Relationship) analysis using RDKit.
 
-Load the CSV file and automatically identify the relevant columns. Do not assume fixed column names. Inspect the dataframe (e.g., using `df.head()` and `df.columns`) to detect columns for:
+**Task Requirements:**
 
-- **Compound Key**: Look for columns named "Compound Key", "ID", "Name", "Compound_ID", or similar.
-- **Activity**: Look for columns named "Standard Value", "IC50", "EC50", "Ki", "Activity", or similar.
-- **SMILES**: Look for columns named "Smiles", "SMILES", "Structure", "canonical_smiles", or similar.
+1.  **Data Loading:** Load the CSV file. Do not assume fixed column names. Instead, inspect the dataframe (e.g., using `df.head()`) to automatically identify columns for Compound Key (e.g., 'Compound Key', 'ID', 'Name'), Activity (e.g., 'Standard Value', 'IC50', 'Activity'), and SMILES (e.g., 'Smiles', 'SMILES', 'Structure').
 
-Processing steps:
+2.  **Core Identification (MCS):**
+    *   Use `rdFMCS.FindMCS` to find a significant common scaffold.
+    *   **Pre-processing:** Apply `Chem.AddHs` to molecules before finding MCS.
+    *   **Reference Code:** Use the following parameter settings for robust core identification:
+        ```python
+        mols_for_mcs = [Chem.AddHs(m) for m in mols]
+        mcs_res = rdFMCS.FindMCS(
+            mols_for_mcs,
+            threshold=0.8,
+            ringMatchesRingOnly=True,
+            completeRingsOnly=True,
+            atomCompare=rdFMCS.AtomCompare.CompareElements,
+            bondCompare=rdFMCS.BondCompare.CompareOrder
+        )
+        core_mol = Chem.MolFromSmarts(mcs_res.smartsString)
+        AllChem.Compute2DCoords(core_mol)
+        ```
 
-- Parse each SMILES string into an RDKit molecule object with `Chem.MolFromSmiles`.
-- Drop rows where SMILES parsing fails and log a warning for each dropped compound.
-- Verify that activity values are numeric; convert string representations if needed.
-- Decision point: If fewer than 3 valid molecules remain, abort with a descriptive error message listing the parsing failures.
+3.  **R-Group Decomposition & Refinement:**
+    *   Perform decomposition based on the Core.
+    *   **Refinement:** Exclude any R-group columns that are identical (constant) across all molecules. Remove these constant points from the Core visualization as well.
 
-### Step 2: Core Identification via MCS
+4.  **Image Generation & Alignment (Strict Coordinate Extraction):**
+    *   **Goal:** Ensure Core and R-groups are visually perfectly superimposed on the Original Molecule.
+    *   **Drawing Style:** When drawing molecules, always use DrawMoleculeACS1996 for consistent and professional visualization:
+        ```python
+        from rdkit.Chem.Draw import rdMolDraw2D
 
-Find the Maximum Common Substructure across the molecule set.
+        drawer = rdMolDraw2D.MolDraw2DSVG(-1, -1)
+        rdMolDraw2D.DrawMoleculeACS1996(drawer, mol)
 
-- Add explicit hydrogens to all molecules: `mols_h = [Chem.AddHs(m) for m in mols]`.
-- Call `rdFMCS.FindMCS` with appropriate parameters (see Key Concepts for the full parameter set).
-- Inspect `mcs_res.numAtoms` and `mcs_res.smartsString` to verify the result is chemically meaningful.
-- Convert the SMARTS result to a molecule: `core_mol = Chem.MolFromSmarts(mcs_res.smartsString)`.
-- Generate 2D coordinates for the core: `AllChem.Compute2DCoords(core_mol)`.
-- Decision point: If `mcs_res.numAtoms < 6`, the core may be too small for meaningful SAR. Consider lowering the threshold, pre-clustering the molecules, or defining the scaffold manually via SMARTS.
+        drawer.FinishDrawing()
+        svg = drawer.GetDrawingText()
+        
+        svg = svg.replace("width='", "width='100%' data-original-width='")
+        svg = svg.replace("height='", "height='100%' data-original-height='")
+        ```
+    *   **Reference Implementation:** Use this specific alignment logic to guarantee perfect overlay:
+        ```python
+        matches, unmatched_indices = rdRGroupDecomposition.RGroupDecompose([core_mol], mols, asSmiles=False, asRows=False)
+        ```
 
-### Step 3: R-Group Decomposition and Refinement
+        ```python
+        def align_substructure_to_parent(sub, parent):
+            if not sub or not parent: return False
+            try:
+                # Strategy 1: Direct match
+                match = parent.GetSubstructMatch(sub)
+                
+                # Strategy 2: Convert dummies to queries (handle R-group attachment points)
+                if not match:
+                    params = Chem.AdjustQueryParameters()
+                    params.makeDummiesQueries = True
+                    params.adjustDegree = False
+                    params.adjustRingCount = False
+                    sub_query = Chem.AdjustQueryProperties(sub, params)
+                    match = parent.GetSubstructMatch(sub_query)
+                
+                # Strategy 3: Try without chirality
+                if not match:
+                     match = parent.GetSubstructMatch(sub, useChirality=False)
 
-Decompose each molecule relative to the identified core.
+                if match:
+                    conf_parent = parent.GetConformer()
+                    conf_sub = Chem.Conformer(sub.GetNumAtoms())
+                    for sub_idx, parent_idx in enumerate(match):
+                        pos = conf_parent.GetAtomPosition(parent_idx)
+                        conf_sub.SetAtomPosition(sub_idx, pos)
+                    
+                    sub.RemoveAllConformers()
+                    sub.AddConformer(conf_sub)
+                    return True
+            except:
+                pass
+            return False
 
-- Call `rdRGroupDecomposition.RGroupDecompose([core_mol], mols, asSmiles=False, asRows=False)`.
-- Check `unmatched_indices` and log any molecules that failed to decompose. Report these separately in the final output.
-- Iterate over the R-group columns (R1, R2, R3, etc.) and identify constant columns where all molecules have the identical substituent.
-- Remove constant R-group columns from the analysis table.
-- Optionally update the core visualization to incorporate the constant substituent positions, producing a "decorated core" that better represents the fixed parts of the scaffold.
-- Decision point: If all R-group columns are constant, the compound set may lack meaningful structural variation for SAR analysis.
+        # Usage in loop:
+        # 1. Align Original Molecule to Core template
+        try:
+            AllChem.GenerateDepictionMatching2DStructure(m, core_mol)
+        except:
+            AllChem.Compute2DCoords(m)
+            
+        # 2. Align fragments (Core/R-groups) to Original Molecule
+        # Copy coords FROM original molecule TO fragment
+        if not align_substructure_to_parent(fragment, m):
+             AllChem.Compute2DCoords(fragment)
+        ```
 
-### Step 4: Molecular Alignment and Image Generation
+        ```python
+        match_core = matches['Core'][i]
+        align_substructure_to_parent(this_core, mol)
+        core_img = mol_to_base64(this_core)
+        ```
 
-Align all structures for consistent visual presentation.
+5.  **HTML Output (`sar_analysis_report.html`):**
+    *   **Design:** Create a clean, modern, and visually appealing HTML page using CSS styling. Use modern CSS features (e.g., subtle shadows, smooth transitions, clean typography, proper color schemes, responsive design) to enhance readability and visual appeal. **Crucially, ensure that the table column widths are large enough to display structures clearly. Set a `min-width` of at least 300px (e.g., `min-width: 300px;`) for the columns containing images (Original, Core, R-groups) so that the molecules are not shrunk and remain easily recognizable.**
+    *   **Table Structure:** `Compound Key`, `Activity`, `Original Molecule`, `Core`, and variable R-groups.
+    *   **Activity Heatmap:** Apply a background color gradient to Activity cells using a logarithmic scale (Green for low values/high potency, Red for high values/low potency).
+    *   **Image Handling:**
+        *   Convert molecules to **SVG** (preferred) or Base64 PNG strings.
+        *   **Validation:** Check if image generation was successful. Only embed valid images; otherwise, use a text placeholder (`<td>No Image</td>`).
+    *   **Interactive Sorting:**
+        *   Add a "Toggle Sort Order" button to the HTML page.
+        *   **Functionality:** Clicking the button cycles through three views: **Default View** (original CSV order), **Activity Ascending View** (sorted by Activity value from low to high), and **Activity Descending View** (sorted by Activity value from high to low).
+        *   **Implementation:** Use JavaScript to handle the sorting logic on the client side. Ensure the Activity column values are parsed as numbers for correct sorting.
+    *   **Summary:** Include a brief text summary of SAR findings (correlation between R-groups and activity).
 
-- Align each original molecule to the core template:
-  ```python
-  try:
-      AllChem.GenerateDepictionMatching2DStructure(m, core_mol)
-  except:
-      AllChem.Compute2DCoords(m)
-  ```
-- For each fragment (core instance, R-groups), extract coordinates from the aligned parent:
-  ```python
-  def align_substructure_to_parent(sub, parent):
-      if not sub or not parent: return False
-      try:
-          # Strategy 1: Direct match
-          match = parent.GetSubstructMatch(sub)
+6.  **Analysis Text Output:**
+    *   Based on the analysis results, generate a concise text analysis of the SAR findings.
+    *   **Output Format:** Print this text directly in the conversation (do not save to a file).
+    *   **Instructions:** Follow these strict guidelines for the analysis text:
 
-          # Strategy 2: Convert dummies to queries (handle R-group attachment points)
-          if not match:
-              params = Chem.AdjustQueryParameters()
-              params.makeDummiesQueries = True
-              params.adjustDegree = False
-              params.adjustRingCount = False
-              sub_query = Chem.AdjustQueryProperties(sub, params)
-              match = parent.GetSubstructMatch(sub_query)
+        You are a scientific assistant specializing in Structure-Activity Relationship (SAR) analysis. Your task is to analyze the provided molecular data and generate a concise SAR report. The report MUST contain molecule ids to help the user understand the SAR analysis.
 
-          # Strategy 3: Try without chirality
-          if not match:
-               match = parent.GetSubstructMatch(sub, useChirality=False)
+        **Analyze the SAR for the following molecules based on the provided data.**
 
-          if match:
-              conf_parent = parent.GetConformer()
-              conf_sub = Chem.Conformer(sub.GetNumAtoms())
-              for sub_idx, parent_idx in enumerate(match):
-                  pos = conf_parent.GetAtomPosition(parent_idx)
-                  conf_sub.SetAtomPosition(sub_idx, pos)
+        **Core Instructions:**
 
-              sub.RemoveAllConformers()
-              sub.AddConformer(conf_sub)
-              return True
-      except:
-          pass
-      return False
-  ```
-- Render each molecule and fragment to SVG using `DrawMoleculeACS1996`.
-- Validate that each SVG string is non-empty before embedding.
+        1.  **Identify the Scaffold and Substituents:**
+            * Determine the common core structure and label the variable positions as R1, R2, etc. Use these labels consistently.
 
-### Step 5: HTML Report Generation
+        2.  **Perform a Comparative Analysis:**
+            * 🚨 CRITICAL REQUIREMENT: You MUST justify ALL claims about substituent impact **by explicitly contrasting with other substituents at the SAME position that resulted in different activity**. Every activity trend you describe MUST be supported by direct comparisons between the compounds. Unsupported generalizations are not acceptable. 🚨
 
-Build an interactive HTML report (`sar_analysis_report.html`).
+        3.  **Infer Mechanisms:**
+            * Propose plausible reasons for activity changes, considering steric, electronic, and potential intermolecular interactions (e.g., H-bonding, hydrophobic).
 
-**Table structure:**
-- Columns: Compound Key, Activity, Original Molecule, Core, and one column per variable R-group.
-- Each image column should have `min-width: 300px` in CSS so structures remain legible.
-- Activity cells receive a background color from the heatmap gradient.
+        4. **Evaluate Data Completeness and Propose Analogues (Mandatory Evaluation Step):**
+            * As the final mandatory step of your analysis, you must critically evaluate the completeness of the provided SAR data.
 
-**Activity heatmap:**
-- Compute `log10(activity)` for each compound to establish the color scale range.
-- Map the log-transformed values to a green-to-red gradient (green = low value = high potency, red = high value = low potency).
-- Apply the computed color as an inline `background-color` style on each Activity cell.
+            * If, and only if, you identify a significant ambiguity where a key compound lacks a clear counterpart for a robust SAR conclusion, you must propose a new analogue to resolve it.
 
-**Image embedding:**
-- Insert validated SVG strings directly into `<td>` elements.
-- For any molecule where SVG generation failed, insert a text placeholder: `<td>No Image</td>`.
-- HTML-escape all text content (compound names, SMILES) before embedding.
+            * The justification for any proposal must still follow the specific logic:
 
-**Interactive sorting:**
-- Add a "Toggle Sort Order" button at the top of the page.
-- Implement with client-side JavaScript that cycles through three views: Default View (original CSV order), Activity Ascending (low to high), and Activity Descending (high to low).
-- Parse Activity column values as floating-point numbers for correct numeric sorting.
+                * Identify the Ambiguity: Name the specific compound and its data that leads to uncertainty.
 
-**Styling:**
-- Use modern CSS: subtle box shadows on the table, clean sans-serif typography, alternating row colors, responsive layout with horizontal scroll for wide tables.
-- Include a brief text summary of observed SAR trends at the top or bottom of the report.
+                * State the Missing Counterpart: Explain what comparison is needed but cannot be made.
 
-### Step 6: SAR Text Analysis
+                * Propose the Solution: Suggest the exact analogue that would resolve the ambiguity.
 
-Generate a concise, interpretive SAR report printed directly in the conversation (do not save to a file).
+                * If you conclude that the data is sufficient, you will simply state this in the dedicated section below.
 
-**Opening statement:**
-- Begin with a single sentence summarizing the main structural modifications and the key finding.
-- Be direct: do not use conversational openings like "I will analyze..." or "Here is the analysis...".
+        5.  **Conclude:**
+            * Summarize the key SAR findings and identify the most promising analogue(s).
 
-**Scaffold and substituents:**
-- Describe the common core structure identified in Step 2.
-- Label variable positions consistently as R1, R2, etc., matching the R-group decomposition output.
+        **Output Formatting and Style:**
 
-**Comparative analysis (critical requirement):**
-- For every activity trend claim, explicitly contrast at least two compounds with different substituents at the same position.
-- Include compound IDs and measured activity values in every comparison.
-- Example format: "Compound 7 (R1=F, IC50=0.5 uM) showed a 10-fold improvement over Compound 1 (R1=Me, IC50=5.2 uM), suggesting steric constraints at the R1 pocket."
+        * **Be Direct:** Begin the analysis immediately. Do not use conversational openings like "I will analyze..." or "Here is the analysis...".
+        * **Opening Statement:** Start with a single sentence summarizing the main structural modifications and the key finding.
+        * **Scientific Tone:** Use precise, speculative language (e.g., "suggests that...", "likely due to...").
+        * **Format:** Use Markdown for clarity (e.g., bolding, bullet points).
+        * **Dedicated Suggestions Section:** At the end of your analysis, you **must** include a separate section titled `### Suggestions for Further Study`.
+            * In this section, present the analogues you propose based on Instruction #4.
+            * **If you conclude that the provided data is sufficient and no new analogues are needed**, you must still include the section and state: "The provided analogues offer sufficient comparative data for a robust initial SAR analysis at the explored positions." This ensures the step is never skipped.
+        * **Conciseness:** Provide only the requested SAR analysis.
+        * **Proactive Follow-up:** At the very end of your response (after the Conclusion), you **must** explicitly suggest a follow-up step or analysis in the form of a direct question to the user (e.g., "Would you like me to...?").
 
-**Mechanistic inference:**
-- Propose plausible reasons for activity changes, considering steric, electronic, and intermolecular interaction effects (H-bonding, hydrophobic contacts, pi-stacking).
-- Use speculative but precise language (e.g., "suggests that...", "likely due to...").
+        ---
+        **Example Output Structure:**
 
-**Data completeness evaluation:**
-- Assess whether the dataset has gaps that prevent robust conclusions.
-- If a key comparison is missing, propose a specific analogue to synthesize:
-  1. Identify the ambiguity (which compound and data point create uncertainty).
-  2. State the missing counterpart (what comparison is needed but unavailable).
-  3. Propose the solution (the exact analogue that would resolve the ambiguity).
+        The SAR analysis of the provided compounds indicates that a small, electron-withdrawing group at the R1 position is crucial for antibacterial activity. For instance, analogue **7** (R1=F, IC50 = 0.5 µM) showed a 10-fold improvement over the parent compound **1** (R1=Me, IC50 = 5.2 µM), suggesting a key interaction within a sterically confined space. In contrast, bulky substituents at R1, such as the phenyl group in analogue **12**, abolished activity entirely.
 
-**Conclusion and follow-up:**
-- Summarize key SAR findings and identify the most promising analogue(s).
-- Include a "Suggestions for Further Study" section. Either propose specific analogues with justification, or state: "The provided analogues offer sufficient comparative data for a robust initial SAR analysis at the explored positions."
-- End with a direct question to the user suggesting a concrete next step (e.g., "Would you like me to design a synthesis pathway for the proposed analogue?").
+        ### Suggestions for Further Study
 
-## Further Reading
+        To validate the hypothesis that steric bulk at R1 is detrimental, synthesizing an analogue with a simple hydrogen at that position (the des-methyl version of compound 1) is recommended. This would establish a baseline activity for the unsubstituted scaffold and confirm the size constraints of the binding pocket.
 
-- [RDKit Documentation](https://www.rdkit.org/docs/) -- Comprehensive reference for all RDKit modules including Chem, AllChem, Draw, and descriptor calculation
-- [rdFMCS Module Documentation](https://www.rdkit.org/docs/source/rdkit.Chem.rdFMCS.html) -- Detailed API reference for Maximum Common Substructure finding, including all parameter options and algorithm details
-- [R-Group Decomposition in RDKit](https://www.rdkit.org/docs/source/rdkit.Chem.rdRGroupDecomposition.html) -- API reference for the R-group decomposition module with usage examples
-- [Matched Molecular Pair Analysis and SAR Transfer (Griffen et al., 2011)](https://doi.org/10.1021/jm200452d) -- Seminal paper on systematic SAR analysis methodologies in drug discovery
-- [Getting Started with the RDKit in Python](https://www.rdkit.org/docs/GettingStartedInPython.html) -- Tutorial covering molecule manipulation, substructure searching, and visualization fundamentals
+        **Would you like me to design a synthesis pathway for the proposed des-methyl analogue?**
 
-## Related Skills
+**Output:**
+*   Provide the final `sar_analysis_report.html` file.
+*   Print the Analysis Text in the chat.
 
-- `rdkit-cheminformatics` -- General-purpose cheminformatics operations including descriptor calculation, fingerprinting, similarity searching, and molecular file I/O
-- `chembl-database-bioactivity` -- Retrieving bioactivity data from ChEMBL for use as input to SAR analysis, including IC50, EC50, and Ki values for compound series
+## References
+
+- RDKit documentation — Maximum Common Substructure: https://www.rdkit.org/docs/source/rdkit.Chem.rdFMCS.html
+- RDKit documentation — R-Group Decomposition: https://www.rdkit.org/docs/source/rdkit.Chem.rdRGroupDecomposition.html
+- RDKit documentation — `MolDraw2D` and `DrawMoleculeACS1996`: https://www.rdkit.org/docs/source/rdkit.Chem.Draw.rdMolDraw2D.html
+- Dalke A, Hastings J. "FMCS: a novel algorithm for the multiple MCS problem." J Cheminform. 2013;5(Suppl 1):O6. https://doi.org/10.1186/1758-2946-5-S1-O6
+- Lewell XQ, Judd DB, Watson SP, Hann MM. "RECAP — Retrosynthetic Combinatorial Analysis Procedure." J Chem Inf Comput Sci. 1998;38(3):511-522. https://doi.org/10.1021/ci970429i
+- Stumpfe D, Bajorath J. "Exploring activity cliffs in medicinal chemistry." J Med Chem. 2012;55(7):2932-2942. https://doi.org/10.1021/jm201706b
+- Allen FH, Bellard S, Brice MD, et al. ACS document standards (ACS1996 drawing style reference): https://pubs.acs.org/doi/10.1021/ci00027a005
