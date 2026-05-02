@@ -1,290 +1,515 @@
 ---
-name: "sgrna-design-guide"
-description: "Decision guide for finding/designing sgRNAs via three tiers: (1) validated from Addgene/literature, (2) pre-computed from Broad CRISPick, (3) de novo via CRISPOR/Benchling as last resort. Covers PAM rules (SpCas9, SaCas9, AsCas12a, enAsCas12a), quality metrics, and targeting rules for knockout, CRISPRa/i, base and prime editing. Use when planning CRISPR and unsure which sgRNA source to pick."
-license: "CC-BY-4.0"
+name: sgrna-design-guide
+description: Three-tiered sgRNA design guide using validated Addgene sequences, CRISPick pre-computed datasets, or de novo design rules for CRISPR experiments
+license: open
 ---
 
-# sgRNA Design Guide
+# sgRNA Design Guide: Three-Tiered Approach
+
+---
+
+## Metadata
+
+**Short Description**: Comprehensive guide for finding or designing sgRNAs using validated sequences, CRISPick datasets, or de novo design tools.
+
+**Authors**: Ohagent Team
+
+**Version**: 1.0
+
+**Last Updated**: November 2025
+
+**License**: CC BY 4.0
+
+**Commercial Use**: Allowed
+
+## Citations and Acknowledgments
+
+### If you use validated sgRNAs from our database (Option 1):
+- **Database Source**: Addgene (https://www.addgene.org)
+- **Citation**: Always cite the original publication associated with each sgRNA using the PubMed ID provided in the database
+- **Acknowledgment**: "Validated sgRNA sequences obtained from Addgene (https://www.addgene.org/crispr/reference/grna-sequence/)"
+
+### If you use CRISPick designs (Option 2):
+- **Acknowledgment Statement**: "Guide designs provided by the CRISPick web tool of the GPP at the Broad Institute"
+- **Citation for Cas9 designs (SpCas9, SaCas9)**: Sanson KR, et al. Optimized libraries for CRISPR-Cas9 genetic screens with multiple modalities. Nat Commun. 2018;9(1):5416. PMID: 30575746
+- **Citation for Cas12a designs (AsCas12a, enAsCas12a)**: DeWeirdt PC, et al. Optimization of AsCas12a for combinatorial genetic screens in human cells. Nat Biotechnol. 2021;39(1):94-104. PMID: 32661438
+  - Note: This paper describes enAsCas12a optimization; specify which variant you used in your methods
+
+---
 
 ## Overview
 
-Selecting effective sgRNAs is the single most consequential decision in a CRISPR experiment. A poorly chosen guide RNA yields low editing efficiency, off-target mutations, or misleading phenotypes regardless of how well everything else is optimized. This guide provides a three-tiered decision strategy — validated sequences first, pre-computed designs second, de novo design only as a last resort — and explains the sgRNA quality metrics, PAM requirements, and application-specific targeting rules needed to make confident design choices.
-
-The guide is adapted from the Biomni sgRNA Design Guide (Biomni Team, CC BY 4.0, November 2025) with expanded PAM rules, a unified decision framework, and additional best practices.
+This guide provides a three-tiered approach to sgRNA design, prioritizing validated sequences before moving to computational predictions. Always start with Option 1 and proceed to subsequent options only if needed.
 
 ## Key Concepts
 
-### PAM Requirements by Cas Enzyme
+### Validated sgRNA Databases (Tier 1)
 
-The protospacer adjacent motif (PAM) is a short DNA sequence the Cas nuclease requires for binding and cleavage. The PAM must be present in the genomic target immediately adjacent to the guide RNA binding site. Choosing the wrong enzyme or misidentifying the PAM renders a guide non-functional.
+Validated sgRNAs are guide sequences that have been experimentally tested in published work, with documented cell line, cutting efficiency, and (often) off-target characterization. Addgene curates such sequences alongside the deposited plasmids that carry them, and a downloadable CSV (`addgene_grna_sequences.csv`) provides a searchable index keyed by gene symbol, target species, and application (cut / activate / RNA targeting). Using a validated sgRNA is preferred because the largest source of CRISPR experimental failure is poor on-target activity that would have been detected during the original validation.
 
-| Enzyme | Guide Length | PAM Location | PAM Sequence | Notes |
-|--------|-------------|--------------|--------------|-------|
-| SpCas9 | 20 bp | 3′ of target | NGG | Most widely used; broadest reagent support |
-| SaCas9 | 20 bp | 3′ of target | NNGRRT | Smaller package; useful for AAV delivery |
-| AsCas12a (wild-type) | 23–25 bp | 5′ of target | TTTV | Staggered DSB; lower background in some cell types |
-| enAsCas12a (enhanced) | 23–25 bp | 5′ of target | TTTV | Higher activity than wild-type; NOT interchangeable |
-| CjCas9 | 22 bp | 3′ of target | NNNNRYAC | Compact; AAV-compatible |
-| Cas13 (RNA targeting) | 22–30 bp | N/A (RNA) | None | Targets RNA, not DNA; use for RNA knockdown |
+### Computational sgRNA Scoring (Tier 2)
 
-**Critical warning**: AsCas12a and enAsCas12a guides are NOT interchangeable. CRISPick provides separate datasets for each; always download the dataset matching your exact Cas variant.
+When no validated sgRNA exists, pre-computed genome-scale designs from the Broad Institute's CRISPick service are the next best option. CRISPick provides 238 datasets covering multiple genomes, Cas variants, and applications, with each candidate guide ranked by **on-target efficiency** (how reliably it cuts), **off-target specificity** (how unlikely it is to cut elsewhere), and a **combined rank** that balances both. The on-target models behind CRISPick are Sanson 2018 (Cas9) and DeWeirdt 2021 (Cas12a). Combined Rank is the recommended default; use On-Target or Off-Target rank only when the experiment specifically prioritizes one over the other.
 
-### sgRNA Quality Metrics
+### Off-Target Stringency and PAM Compatibility
 
-Three orthogonal metrics predict sgRNA performance. Optimizing one in isolation often degrades the others.
+PAM (Protospacer Adjacent Motif) requirements differ by Cas variant: SpCas9 needs NGG (3'), SaCas9 needs NNGRRT (3'), AsCas12a and enAsCas12a need TTTV (5'). Critically, **AsCas12a and enAsCas12a are different enzymes**: enAsCas12a is an engineered variant with broadened activity, and guides optimized for one will not perform identically on the other. Always match the CRISPick dataset to the exact Cas variant used in the lab. Off-target stringency thresholds (typically `Off-Target Rank` or a CFD-style score) trade specificity against the size of the candidate pool — tighter thresholds yield fewer but cleaner guides.
 
-**On-target efficiency** measures predicted cutting or activation activity at the intended site. Tools such as Rule Set 3 (CRISPick) and DeepCRISPR score efficiency. Higher is better, but efficiency scores from different algorithms are not directly comparable across tools.
+### De Novo Design Rules (Tier 3)
 
-**Off-target risk** measures the likelihood of the guide binding and cutting elsewhere in the genome. Metrics include the number of mismatched sites genome-wide and their predicted cleavage rates. Lower off-target score is better. The Cutting Frequency Determination (CFD) score and MIT specificity score are commonly used.
-
-**GC content** of the 20 bp spacer sequence predicts both thermodynamic stability and Pol III transcription termination risk:
-- **Optimal range**: 40–60%
-- Below 40%: weak base-pairing; low efficiency
-- Above 60%: secondary structure formation; reduced activity
-- Avoid runs of four or more consecutive T nucleotides (TTTT+): Pol III terminates transcription, producing truncated guides
-
-**CRISPick ranking columns** combine these metrics:
-- `Combined Rank`: balances on-target and off-target; use by default
-- `On-Target Rank`: prioritize when maximum cutting efficiency is required
-- `Off-Target Rank`: prioritize when specificity is paramount (therapeutic applications, base editing, studies where off-target phenotypes would confound results)
-
-### CRISPR Application Types
-
-The optimal sgRNA design rules differ by application because each alters the genome or transcriptome differently.
-
-| Application | Mechanism | Targeting Rule | Enzyme |
-|-------------|-----------|---------------|--------|
-| Knockout (loss of function) | Frameshift or large deletion via NHEJ | Early exons (first 30–50% of coding sequence); avoid last exon | SpCas9, SaCas9, Cas12a |
-| CRISPRa (gene activation) | Transcriptional activation via dCas9-VP64 etc. | −200 to −1 bp from TSS | dSpCas9, dSaCas9 |
-| CRISPRi (gene inhibition) | Transcriptional repression via dCas9-KRAB | −50 to +300 bp from TSS | dSpCas9 |
-| Base editing | C→T or A→G conversion without DSB | Position the target base in the editing window (≈positions 4–8 from PAM) | BE4max, ABE8e |
-| Prime editing | Precise insertions, deletions, substitutions | Nick site + PBS + RT template design; use PrimeDesign or PE-Designer | PE2, PE3 |
-| RNA targeting | RNA knockdown or tracking | Target accessible single-stranded region of mRNA | CasRx, LwaCas13a |
+When neither validated sequences nor pre-computed datasets cover the target (non-model organism, custom locus, etc.), apply rule-based design: 20 bp protospacer for SpCas9/SaCas9 (23–25 bp for Cas12a), GC content 40–60%, avoid TTTT (Pol III terminator) and homopolymer runs >4. Target location matters: early exons (first 50% of coding sequence) for knockout, −200 to +1 from TSS for CRISPRa, −50 to +300 from TSS for CRISPRi.
 
 ## Decision Framework
 
-Choose the sgRNA sourcing approach based on availability of validated sequences and organism/gene coverage:
-
 ```
-Are validated sgRNAs available for your target gene?
-├── YES → Option 1: Use validated sgRNA from database or literature
-│   ├── Search addgene_grna_sequences.csv for gene + species + application
-│   └── Search literature (PubMed) for published sgRNA sequences
-│       └── Record PubMed ID; cite original paper in methods
-└── NO → Is your organism/gene covered by CRISPick?
-    ├── YES → Option 2: Download pre-computed CRISPick dataset
-    │   ├── Filter by Combined Rank ≤ 10 (default)
-    │   ├── Confirm GC content 40–60%
-    │   ├── Avoid TTTT runs in spacer
-    │   └── Select 3–4 guides from distinct exons
-    └── NO → Option 3: De novo design (last resort)
-        ├── Use CRISPOR, Benchling, or CHOPCHOP
-        ├── Apply PAM + GC + position rules (see Key Concepts)
-        └── Validate off-target predictions with Cas-OFFinder
+sgRNA design decision tree
+└── Does Addgene database (Tier 1) contain a validated sgRNA for your gene + species + application?
+    ├── Yes -> Use the validated sgRNA(s); cite the original PubMed reference
+    └── No  -> Run advanced literature search (mandatory before Tier 2)
+        ├── Found in literature -> Use the literature sgRNA; cite the paper
+        └── Still no match -> Is the target organism + Cas variant covered by a CRISPick dataset (Tier 2)?
+            ├── Yes -> Download dataset, filter by gene, sort by Combined Rank
+            │         └── Pick top 3-4 sgRNAs (ideally from different exons for redundancy)
+            └── No  -> De novo design (Tier 3) using 20 bp / PAM / GC / avoid-TTTT rules
+                      └── Validate experimentally (Sanger / T7E1 / amplicon-seq)
 ```
 
-| Scenario | Recommended Approach | Rationale |
-|----------|---------------------|-----------|
-| Published gene in human or mouse | Option 1 first, Option 2 if not found | Validated guides have experimental evidence; CRISPick covers >95% of protein-coding genes |
-| Genome-scale CRISPR screen | Option 2 (CRISPick) | Pre-computed datasets provide consistent scoring; validated libraries may not cover all targets |
-| Non-model organism (e.g., zebrafish, Drosophila) | Option 2 if available, else Option 3 | CRISPick covers some non-human organisms; verify TAXID in download links file |
-| Custom PAM or exotic Cas variant | Option 3 (de novo) | CRISPick covers SpCas9/SaCas9/AsCas12a/enAsCas12a only |
-| Therapeutic application requiring high specificity | Option 1 or Option 2 with Off-Target Rank | Clinical applications require validated specificity evidence |
-| CRISPRa or CRISPRi (not knockout) | Option 2 CRISPRa/CRISPRi dataset | TSS-relative targeting rules differ from knockout; dedicated datasets handle this |
-| Base editing or prime editing | Option 3 + specialized tool (PrimeDesign, BE-Designer) | Editing window position is critical; general purpose tools do not compute this correctly |
+| Situation | Recommended tier | Rationale |
+|-----------|------------------|-----------|
+| Common human/mouse gene with prior CRISPR publications | Tier 1 (Addgene + literature) | Validated sequences come with measured cutting efficiency; lowest experimental risk |
+| Genome-scale screen of a model organism | Tier 2 (CRISPick) | Pre-computed datasets cover whole genomes with consistent scoring |
+| Single human gene knockout, no Addgene hit | Tier 2 (CRISPick GRCh38 SpCas9 CRISPRko), filter by Combined Rank | Best balance of efficiency and specificity for one-off knockouts |
+| CRISPRa / CRISPRi experiment | Tier 2 with the matching `CRISPRa` / `CRISPRi` dataset | Activation/inhibition models target proximal-promoter windows, not coding exons |
+| Cas12a (AsCas12a vs enAsCas12a) | Tier 2 with the **exact** Cas12a variant dataset | Guides for one variant are not interchangeable with the other |
+| Non-model organism not covered by CRISPick | Tier 3 (de novo rules) | No high-throughput training data exists; rule-based design + experimental validation |
+| Small custom locus (e.g., engineered cassette) | Tier 3 | Locus is not in any reference genome; design directly against the target sequence |
+| Maximum specificity required (e.g., therapeutic application) | Tier 2 sorted by **Off-Target Rank** | Prioritize guides with the fewest predicted off-target sites |
+| Maximum cutting efficiency required (e.g., difficult cell line) | Tier 2 sorted by **On-Target Rank** | Accept slightly higher off-target risk in exchange for activity |
 
 ## Best Practices
 
-1. **Always search validated databases before computational design**: Validated sgRNAs carry experimental evidence of cutting efficiency and off-target activity. This eliminates prediction uncertainty. Search Addgene and PubMed before investing time in computational design. A 10-minute database search can replace weeks of experimental validation.
-
-2. **Target early coding exons for knockout experiments**: Frameshift mutations near the N-terminus disrupt the protein regardless of downstream in-frame indels. Guides targeting the last exon frequently produce truncated but partially functional proteins because the C-terminus is dispensable for many protein families. For essential genes, target the first 30–50% of the coding sequence; for domain-specific knockouts, target the exon encoding the functional domain.
-
-3. **Validate at least 2–4 guides per target gene**: A single sgRNA may have low efficiency in your specific cell type even if it scores well computationally. On-target prediction algorithms have cell-type-specific inaccuracies. Using 2–4 guides from distinct exons protects against single-guide failure and provides an internal specificity control: if all guides produce the same phenotype, off-target effects are unlikely to explain the result.
-
-4. **Check for single nucleotide polymorphisms (SNPs) in the guide region**: A SNP within the 20 bp spacer or at the PAM reduces binding and cleavage efficiency. This is particularly important when designing guides for genetically diverse patient-derived cells or mouse strains. Use dbSNP or gnomAD to check the spacer sequence before ordering.
-
-5. **Confirm GC content is between 40–60% and avoid poly-T sequences**: Both rules are absolute filters, not preferences. Guides outside the GC window or containing TTTT runs will perform poorly regardless of their algorithmic rank. Always verify these properties on your final guide sequences.
-
-6. **Match the CRISPick dataset exactly to your Cas variant**: AsCas12a and enAsCas12a are distinct enzymes with different activity profiles. Guides optimized for enAsCas12a may fail entirely with wild-type AsCas12a. CRISPick uses different models for each; download the dataset named for your specific enzyme.
-
-7. **Perform computational off-target analysis before ordering**: Even if using a high-rank CRISPick guide, run Cas-OFFinder or CRISPOR to enumerate potential off-target sites. For therapeutic applications, validate predicted off-target sites by amplicon sequencing. For basic research, a guide with fewer than 5 predicted off-target sites with ≤2 mismatches is generally acceptable.
+1. **Always exhaust Tier 1 before moving to Tier 2.** Even if `addgene_grna_sequences.csv` returns no rows, run the literature search step (Method 2). Many validated sgRNAs are published in supplementary materials but never deposited at Addgene.
+2. **Match the CRISPick dataset to the exact Cas variant.** AsCas12a and enAsCas12a are distinct enzymes; SpCas9 and SaCas9 require different PAMs. Using the wrong dataset wastes experimental resources.
+3. **Use Combined Rank as the default selector.** It balances on-target efficiency and off-target specificity; reach for `On-Target Rank` or `Off-Target Rank` only when the experiment has a specific reason to prioritize one.
+4. **Order 3–4 sgRNAs per target gene, ideally from different exons.** A single guide can fail for reasons unrelated to its predicted score (chromatin context, secondary structure, PCR drop-out). Redundancy is cheap insurance.
+5. **For knockouts, target the first 50% of the coding sequence.** N-terminal cuts are most likely to produce a true loss-of-function via NMD; C-terminal cuts can leave partially functional protein.
+6. **For CRISPRa, design within −200 to +1 bp of the TSS; for CRISPRi, within −50 to +300 bp.** Effector activity drops sharply outside these windows.
+7. **Validate experimentally.** Even high-ranked guides fail ~20–30% of the time. Confirm editing with Sanger sequencing, T7E1, ICE, or amplicon-seq before committing to phenotype assays.
+8. **Cite the original validation paper for Tier 1, and CRISPick + Sanson 2018 / DeWeirdt 2021 for Tier 2.** Reproducibility depends on traceable provenance for every guide sequence.
 
 ## Common Pitfalls
 
-1. **Skipping the validated database search**: Researchers often jump directly to computational design tools without checking whether a validated guide already exists for their target.
-   - *How to avoid*: Make database searching Step 1 in every sgRNA design project. Query Addgene's curated sequence list and search PubMed with terms like `"[GENE] sgRNA validated"` or `"[GENE] CRISPR knockout sequence"`. Spend at least 15 minutes on this before opening a design tool.
+- **Pitfall: Skipping the literature search step (Method 2) when the Addgene CSV returns no hits.**
+  - *How to avoid*: Treat Method 2 as mandatory; many validated guides only appear in published supplementary materials.
 
-2. **Targeting late exons for knockout**: Guides targeting the final exon or C-terminal coding sequence often produce proteins that are truncated but retain partial function, leading to incomplete loss-of-function and ambiguous phenotypes.
-   - *How to avoid*: Filter CRISPick results by exon number and prefer guides in exon 1–3 or within the first 50% of the coding sequence. For CRISPick knockout datasets, use `Exon Number <= 3` or `Target Cut % <= 50` as a primary filter.
+- **Pitfall: Using AsCas12a guides with enAsCas12a (or vice versa) because both share TTTV PAM.**
+  - *How to avoid*: Match the CRISPick dataset filename's Cas tag (`AsCas12a` vs `enAsCas12a`) to the exact enzyme variant used at the bench.
 
-3. **Using a single guide and attributing all phenotypes to on-target editing**: Off-target edits at a locus with similar sequence can produce the same phenotype, leading to incorrect target attribution.
-   - *How to avoid*: Design 3–4 guides from different exons and confirm that independent guides produce consistent phenotypes. For critical experiments, perform whole-genome sequencing on at least one edited clone to assess off-target editing frequency.
+- **Pitfall: Sorting by On-Target Rank only and ending up with high-activity, low-specificity guides that produce off-target editing.**
+  - *How to avoid*: Use Combined Rank as the default; only deviate when the experiment explicitly requires extreme efficiency or specificity.
 
-4. **Confusing AsCas12a and enAsCas12a datasets**: These are listed together in many repositories and have the same PAM (TTTV), leading researchers to use the wrong dataset or mix up the enzymes.
-   - *How to avoid*: Write the exact enzyme name in your lab notebook and confirm the CRISPick filename contains the matching string (`AsCas12a` vs `enAsCas12a`). If you received the Cas12a expression vector from a collaborator, verify the variant by checking the plasmid sequence or Addgene page.
+- **Pitfall: Designing a single sgRNA per gene and concluding "the guide doesn't work" when one fails.**
+  - *How to avoid*: Always order and test 3–4 guides per gene from independent loci/exons.
 
-5. **Ignoring GC content and poly-T filters**: Algorithmic ranks (Combined Rank, On-Target Rank) do not always filter out guides that fail the GC or poly-T rules, particularly in older datasets.
-   - *How to avoid*: After filtering by rank, apply explicit GC content (40–60%) and poly-T (no TTTT runs) filters before finalizing your guide list. These are hard constraints, not soft preferences.
+- **Pitfall: Targeting late exons or 3' UTRs for knockout.** Truncated proteins from late-exon edits are often partially functional and confound phenotype interpretation.
+  - *How to avoid*: For knockouts, restrict candidates to the first 50% of the coding sequence (or the first 3 exons).
 
-6. **Designing guides without checking for SNPs in the target region**: Population-level SNPs in the spacer or PAM reduce editing efficiency unpredictably and can make results non-reproducible across cell lines from different donors.
-   - *How to avoid*: After selecting guide sequences, paste the spacer into dbSNP or UCSC Genome Browser and check for common variants (MAF > 1%). If a SNP is present, select an alternative guide or design guides flanking the SNP.
+- **Pitfall: Using a CRISPRko dataset for a CRISPRa or CRISPRi experiment.** The protospacer windows are different — coding exons for knockout, proximal promoter for activation/inhibition.
+  - *How to avoid*: Download the dataset whose application tag (`CRISPRko` / `CRISPRa` / `CRISPRi`) matches the experiment.
 
-7. **Using CRISPRa/CRISPRi guides for knockout (or vice versa)**: The targeting rules are fundamentally different: knockout guides can be anywhere in the coding exons, while activation and inhibition guides must target specific windows relative to the TSS. Using a knockout guide for CRISPRa rarely produces activation.
-   - *How to avoid*: Download the application-specific CRISPick dataset (CRISPRa or CRISPRi, not CRISPRko) and confirm that the guide's TSS offset falls within the required window (−200 to −1 bp for CRISPRa; −50 to +300 bp for CRISPRi).
+- **Pitfall: Designing guides containing `TTTT`.** This sequence terminates RNA Pol III transcription, so the sgRNA simply will not be expressed from a U6 promoter.
+  - *How to avoid*: Always filter de novo designs (and double-check Tier 1/2 picks) against `TTTT` and homopolymer runs >4.
 
-## Workflow
+- **Pitfall: Failing to cite the original publication for a validated sgRNA.**
+  - *How to avoid*: Record the `PubMed_ID` from the Addgene CSV (or the DOI from the literature search) as part of the design record and include it in the methods section.
 
-1. **Define the target and application**: Specify the gene symbol, species, Cas enzyme, and application (knockout/CRISPRa/CRISPRi/base editing/prime editing). Write these down before searching or designing — many errors arise from switching assumptions mid-workflow.
+## Option 1: Search Validated sgRNA Sequences (Recommended First)
 
-2. **Search validated sgRNA databases (Option 1)**:
-   - Query the Addgene curated sequence database by gene name, species, and application.
-   - Search PubMed for publications describing validated sgRNAs for your target.
-   - If 1–4 validated guides are found, record their sequences and PubMed IDs; proceed to Step 4.
-   - If no validated guides are found after 15–20 minutes of searching, proceed to Step 3.
+### 1.1 Search for Validated sgRNAs
 
-3. **Download and filter the CRISPick pre-computed dataset (Option 2)**:
-   - Identify the correct dataset from the CRISPick download links using the TAXID, genome build, Cas enzyme, and application type.
-   - Download and decompress the `.txt.gz` file.
-   - Filter for your gene, then apply ranking and quality filters (see Protocol Guidelines).
-   - Select 3–4 guides from distinct exons with Combined Rank ≤ 10.
-   - If your organism or gene is not in any CRISPick dataset, proceed to de novo design (Option 3).
+**IMPORTANT**: You MUST complete BOTH Method 1 AND Method 2 before proceeding to Option 2. Do not skip Method 2 even if Method 1 finds no results.
 
-4. **Verify guide quality**:
-   - Confirm GC content 40–60% for each selected guide.
-   - Confirm no TTTT runs in the spacer.
-   - Check for SNPs using dbSNP or UCSC Genome Browser.
-   - Run off-target prediction with Cas-OFFinder or CRISPOR.
+#### Method 1: Search Our Database (Fastest)
 
-5. **Order and clone**:
-   - Order as annealed oligo pairs for ligation into a Cas9 expression vector, or as a single-stranded oligo for Gibson assembly.
-   - Sequence the final construct to confirm correct guide insertion.
+We maintain a curated database of 300+ validated sgRNA sequences from Addgene with experimental evidence.
 
-6. **Validate experimentally**:
-   - Transfect or transduce cells; assess editing efficiency by Sanger sequencing and ICE or TIDE analysis.
-   - For screens or critical experiments, validate at least 2 independent clones per guide.
+**Location**: `resource/addgene_grna_sequences.csv` (relative to this skill directory)
 
-## Protocol Guidelines
-
-### Filtering CRISPick Datasets (Option 2)
-
+**Search the database**:
 ```python
 import pandas as pd
 
-# Load the CRISPick tab-delimited file (after gunzip)
-df = pd.read_csv(
-    "sgRNA_design_9606_GRCh38_SpyoCas9_CRISPRko_RS3seq-Chen2013+RS3target_NCBI_20241104.txt",
-    sep="\t",
-    low_memory=False,
-)
+# Load the database
+df = pd.read_csv('addgene_grna_sequences.csv')
 
+# Search for your gene
 gene_name = "TP53"
+results = df[df['Target_Gene'].str.upper() == gene_name.upper()]
 
-# Step 1: Filter for gene of interest
-gene_df = df[df["Target Gene Symbol"] == gene_name].copy()
-print(f"Total sgRNAs for {gene_name}: {len(gene_df)}")
-
-# Step 2: Apply quality filters
-filtered = gene_df[
-    gene_df["Combined Rank"] <= 10   # top-ranked guides per gene
-].copy()
-
-# Step 3: Compute GC content and exclude out-of-range guides
-def gc_content(seq):
-    seq = str(seq).upper()
-    return (seq.count("G") + seq.count("C")) / len(seq) * 100
-
-filtered["GC%"] = filtered["sgRNA Sequence"].apply(gc_content)
-filtered = filtered[(filtered["GC%"] >= 40) & (filtered["GC%"] <= 60)]
-
-# Step 4: Exclude guides with TTTT runs (Pol III terminator)
-filtered = filtered[~filtered["sgRNA Sequence"].str.upper().str.contains("TTTT")]
-
-# Step 5: Prefer early exons for knockout
-early_exon = filtered[filtered["Exon Number"] <= 5]
-
-# Step 6: Select one guide per exon for diversity
-final = (
-    early_exon.sort_values("Combined Rank")
-    .groupby("Exon Number")
-    .head(1)
-    .head(4)
-)
-
-print(final[["sgRNA Sequence", "Exon Number", "Combined Rank", "GC%"]])
-final.to_csv(f"{gene_name}_selected_sgrnas.csv", index=False)
-```
-
-### Searching the Addgene Validated sgRNA Database (Option 1)
-
-```python
-import pandas as pd
-
-# Load the Addgene curated database (300+ validated sequences)
-# Source: Addgene validated sgRNA database (https://www.addgene.org/crispr/guide-rna-sequences/)
-df = pd.read_csv("addgene_grna_sequences.csv")
-
-# Search by gene, species, and application
-gene = "TP53"
-species = "H. sapiens"
-application = "cut"          # "cut" = knockout, "activate" = CRISPRa
-
-results = df[
-    (df["Target_Gene"].str.upper() == gene.upper()) &
-    (df["Target_Species"] == species) &
-    (df["Application"] == application)
+# Filter by species and application
+results_filtered = results[
+    (results['Target_Species'] == 'H. sapiens') &
+    (results['Application'] == 'cut')  # or 'activate', 'RNA targeting'
 ]
 
-if results.empty:
-    print(f"No validated sgRNAs found for {gene} in {species}. Proceed to Option 2.")
-else:
-    print(f"Found {len(results)} validated sgRNA(s):")
-    print(
-        results[
-            ["Target_Gene", "Target_Sequence", "Plasmid_ID", "PubMed_ID", "Depositor"]
-        ]
-    )
-    # Always cite the PubMed_ID in your methods section
+# Display results with references
+print(results_filtered[['Target_Gene', 'Target_Sequence',
+                        'Plasmid_ID', 'PubMed_ID', 'Depositor']])
 ```
 
-### GC Content and Poly-T Spot-Check (any source)
+**Database columns**:
+- `Target_Gene`: Gene symbol
+- `Target_Species`: Organism (H. sapiens, M. musculus, etc.)
+- `Target_Sequence`: 20bp sgRNA sequence (5' to 3')
+- `Application`: cut (knockout), activate (CRISPRa), RNA targeting (CRISPRi)
+- `Cas9_Species`: S. pyogenes, S. aureus, etc.
+- `Plasmid_ID`: Addgene plasmid number
+- `Plasmid_URL`: Direct link to plasmid page
+- `PubMed_ID`: **Publication reference** (cite this in your work)
+- `PubMed_URL`: Direct link to paper
+- `Depositor`: Research lab that contributed the sequence
+
+#### Method 2: Advanced Web Search (REQUIRED - Do Not Skip)
+
+**CRITICAL**: Even if Method 1 found no results, you MUST perform this literature search before moving to Option 2. Many validated sgRNAs are published in literature but not in the Addgene database.
+
+Use `advanced_web_search_claude` from `ohagent.tool.literature` to find validated sgRNAs from literature and databases:
 
 ```python
-def validate_sgrna(spacer: str) -> dict:
-    """Check GC content and poly-T for a single spacer sequence."""
-    spacer = spacer.upper().strip()
-    gc = (spacer.count("G") + spacer.count("C")) / len(spacer) * 100
-    has_poly_t = "TTTT" in spacer
-    return {
-        "sequence": spacer,
-        "length": len(spacer),
-        "gc_pct": round(gc, 1),
-        "gc_ok": 40 <= gc <= 60,
-        "poly_t": has_poly_t,
-        "passes": (40 <= gc <= 60) and not has_poly_t,
-    }
+from ohagent.tool.literature import advanced_web_search_claude
 
-# Example
-guides = ["GAGGTTGTGAGGCGCTGCCC", "CACCTTTTTTGGACACTGAT", "GCGCGATCGCGATCGCGCGC"]
-for g in guides:
-    result = validate_sgrna(g)
-    status = "PASS" if result["passes"] else "FAIL"
-    print(f"[{status}] {result['sequence']}  GC={result['gc_pct']}%  poly-T={result['poly_t']}")
-# Expected output:
-# [PASS] GAGGTTGTGAGGCGCTGCCC  GC=65.0%  poly-T=False   <- fails GC check (>60)
-# [FAIL] CACCTTTTTTGGACACTGAT  GC=45.0%  poly-T=True    <- poly-T present
-# [FAIL] GCGCGATCGCGATCGCGCGC  GC=75.0%  poly-T=False   <- fails GC check (>60)
+# Example usage
+results = advanced_web_search_claude("sgRNA TP53 validated H. sapiens experimental")
 ```
 
-## Further Reading
+**Search queries to try (use multiple):**
+```
+"sgRNA" OR "guide RNA" "[GENE_NAME]" validated experimental
+"CRISPR knockout" "[GENE_NAME]" sgRNA sequence validated
+"[GENE_NAME]" sgRNA "cutting efficiency" OR "on-target"
+"[GENE_NAME]" "guide sequence" CRISPR validated
+```
 
-- [CRISPick (Broad Institute GPP)](https://portals.broadinstitute.org/gppx/crispick/public) — Pre-computed sgRNA designs for human, mouse, and other organisms; datasets for SpCas9, SaCas9, AsCas12a, and enAsCas12a
-- [CRISPOR](http://crispor.tefor.net/) — De novo guide design and off-target scoring for any genome; supports 100+ species and multiple Cas variants
-- [Cas-OFFinder](http://www.rgenome.net/cas-offinder/) — Fast genome-wide off-target site enumeration for any Cas enzyme and PAM
-- [Addgene CRISPR Guide RNA Database](https://www.addgene.org/crispr/reference/grna-sequence/) — Curated repository of validated sgRNA sequences from published experiments
-- [Sanson KR et al. Nat Commun. 2018;9:5416](https://pubmed.ncbi.nlm.nih.gov/30575746/) — CRISPick Rule Set 3 for SpCas9/SaCas9 knockout guide design; required citation for CRISPick Cas9 designs
-- [DeWeirdt PC et al. Nat Biotechnol. 2021;39:94–104](https://pubmed.ncbi.nlm.nih.gov/32661438/) — enAsCas12a optimization and CRISPick Cas12a guide scoring; required citation for CRISPick Cas12a designs
+**Example for TP53:**
+```
+"sgRNA" "TP53" validated "H. sapiens" experimental
+"CRISPR knockout" "TP53" guide sequence validated
+```
 
-## Related Skills
+**What to search for in results:**
+- Published papers with validated sgRNA sequences
+- Supplementary materials containing sgRNA sequences
+- Other CRISPR databases (e.g., GenScript, Horizon Discovery)
+- Laboratory protocols with specific sgRNA sequences
 
-- `biopython-sequence-analysis` — Sequence manipulation, reverse complement calculation, and motif scanning for sgRNA spacer validation
-- `biopython-molecular-biology` — Restriction site analysis and primer design workflows useful in sgRNA cloning steps
+**IMPORTANT**: Spend adequate time searching literature. Look through at least the first 10-15 search results and check supplementary materials of relevant papers.
+
+#### What to Do with Results:
+
+**If you find matching sgRNAs (from either method):**
+1. **Record the sgRNA sequence** (20bp target sequence)
+2. **Note the reference**:
+   - From database: Use `PubMed_ID` to cite the original paper
+   - From web search: Record the publication DOI/PubMed ID
+3. **Record validation details**: Cell line, cutting efficiency, any reported off-targets
+
+
+**Example result format:**
+```
+Gene: TP53
+sgRNA sequence: GAGGTTGTGAGGCGCTGCCC
+Species: H. sapiens (human)
+Application: Knockout (cut)
+Reference: PubMed ID 24336569 (Ran et al., 2013)
+Validation: Tested in HEK293T cells, 85% cutting efficiency
+```
+
+**If no matches found in BOTH Method 1 AND Method 2:**
+Only then proceed to **Option 2: Download CRISPick Dataset**
+
+
+
+## Option 2: Download Pre-Computed sgRNAs from CRISPick
+
+### When to Use This Option?
+- No validated sgRNAs found in Addgene
+- Need comprehensive coverage of a gene
+- Want multiple sgRNA options with predicted scores
+- Working with genome-scale screening
+
+### 2.1 Overview of CRISPick
+
+**CRISPick** (from Broad Institute GPP) provides pre-computed sgRNA designs for entire genomes with 238 available datasets covering:
+- Human (GRCh38, GRCh37)
+- Mouse (GRCm38, GRCm39)
+- Dog, Cow, Monkey, and other model organisms
+- Multiple Cas enzymes (SpCas9, SaCas9, AsCas12a, enAsCas12a)
+  - **IMPORTANT**: AsCas12a and enAsCas12a are DIFFERENT enzymes
+  - **AsCas12a**: Wild-type Acidaminococcus sp. Cas12a
+  - **enAsCas12a**: Enhanced variant with improved activity
+  - **Critical**: sgRNAs designed for enAsCas12a may NOT work with wild-type AsCas12a
+  - Always match the dataset to your specific Cas12a variant
+- Different applications (knockout, activation, inhibition)
+
+### 2.2 Find the Download Link
+
+**All 238 download links are available in**: `resource/CRISPick_download_links.txt` (relative to this skill directory)
+
+#### Step 1: Understand File Naming Convention
+
+Files are named: `sgRNA_design_{TAXID}_{GENOME}_{CAS}_{APPLICATION}_{ALGORITHM}_{SOURCE}_{DATE}.txt.gz`
+
+**Common datasets:**
+
+| Organism | Genome | Cas9 | Application | Search Pattern |
+|-|--||-|-|
+| Human | GRCh38 | SpCas9 | Knockout | `9606_GRCh38_SpyoCas9_CRISPRko` |
+| Human | GRCh38 | SpCas9 | Activation | `9606_GRCh38_SpyoCas9_CRISPRa` |
+| Human | GRCh38 | SaCas9 | Knockout | `9606_GRCh38_SaurCas9_CRISPRko` |
+| Mouse | GRCm38 | SpCas9 | Knockout | `10090_GRCm38_SpyoCas9_CRISPRko` |
+| Mouse | GRCm38 | SpCas9 | Activation | `10090_GRCm38_SpyoCas9_CRISPRa` |
+
+**Key components:**
+- **TAXID**: `9606` (Human), `10090` (Mouse), `9615` (Dog), `9913` (Cow)
+- **CAS**:
+  - `SpyoCas9` (SpCas9, NGG PAM)
+  - `SaurCas9` (SaCas9, NNGRRT PAM)
+  - `AsCas12a` (Wild-type Cas12a, TTTV PAM)
+  - `enAsCas12a` (Enhanced Cas12a, TTTV PAM)
+  - **WARNING**: Do NOT use AsCas12a datasets if you have enAsCas12a, and vice versa
+- **APPLICATION**: `CRISPRko` (knockout), `CRISPRa` (activation), `CRISPRi` (inhibition)
+
+#### Step 2: Find Your Download URL
+
+```bash
+# Search the download links file
+grep "9606_GRCh38_SpyoCas9_CRISPRko" resource/CRISPick_download_links.txt
+
+# Or for mouse
+grep "10090_GRCm38_SpyoCas9_CRISPRko" resource/CRISPick_download_links.txt
+```
+
+#### Step 3: Download and Extract
+
+```bash
+# Copy the URL from download_links.txt, then:
+wget [PASTE_URL_HERE]
+
+# Extract the file
+gunzip sgRNA_design_*.txt.gz
+```
+
+**File sizes**: Knockout (300-700 MB), Activation (50-100 MB), Summary files (1-3 MB)
+
+### 2.4 Understanding the File Format
+
+The `.txt` file is tab-delimited. Column names differ between knockout and activation/inhibition datasets.
+
+**Essential Columns (All files):**
+- **sgRNA Sequence**: The 20bp guide RNA sequence (5' to 3')
+- **Target Gene Symbol**: Gene name (e.g., "TP53", "BRCA1")
+- **Combined Rank**: Overall ranking (lower = better) - **Use this by default**
+- **On-Target Rank**: Ranking by efficiency only (lower = better)
+- **Off-Target Rank**: Ranking by specificity only (lower = better)
+- **PAM Sequence**: The PAM sequence (e.g., "AGG", "TGG")
+
+**Knockout-specific columns:**
+- **sgRNA Cut Position (1-based)**: Genomic coordinate of cut site
+- **Exon Number**: Which exon is targeted
+- **Target Cut %**: Percentage of protein affected
+
+**Activation/Inhibition-specific columns:**
+- **sgRNA 'Cut' Position**: Position relative to gene
+- **sgRNA 'Cut' Site TSS Offset**: Distance from transcription start site (bp)
+- **DHS Score**: DNase hypersensitivity score (for CRISPRa)
+
+### 2.5 Extract and Select sgRNAs
+
+#### Step 1: Load Data and Filter for Your Gene
+
+```python
+import pandas as pd
+
+# Load the dataset
+df = pd.read_csv('sgRNA_design_9606_GRCh38_SpyoCas9_CRISPRko_*.txt',
+                 sep='\t', low_memory=False)
+
+# Filter for your gene
+gene_name = "TP53"
+gene_sgrnas = df[df['Target Gene Symbol'] == gene_name].copy()
+
+print(f"Found {len(gene_sgrnas)} sgRNAs for {gene_name}")
+```
+
+#### Step 2: Select Top sgRNAs
+
+**Default: Use Combined Rank (balances efficiency and specificity)**
+```python
+# Sort by Combined Rank (lower is better)
+top_sgrnas = gene_sgrnas.nsmallest(10, 'Combined Rank')
+
+print(top_sgrnas[['sgRNA Sequence', 'Combined Rank',
+                   'Exon Number', 'sgRNA Cut Position (1-based)']])
+```
+
+**Option A: Prioritize On-Target Efficiency**
+```python
+# Sort by On-Target Rank (for maximum cutting efficiency)
+efficient_sgrnas = gene_sgrnas.nsmallest(10, 'On-Target Rank')
+```
+
+**Option B: Prioritize Off-Target Specificity**
+```python
+# Sort by Off-Target Rank (for maximum specificity)
+specific_sgrnas = gene_sgrnas.nsmallest(10, 'Off-Target Rank')
+```
+
+#### Step 3: Filter by Custom Criteria (Optional)
+
+**Filter by Exon Number:**
+```python
+# Target specific exon (e.g., exon 5)
+exon5_sgrnas = gene_sgrnas[gene_sgrnas['Exon Number'] == 5]
+top_exon5 = exon5_sgrnas.nsmallest(5, 'Combined Rank')
+```
+
+**Filter by Genomic Position:**
+```python
+# Target specific genomic range
+position_filtered = gene_sgrnas[
+    (gene_sgrnas['sgRNA Cut Position (1-based)'] >= 7572000) &
+    (gene_sgrnas['sgRNA Cut Position (1-based)'] <= 7575000)
+]
+```
+
+**Target Early Exons for Knockout:**
+```python
+# Get sgRNAs from first 3 exons
+early_exons = gene_sgrnas[gene_sgrnas['Exon Number'] <= 3]
+top_early = early_exons.nsmallest(10, 'Combined Rank')
+```
+
+**Filter by Target Cut Percentage:**
+```python
+# Target sgRNAs that affect significant portion of protein
+high_impact = gene_sgrnas[gene_sgrnas['Target Cut %'] <= 50]  # Cut in first 50%
+top_high_impact = high_impact.nsmallest(10, 'Combined Rank')
+```
+
+#### Step 4: Select Multiple sgRNAs for Validation
+
+```python
+# Get top 4 sgRNAs from different exons for redundancy
+final_selection = gene_sgrnas.sort_values('Combined Rank').groupby('Exon Number').head(1).head(4)
+
+# Save results
+final_selection.to_csv(f'{gene_name}_selected_sgRNAs.csv', index=False)
+
+print("\nSelected sgRNAs:")
+print(final_selection[['sgRNA Sequence', 'Exon Number', 'Combined Rank']])
+```
+
+### 2.6 What to Do with Results
+
+**Once you have selected sgRNAs:**
+1. Choose **3-4 sgRNAs** (use Combined_Rank by default)
+
+**If dataset doesn't cover your gene or organism:**
+Proceed to **Option 3: De Novo sgRNA Design**
+
+
+
+## Option 3: General sgRNA Design Guidelines (Last Resort)
+
+### When to Use This Option?
+- Gene not covered in CRISPick datasets
+- Non-model organism
+- Custom design requirements
+
+### General Design Rules
+
+#### Essential Requirements:
+1. **Length**:
+   - 20 bp for SpCas9 and SaCas9
+   - 23-25 bp for Cas12a variants (AsCas12a, enAsCas12a)
+2. **PAM sequence**:
+   - **SpCas9**: Requires **NGG** immediately after target (3' end)
+   - **SaCas9**: Requires **NNGRRT** immediately after target (3' end)
+   - **AsCas12a** (wild-type): Requires **TTTV** before target (5' end)
+   - **enAsCas12a** (enhanced): Requires **TTTV** before target (5' end)
+   - **CRITICAL**: Guides designed for enAsCas12a may not work with wild-type AsCas12a due to different activity profiles
+3. **GC content**: 40-60% is optimal
+4. **Avoid**:
+   - TTTT sequences (terminates transcription)
+   - Long runs of same nucleotide (>4 repeats)
+
+#### Target Location:
+- **For knockout**: Target early exons (first 50% of gene)
+- **For activation**: Target -200 to +1 bp from transcription start site (TSS)
+- **For inhibition**: Target -50 to +300 bp from TSS
+
+#### Best Practices:
+- **Test 3-4 different sgRNAs** per target gene
+- Select sgRNAs with high efficiency scores (>0.5) and minimal off-targets
+- Validate experimentally with Sanger sequencing
+
+
+
+## Quick Start Examples
+
+### Example 1: Knockout TP53 in Human Cells
+
+**Step 1**: Check Addgene
+```python
+df = pd.read_csv('addgene_grna_sequences.csv')
+tp53_results = df[(df['Target_Gene'] == 'TP53') &
+                  (df['Target_Species'] == 'H. sapiens') &
+                  (df['Application'] == 'cut')]
+# Result: Found 0 entries -> Proceed to Option 2
+```
+
+**Step 2**: Download CRISPick dataset
+```bash
+# Download human GRCh38 SpCas9 knockout dataset
+wget https://portals.broadinstitute.org/gppx/public/sgrna_design/api/downloads/\
+sgRNA_design_9606_GRCh38_SpyoCas9_CRISPRko_RS3seq-Chen2013+RS3target_NCBI_20241104.txt.gz
+
+gunzip sgRNA_design_9606_GRCh38_SpyoCas9_CRISPRko_*.txt.gz
+```
+
+**Step 3**: Extract TP53 sgRNAs
+```python
+df = pd.read_csv('sgRNA_design_9606_GRCh38_SpyoCas9_CRISPRko_*.txt', sep='\t')
+tp53 = df[df['Gene_Symbol'] == 'TP53']
+top_sgrnas = tp53[
+    (tp53['sgRNA_score'] > 0.6) &
+    (tp53['Off_target_stringency'] > 0.5)
+].sort_values('sgRNA_score', ascending=False).head(4)
+
+print(top_sgrnas[['sgRNA_sequence', 'sgRNA_score', 'Exon_ID']])
+```
+
+### Example 2: Activate OCT4 in Human iPSCs
+
+**Step 1**: Check Addgene
+```python
+oct4_results = df[(df['Target_Gene'] == 'OCT4') &
+                  (df['Application'] == 'activate')]
+# Found 1 validated sgRNA!
+print(oct4_results['Target_Sequence'].values[0])
+# Use this sequence
+```
+
+
+
+**Remember**: Always start with validated sequences (Option 1), then move to pre-computed designs (Option 2), and only use de novo design (Option 3) when necessary. Testing 3-4 sgRNAs per gene is standard practice regardless of prediction scores.
+
+## References
+
+- Addgene CRISPR sgRNA reference sequences: https://www.addgene.org/crispr/reference/grna-sequence/
+- CRISPick (Broad Institute GPP) pre-computed sgRNA designs: https://portals.broadinstitute.org/gppx/crispick/public
+- Sanson KR, Hanna RE, Hegde M, et al. "Optimized libraries for CRISPR-Cas9 genetic screens with multiple modalities." Nat Commun. 2018;9(1):5416. PMID: 30575746. https://doi.org/10.1038/s41467-018-07901-8
+- DeWeirdt PC, Sanson KR, Sangree AK, et al. "Optimization of AsCas12a for combinatorial genetic screens in human cells." Nat Biotechnol. 2021;39(1):94-104. PMID: 32661438. https://doi.org/10.1038/s41587-020-0600-6
+- Doench JG, Fusi N, Sullender M, et al. "Optimized sgRNA design to maximize activity and minimize off-target effects of CRISPR-Cas9." Nat Biotechnol. 2016;34(2):184-191. https://doi.org/10.1038/nbt.3437
+- Ran FA, Hsu PD, Wright J, et al. "Genome engineering using the CRISPR-Cas9 system." Nat Protoc. 2013;8(11):2281-2308. PMID: 24336569. https://doi.org/10.1038/nprot.2013.143
+- Zetsche B, Heidenreich M, Mohanraju P, et al. "Multiplex gene editing by CRISPR-Cpf1 using a single crRNA array." Nat Biotechnol. 2017;35(1):31-34. https://doi.org/10.1038/nbt.3737
