@@ -1539,3 +1539,19 @@ entries:
     description: "General scientific figure quality checklist for generated plots. Covers visual inspection for overlapping labels, clipped text, missing axes/legends, empty plot areas, overcrowded data, and resolution/format best practices across journals."
     date_added: "2026-04-01"
 
+  - name: "bakta-genome-annotation"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/bakta-genome-annotation/SKILL.md"
+    description: "Annotate bacterial and archaeal genomes and plasmids with Bakta's Prodigal/HMM/DIAMOND pipeline against a curated UniRef-derived database. Identifies CDS, ncRNA, tRNA, rRNA, tmRNA, sORFs, CRISPR arrays, and replication origins. Produces NCBI-compatible GFF3, GenBank, EMBL, FASTA, JSON, TSV, and a circular Circos plot. Use Prokka for legacy pipelines or non-bacterial kingdoms; PGAP for NCBI GenBank submission; Bakta for faster, regularly updated annotation."
+    date_added: "2026-05-08"
+
+  - name: "roary-pangenome"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/roary-pangenome/SKILL.md"
+    description: "Compute the bacterial pan-genome from Prokka/Bakta GFF3 annotations with Roary's CD-HIT + BLASTP + MCL clustering pipeline. Outputs the gene presence/absence matrix, core/soft-core/shell/cloud partitions, a non-redundant pan-genome reference FASTA, and an optional concatenated core-gene alignment for phylogenetics. Use Panaroo for fragmented assemblies or noisy annotations; PIRATE for paralog-aware multi-threshold clustering; PPanGGOLiN for graph-based statistical partitioning."
+    date_added: "2026-05-08"
+

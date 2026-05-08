@@ -1,13 +1,13 @@
 # SciAgent-Skills
 
 <p align="center">
-  <img src="https://img.shields.io/badge/skills-197-blue?style=for-the-badge" alt="197 Skills">
+  <img src="https://img.shields.io/badge/skills-199-blue?style=for-the-badge" alt="199 Skills">
   <img src="https://img.shields.io/badge/BixBench-92.0%25-brightgreen?style=for-the-badge" alt="BixBench 92.0%">
   <img src="https://img.shields.io/badge/license-CC--BY--4.0-lightgrey?style=for-the-badge" alt="CC-BY-4.0">
   <img src="https://img.shields.io/github/stars/jaechang-hits/SciAgent-Skills?style=for-the-badge" alt="GitHub Stars">
 </p>
 
-> **Turn your AI coding agent into a life sciences expert** — 197 bioinformatics skills for Claude Code covering RNA-seq, single-cell analysis, genomics, proteomics, drug discovery, and more. Boosted [BixBench](https://github.com/Future-House/BixBench) from 65% to 92%. Open source.
+> **Turn your AI coding agent into a life sciences expert** — 199 bioinformatics skills for Claude Code covering RNA-seq, single-cell analysis, genomics, proteomics, drug discovery, and more. Boosted [BixBench](https://github.com/Future-House/BixBench) from 65% to 92%. Open source.
 
 **SciAgent-Skills** is the largest open-source skill library for scientific AI agents. It equips [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (and any markdown-compatible agent) with domain-specific knowledge for computational biology, bioinformatics, cheminformatics, and biostatistics — no fine-tuning required, just plug in and analyze.
 
@@ -36,7 +36,7 @@ Want to try these skills without any setup? **[OmicsHorizon](https://omicshorizo
 
 ---
 
-**197 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
+**199 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
 
 Each skill is a self-contained SKILL.md file with runnable code examples, key parameters, troubleshooting guides, and best practices. Designed for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but compatible with any AI agent that reads markdown skill files ([setup guides below](#using-with-other-agents)).
 
@@ -44,7 +44,7 @@ Each skill is a self-contained SKILL.md file with runnable code examples, key pa
 
 | Category | Skills | Examples |
 |----------|:------:|----------|
-| Genomics & Bioinformatics | 63 | Scanpy, BioPython, pysam, gget, KEGG, PubMed, scvi-tools |
+| Genomics & Bioinformatics | 65 | Scanpy, BioPython, pysam, gget, KEGG, PubMed, scvi-tools, Bakta, Roary |
 | Structural Biology & Drug Discovery | 26 | RDKit, AutoDock Vina, ChEMBL, PDB, DeepChem, datamol |
 | Scientific Computing | 24 | Polars, Dask, NetworkX, SymPy, UMAP, PyG, Zarr, SimPy |
 | Cell Biology | 15 | pydicom, histolab, FlowIO |
@@ -56,7 +56,7 @@ Each skill is a self-contained SKILL.md file with runnable code examples, key pa
 | Data Visualization | 5 | Plotly, Seaborn |
 | Molecular Biology | 3 | CRISPR sgRNA design, gene expression, cloning |
 
-**Skill types:** 72 toolkits, 53 database connectors, 36 guides, 35 pipelines
+**Skill types:** 72 toolkits, 53 database connectors, 37 guides, 37 pipelines
 
 ## Installation
 
@@ -205,7 +205,7 @@ SciAgent-Skills/
 ├── .claude-plugin/
 │   └── plugin.json        # Claude Code plugin manifest
 ├── integration-templates/  # Config templates for Codex, Cursor, Windsurf
-├── skills/                 # All 197 skills organized by category
+├── skills/                 # All 199 skills organized by category
 │   ├── genomics-bioinformatics/
 │   ├── structural-biology-drug-discovery/
 │   ├── scientific-computing/
@@ -285,7 +285,7 @@ Uses: `lamindb-data-management` → `reactome-pathway-analysis` → `string-prot
 
 | Feature | SciAgent-Skills | GPTomics/bioSkills | ClawBio |
 |---------|:-:|:-:|:-:|
-| Total skills | **197** | ~30 | ~20 |
+| Total skills | **199** | ~30 | ~20 |
 | BixBench benchmark | **92.0%** | — | — |
 | Skill types | Pipeline, Toolkit, Database, Guide | Pipeline | Pipeline |
 | Multi-agent support | Claude Code, Codex, Cursor, Windsurf | Claude Code | Claude Code |
