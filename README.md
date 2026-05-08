@@ -1,13 +1,13 @@
 # SciAgent-Skills
 
 <p align="center">
-  <img src="https://img.shields.io/badge/skills-199-blue?style=for-the-badge" alt="199 Skills">
+  <img src="https://img.shields.io/badge/skills-201-blue?style=for-the-badge" alt="201 Skills">
   <img src="https://img.shields.io/badge/BixBench-92.0%25-brightgreen?style=for-the-badge" alt="BixBench 92.0%">
   <img src="https://img.shields.io/badge/license-CC--BY--4.0-lightgrey?style=for-the-badge" alt="CC-BY-4.0">
   <img src="https://img.shields.io/github/stars/jaechang-hits/SciAgent-Skills?style=for-the-badge" alt="GitHub Stars">
 </p>
 
-> **Turn your AI coding agent into a life sciences expert** — 199 bioinformatics skills for Claude Code covering RNA-seq, single-cell analysis, genomics, proteomics, drug discovery, and more. Boosted [BixBench](https://github.com/Future-House/BixBench) from 65% to 92%. Open source.
+> **Turn your AI coding agent into a life sciences expert** — 201 bioinformatics skills for Claude Code covering RNA-seq, single-cell analysis, genomics, proteomics, drug discovery, and more. Boosted [BixBench](https://github.com/Future-House/BixBench) from 65% to 92%. Open source.
 
 **SciAgent-Skills** is the largest open-source skill library for scientific AI agents. It equips [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (and any markdown-compatible agent) with domain-specific knowledge for computational biology, bioinformatics, cheminformatics, and biostatistics — no fine-tuning required, just plug in and analyze.
 
@@ -36,7 +36,7 @@ Want to try these skills without any setup? **[OmicsHorizon](https://omicshorizo
 
 ---
 
-**199 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
+**201 ready-to-use scientific skills for AI coding agents** — covering genomics, proteomics, drug discovery, biostatistics, scientific computing, and scientific writing.
 
 Each skill is a self-contained SKILL.md file with runnable code examples, key parameters, troubleshooting guides, and best practices. Designed for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), but compatible with any AI agent that reads markdown skill files ([setup guides below](#using-with-other-agents)).
 
@@ -50,13 +50,13 @@ Each skill is a self-contained SKILL.md file with runnable code examples, key pa
 | Cell Biology | 15 | pydicom, histolab, FlowIO |
 | Biostatistics | 12 | scikit-learn, statsmodels, PyMC, SHAP, survival analysis |
 | Scientific Writing | 21 | Manuscript writing, peer review, LaTeX posters, slides, figure guides |
-| Systems Biology & Multi-omics | 11 | COBRApy, LaminDB, Reactome, STRING |
+| Systems Biology & Multi-omics | 13 | COBRApy, LaminDB, Reactome, STRING, OmniPath, pypath |
 | Proteomics & Protein Engineering | 10 | ESM, UniProt, PyOpenMS, matchms, HMDB |
 | Lab Automation | 6 | Opentrons, Benchling |
 | Data Visualization | 5 | Plotly, Seaborn |
 | Molecular Biology | 3 | CRISPR sgRNA design, gene expression, cloning |
 
-**Skill types:** 72 toolkits, 53 database connectors, 37 guides, 37 pipelines
+**Skill types:** 73 toolkits, 54 database connectors, 37 guides, 37 pipelines
 
 ## Installation
 
@@ -205,7 +205,7 @@ SciAgent-Skills/
 ├── .claude-plugin/
 │   └── plugin.json        # Claude Code plugin manifest
 ├── integration-templates/  # Config templates for Codex, Cursor, Windsurf
-├── skills/                 # All 199 skills organized by category
+├── skills/                 # All 201 skills organized by category
 │   ├── genomics-bioinformatics/
 │   ├── structural-biology-drug-discovery/
 │   ├── scientific-computing/
@@ -285,7 +285,7 @@ Uses: `lamindb-data-management` → `reactome-pathway-analysis` → `string-prot
 
 | Feature | SciAgent-Skills | GPTomics/bioSkills | ClawBio |
 |---------|:-:|:-:|:-:|
-| Total skills | **199** | ~30 | ~20 |
+| Total skills | **201** | ~30 | ~20 |
 | BixBench benchmark | **92.0%** | — | — |
 | Skill types | Pipeline, Toolkit, Database, Guide | Pipeline | Pipeline |
 | Multi-agent support | Claude Code, Codex, Cursor, Windsurf | Claude Code | Claude Code |

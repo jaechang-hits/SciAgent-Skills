@@ -1555,3 +1555,19 @@ entries:
     description: "Compute the bacterial pan-genome from Prokka/Bakta GFF3 annotations with Roary's CD-HIT + BLASTP + MCL clustering pipeline. Outputs the gene presence/absence matrix, core/soft-core/shell/cloud partitions, a non-redundant pan-genome reference FASTA, and an optional concatenated core-gene alignment for phylogenetics. Use Panaroo for fragmented assemblies or noisy annotations; PIRATE for paralog-aware multi-threshold clustering; PPanGGOLiN for graph-based statistical partitioning."
     date_added: "2026-05-08"
 
+  - name: "omnipath-knowledge-graph"
+    type: skill
+    sub_type: database
+    category: "systems-biology-multiomics"
+    path: "skills/systems-biology-multiomics/omnipath-knowledge-graph/SKILL.md"
+    description: "Query the OmniPath integrated biological knowledge graph from Python. The `omnipath` client wraps the saezlab OmniPath web service which integrates 150+ resources covering signaling interactions, transcriptional regulation (DoRothEA, CollecTRI), miRNA-target, post-translational modifications (enzyme-substrate), protein complexes, intercellular communication (ligand-receptor), and entity annotations. All requests return tidy pandas DataFrames. Use `pypath-network-builder` instead when you need to rebuild OmniPath from primary resources or add custom databases; use `string-database-ppi` for STRING-only protein interactions; use `reactome-database` for Reactome pathways."
+    date_added: "2026-05-08"
+
+  - name: "pypath-network-builder"
+    type: skill
+    sub_type: toolkit
+    category: "systems-biology-multiomics"
+    path: "skills/systems-biology-multiomics/pypath-network-builder/SKILL.md"
+    description: "Build customized biological knowledge graphs with pypath — the saezlab Python framework that powers OmniPath. Provides ~150 input modules for individual signaling, regulatory, complex, PTM, annotation, and intercellular databases, plus high-level Network/Annotation/Complex/Enz_sub/Intercell aggregator classes that merge raw inputs and de-duplicate evidence. Includes ID translation utilities, persistent on-disk cache, and pickle-backed snapshots. Use `omnipath-knowledge-graph` instead when you only need to query the existing OmniPath service via its REST API."
+    date_added: "2026-05-08"
+
