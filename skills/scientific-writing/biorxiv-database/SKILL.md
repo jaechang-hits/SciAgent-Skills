@@ -42,7 +42,7 @@ r = requests.get(f"{BASE}/details/biorxiv/2024-01-01/2024-01-07/0",
                  params={"category": "bioinformatics"})
 r.raise_for_status()
 data = r.json()
-print(f"Total preprints: {data['messages'][0]['total']}")
+print(f"Total preprints: {int(data['messages'][0]['total'])}")  # API returns total as a string
 for article in data["collection"][:3]:
     print(f"\n{article['title'][:80]}")
     print(f"  Authors : {article['authors'][:60]}")
@@ -73,7 +73,7 @@ def get_preprints(server, date_from, date_to, cursor=0, category=None):
     return r.json()
 
 data = get_preprints("biorxiv", "2024-01-01", "2024-01-03")
-total = data["messages"][0]["total"]
+total = int(data["messages"][0]["total"])  # API returns total as a string — cast for arithmetic
 print(f"bioRxiv preprints Jan 1-3, 2024: {total}")
 
 rows = []
@@ -101,7 +101,7 @@ def get_all_preprints(server, date_from, date_to, max_results=500):
         if not collection:
             break
         all_articles.extend(collection)
-        total = data["messages"][0]["total"]
+        total = int(data["messages"][0]["total"])  # cast: API returns total as string
         cursor += 100
         if cursor >= total:
             break
@@ -129,7 +129,7 @@ def get_by_doi(server, doi):
     return r.json()
 
 # Generic example using bioRxiv DOI pattern
-r = requests.get(f"{BASE}/details/biorxiv/10.1101/2021.01.01.425318")
+r = requests.get(f"{BASE}/details/biorxiv/10.1101/2024.05.28.596311")
 if r.ok:
     data = r.json()
     articles = data.get("collection", [])
@@ -161,7 +161,7 @@ def check_published(server, doi):
     return data.get("collection", [])
 
 # Check one known preprint
-doi = "10.1101/2021.01.01.425318"
+doi = "10.1101/2024.05.28.596311"
 published = check_published("biorxiv", doi)
 if published:
     pub = published[0]
@@ -223,7 +223,7 @@ BASE = "https://api.biorxiv.org"
 r = requests.get(f"{BASE}/details/medrxiv/2024-01-01/2024-01-07/0")
 r.raise_for_status()
 data = r.json()
-total = data["messages"][0]["total"]
+total = int(data["messages"][0]["total"])  # cast: API returns total as string
 print(f"medRxiv preprints Jan 1-7, 2024: {total}")
 
 # Group by category
@@ -244,9 +244,9 @@ import requests, time, pandas as pd
 BASE = "https://api.biorxiv.org"
 
 dois = [
-    "10.1101/2023.01.01.000001",
-    "10.1101/2023.02.01.000002",
-    "10.1101/2023.03.01.000003",
+    "10.1101/2024.05.28.596311",
+    "10.1101/2023.11.28.569048",
+    "10.1101/2023.03.07.531523",
 ]
 
 rows = []
@@ -317,7 +317,7 @@ while True:
     if not batch:
         break
     all_articles.extend(batch)
-    total = data["messages"][0]["total"]
+    total = int(data["messages"][0]["total"])  # cast: API returns total as string
     cursor += 100
     if cursor >= total:
         break
@@ -346,8 +346,8 @@ import requests, time, pandas as pd
 BASE = "https://api.biorxiv.org"
 
 preprint_dois = [
-    "10.1101/2021.01.01.425318",
-    "10.1101/2020.04.01.020370",
+    "10.1101/2024.05.28.596311",
+    "10.1101/2023.11.28.569048",
 ]
 
 results = []
@@ -401,24 +401,58 @@ df.to_csv("preprint_publication_status.csv", index=False)
 
 ## Common Recipes
 
-### Recipe: Download Preprint PDF
+### Recipe: Download Preprint PDF (Cloudflare-aware)
 
-When to use: Retrieve full-text PDF for a bioRxiv preprint.
+When to use: Retrieve full-text PDF for a bioRxiv preprint. **Caveat**: as of 2026, `www.biorxiv.org` is fronted by Cloudflare's anti-bot challenge — direct `requests.get(..., headers={"User-Agent": "Mozilla/5.0"})` consistently returns HTTP 403 ("Just a moment...") even with a `Session` and a landing-page warmup. The pattern below attempts a best-effort download with realistic browser headers, then falls back to EuropePMC for metadata if blocked.
 
 ```python
 import requests
 
-doi = "10.1101/2021.01.01.425318"
-# bioRxiv PDF URL pattern
-pdf_url = f"https://www.biorxiv.org/content/{doi}.full.pdf"
+def download_biorxiv_pdf(doi, out_path=None):
+    """Best-effort PDF download. If Cloudflare blocks, return False so the caller
+    can fall back to EuropePMC metadata or open the landing page in a browser."""
+    pdf_url = f"https://www.biorxiv.org/content/{doi}.full.pdf"
+    s = requests.Session()
+    s.headers.update({
+        "User-Agent": ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                       "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,application/pdf,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+    })
+    # Warm up the landing page first (sometimes lets Cloudflare's "trust" cookie set)
+    s.get(f"https://www.biorxiv.org/content/{doi}v1", timeout=30)
+    r = s.get(pdf_url, timeout=60)
+    if r.ok and r.content.startswith(b"%PDF"):
+        out = out_path or f"{doi.replace('/', '_')}.pdf"
+        with open(out, "wb") as f:
+            f.write(r.content)
+        print(f"Downloaded {out} ({len(r.content)//1024} KB)")
+        return True
+    print(f"PDF blocked (HTTP {r.status_code}); falling back to metadata-only via EuropePMC")
+    return False
 
-r = requests.get(pdf_url, headers={"User-Agent": "Mozilla/5.0"})
-if r.ok:
-    with open(f"{doi.replace('/', '_')}.pdf", "wb") as f:
-        f.write(r.content)
-    print(f"Downloaded PDF ({len(r.content)//1024} KB)")
-else:
-    print(f"PDF not available: HTTP {r.status_code}")
+def europepmc_metadata(doi):
+    """Fetch preprint metadata via EuropePMC when bioRxiv PDF is blocked.
+    EuropePMC indexes bioRxiv as source 'PPR' and exposes a stable landing URL."""
+    r = requests.get("https://www.ebi.ac.uk/europepmc/webservices/rest/search",
+                     params={"query": f"DOI:{doi}", "format": "json"}, timeout=30)
+    r.raise_for_status()
+    hits = r.json().get("resultList", {}).get("result", [])
+    if not hits:
+        return None
+    h = hits[0]
+    return {
+        "source": h.get("source"),                      # 'PPR' for preprints
+        "epmc_id": h.get("id"),                         # e.g. 'PPR860608'
+        "title": h.get("title"),
+        "landing_url": f"https://europepmc.org/article/{h.get('source')}/{h.get('id')}",
+    }
+
+doi = "10.1101/2024.05.28.596311"
+if not download_biorxiv_pdf(doi):
+    meta = europepmc_metadata(doi)
+    print(f"  EuropePMC landing: {meta['landing_url']}")
+    print(f"  Title: {meta['title'][:80]}")
 ```
 
 ### Recipe: Count Preprints by Category
@@ -431,7 +465,7 @@ from collections import Counter
 
 r = requests.get("https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-01-07/0")
 data = r.json()
-total = data["messages"][0]["total"]
+total = int(data["messages"][0]["total"])  # cast: API returns total as a string
 
 # Fetch all pages
 all_articles = data["collection"]
@@ -451,7 +485,7 @@ When to use: Quick single-preprint publication check.
 ```python
 import requests
 
-doi = "10.1101/2021.01.01.425318"
+doi = "10.1101/2024.05.28.596311"
 r = requests.get(f"https://api.biorxiv.org/publisher/biorxiv/{doi}")
 collection = r.json().get("collection", [])
 if collection:
@@ -468,7 +502,9 @@ else:
 | Duplicate preprints in results | Multiple versions returned | Deduplicate by DOI: `df.drop_duplicates(subset='doi', keep='last')` |
 | Missing abstract field | Some preprints don't have structured abstracts | Guard with `art.get("abstract", "") or "N/A"` |
 | `total` count vs retrieved mismatch | New preprints added during pagination | Accept approximate totals; preprints are added continuously |
-| PDF download blocked | Anti-bot protection | Add a User-Agent header; respect `robots.txt`; use for research only |
+| PDF download blocked (HTTP 403 "Just a moment...") | Cloudflare anti-bot on `www.biorxiv.org/.../*.full.pdf` (cannot be bypassed by a `Mozilla/5.0` UA alone, nor by a Session + landing-page warmup) | Try the Session + warmup recipe; if still blocked, fall back to EuropePMC (`source=PPR`) for metadata, or fetch the PDF interactively from the bioRxiv landing page in a browser |
+| `cursor >= total` never triggers; loop runs forever | `data['messages'][0]['total']` is returned as a **string** (e.g. `'1119'`); `int_cursor >= str_total` raises `TypeError` or compares lexically | Cast explicitly: `int(data["messages"][0]["total"])` in every pagination loop |
+| `collection` empty for a specific DOI | The DOI never resolved to a real preprint (e.g. fake placeholder like `2023.01.01.000001`, or a stale/withdrawn DOI) | Verify the DOI on `https://www.biorxiv.org/content/{doi}v1` first; recent DOIs from a date-range listing are the safest examples |
 | Slow pagination for large date ranges | Large number of preprints | Use narrower date windows (3-7 days) for busy periods |
 
 ## Related Skills

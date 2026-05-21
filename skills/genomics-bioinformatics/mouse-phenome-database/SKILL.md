@@ -1,6 +1,6 @@
 ---
 name: "mouse-phenome-database"
-description: "Retrieve quantitative phenotypes across inbred mouse strains from MPD: metabolic, behavioral, physiological traits. Query strain means and raw measurements for body weight, glucose, blood pressure, behavioral assays, 40+ procedures. Use for QTL support, cross-strain comparison, mouse model selection. Use monarch-database for gene-disease associations; ensembl-database for genome annotations."
+description: "Retrieve mouse phenotype data from the Jackson Laboratory Mouse Phenome Database (MPD) via its REST API. Browse 520+ projects, look up per-project measure metadata, pull strain-level means (raw or LS-mean adjusted) and per-animal values, find measures by MP/VT ontology terms, and resolve strain nomenclature or gene coordinates. Use for QTL support, cross-strain comparison, mouse model selection, and ontology-driven phenotype discovery. Use monarch-database for disease-gene-phenotype knowledge graphs; ensembl-database for mouse genome annotations."
 license: "CC-BY-4.0"
 ---
 
@@ -8,24 +8,25 @@ license: "CC-BY-4.0"
 
 ## Overview
 
-The Mouse Phenome Database (MPD) at the Jackson Laboratory catalogs standardized phenotype measurements across inbred, recombinant inbred, and collaborative cross mouse strains. It aggregates data from 700+ projects covering 40+ phenotype categories including body composition, metabolic parameters, cardiovascular, behavioral, and hematological measures. The REST API at `https://phenome.jax.org/api` provides programmatic access to strain summaries, individual animal data, and measurement protocols. No authentication is required; data is freely available under CC-BY-4.0.
+The Mouse Phenome Database (MPD), maintained at the Jackson Laboratory, catalogs standardized phenotype measurements across inbred, recombinant inbred (e.g., BXD), and Collaborative Cross / Diversity Outbred mouse panels. It aggregates 520+ projects spanning metabolic, cardiovascular, behavioral, hematological, and immunological traits. The REST API at `https://phenome.jax.org/api` is free, requires no authentication, and is documented at <https://phenome.jax.org/about/api>. MPD measurement IDs (`measnum`) are project-scoped 5-digit integers — there is no global "measnum 10001 = body weight" mapping; valid measnums must be discovered per project via the `measureinfo` endpoint.
 
 ## When to Use
 
-- Identifying which inbred strains show extreme phenotypes (highest/lowest body weight, glucose, blood pressure) for selection as experimental models
-- Retrieving phenotype data for QTL analysis using BXD, AXB, or DO panel strains
-- Comparing strain means and distributions across metabolic traits for a hypothesis about genetic background effects
-- Finding published MPD projects measuring a specific trait category (e.g., anxiety behavior, bone density, immune cell counts)
-- Downloading individual-level measurement data for statistical modeling or power calculations
-- Use `monarch-database` instead when you need disease-gene-phenotype knowledge graph associations (gene ontology, HPO phenotypes, human disease links)
-- Use `ensembl-database` instead for genomic coordinate, transcript, and gene annotation lookups for specific mouse genes
+- Selecting inbred strains with extreme phenotypes (highest/lowest fasted glucose, body weight, heart rate, etc.) as experimental models
+- Pulling individual-animal data from BXD / CC / DO panels for QTL mapping with R/qtl2 or similar tools
+- Comparing strain means and variance across metabolic, behavioral, or cardiovascular measures for genetic background studies
+- Finding MPD projects that measure a trait of interest using ontology terms (MP, VT, MA) or free-text descriptions
+- Validating mouse strain nomenclature (canonical JAX names ↔ stock numbers ↔ MGI IDs) before submitting orders or analyses
+- Looking up coordinates and annotations for mouse genes in the MPD/MGI cross-reference
+- Use `monarch-database` instead for disease-gene-phenotype knowledge graphs (HPO ↔ MP ↔ disease)
+- Use `ensembl-database` instead for transcript-level mouse gene annotations and variant consequence prediction
 
 ## Prerequisites
 
 - **Python packages**: `requests`, `pandas`, `matplotlib`
-- **Data requirements**: strain names (e.g., `C57BL/6J`), measure IDs (e.g., `10001`), or project IDs (e.g., `Jaxwest1`)
+- **Data requirements**: a project symbol (e.g., `Jaxwest1`, `Auwerx1`) or a measnum (e.g., `15101`); strain names follow JAX canonical nomenclature (e.g., `C57BL/6J`, `DBA/2J`)
 - **Environment**: internet connection; no API key required
-- **Rate limits**: no official published limits; use `time.sleep(0.5)` between batch requests; avoid bursts over 5 requests/second
+- **Rate limits**: no published hard limit; keep bursts under ~5 requests/second and add `time.sleep(0.3)` between requests in loops
 
 ```bash
 pip install requests pandas matplotlib
@@ -35,594 +36,519 @@ pip install requests pandas matplotlib
 
 ```python
 import requests
-import pandas as pd
 
-MPD_API = "https://phenome.jax.org/api"
+MPD = "https://phenome.jax.org/api"
 
-def mpd_get(endpoint: str, params: dict = None) -> dict:
-    """GET request to MPD API; raises on HTTP errors."""
-    r = requests.get(f"{MPD_API}{endpoint}", params=params, timeout=30)
-    r.raise_for_status()
-    return r.json()
+# 1) Pick a project (Jaxwest1 — cardiovascular phenotyping on inbred panel)
+r = requests.get(f"{MPD}/projects/Jaxwest1/strains", timeout=30)
+strains = r.json()["strains"]
+print(f"Jaxwest1: {len(strains)} strains tested")
 
-# Retrieve strain summary for C57BL/6J
-strain_info = mpd_get("/strain/C57BL%2F6J")
-print(f"Strain: {strain_info.get('strainname')}")
-print(f"Stock number: {strain_info.get('stocknum')}")
-print(f"Background: {strain_info.get('category')}")
+# 2) Discover its measures
+r = requests.get(f"{MPD}/pheno/measureinfo/Jaxwest1", timeout=30)
+measures = r.json()["measures_info"]
+print(f"Jaxwest1 measures: {len(measures)}; first: measnum={measures[0]['measnum']} "
+      f"varname={measures[0]['varname']}  ({measures[0]['descrip']}, {measures[0]['units']})")
 
-# Query body weight measurements across strains
-result = mpd_get("/pheno/query", params={
-    "measnum": "10001",    # body weight measure ID
-    "sex": "m",
-    "strain": "C57BL/6J,DBA/2J,BALB/cJ"
-})
-df = pd.DataFrame(result.get("data", []))
-print(f"\nBody weight data: {len(df)} records")
-if len(df) > 0:
-    print(df[["strainname", "sex", "mean", "sd", "n"]].head())
+# 3) Pull strain means for heart rate (varname=HR, measnum=15101)
+r = requests.get(f"{MPD}/pheno/strainmeans/15101", timeout=30)
+sm = r.json()["strainmeans"]
+print(f"\nHeart rate strain means: {len(sm)} rows  (one per strain × sex)")
+top = sorted(sm, key=lambda x: x["mean"], reverse=True)[:5]
+for s in top:
+    print(f"  {s['strain']:<20}  sex={s['sex']}  mean={s['mean']:.0f} {s.get('varname','')}  n={s['nmice']}")
 ```
 
 ## Core API
 
-### Query 1: List Available Measurement Procedures
+### Module 1: Browse Projects — `/projects`
 
-Browse available phenotype measurement categories and their procedure IDs. Use to discover what data exists before querying.
+Lists all MPD projects with full metadata. Filter via `investigator`, `projsym`, `projid`, `mpdsector`, `largecollab`, `panelsym`. Use `/project_filters/{filtername}` to see the allowed values of `mpdsector`, `largecollab`, or `panelsym` before filtering.
+
+```python
+import requests, pandas as pd
+
+MPD = "https://phenome.jax.org/api"
+
+# List allowed panel symbols (e.g., BXD, CC, DO)
+filters = requests.get(f"{MPD}/project_filters/panelsym", timeout=30).json()
+print(f"Available panels ({filters['count']}):", [t['term'] for t in filters['terms']][:10])
+
+# All projects in the BXD recombinant inbred panel
+r = requests.get(f"{MPD}/projects", params={"panelsym": "BXD"}, timeout=30)
+projects = r.json()["projects"]
+print(f"BXD projects: {len(projects)}")
+df = pd.DataFrame([{
+    "projsym": p["projsym"],
+    "pi": p.get("pistring", "")[:40],
+    "nstrains": p.get("nstrains"),
+    "ages": p.get("ages"),
+    "sector": p.get("mpdsector"),
+    "title": (p.get("title") or "")[:60],
+} for p in projects])
+print(df.head(10).to_string(index=False))
+```
+
+```python
+# Filter by MPD sector — komp, pheno, qtla, snp, onestrain, phenoarchive
+r = requests.get(f"{MPD}/projects", params={"mpdsector": "qtla"}, timeout=30)
+qtl_projects = r.json()["projects"]
+print(f"QTL-archive projects: {len(qtl_projects)}")
+for p in qtl_projects[:5]:
+    print(f"  {p['projsym']:<15} panel={p.get('panelsym') or '--':<6} nstrains={str(p.get('nstrains') or '--'):>4}  {(p.get('title') or '')[:55]}")
+```
+
+### Module 2: Project Detail — `/projects/{projsym}/...`
+
+Each project has sub-resources for its dataset (CSV of every animal × every measure), the strain panel it tested, the publications it produced, and (for QTL projects) the genetic markers used.
+
+```python
+import requests, io, pandas as pd
+
+MPD = "https://phenome.jax.org/api"
+
+# Full per-animal dataset as CSV (default). Use json=yes for JSON.
+r = requests.get(f"{MPD}/projects/Jaxwest1/dataset", timeout=60)
+df = pd.read_csv(io.StringIO(r.text))
+print(f"Jaxwest1 dataset: {df.shape[0]} animals × {df.shape[1]} columns")
+print(df.columns[:12].tolist())
+print(df[["strain", "sex", "animal_id", "HR", "QRS", "bw"]].head(5).to_string(index=False))
+```
+
+```python
+# Strains tested in a project + publication list
+strains = requests.get(f"{MPD}/projects/Jaxwest1/strains", timeout=30).json()
+print(f"Jaxwest1 strains ({strains['count']}):")
+for s in strains["strains"][:5]:
+    print(f"  {s['strainname']:<20}  stock={s['stocknum']}  vendor={s['vendor']}")
+
+pubs = requests.get(f"{MPD}/projects/Jaxwest1/publications", timeout=30).json()
+print(f"\nPublications: {pubs['count']}")
+```
+
+### Module 3: Measure Discovery — `/pheno/measureinfo/{selector}`
+
+This is the canonical way to discover valid `measnum` values. The selector is either a project symbol (returns all measures in that project) or a measnum (returns metadata for one measure).
+
+```python
+import requests, pandas as pd
+
+MPD = "https://phenome.jax.org/api"
+
+# All measures in the Jaxwest1 cardiovascular project
+r = requests.get(f"{MPD}/pheno/measureinfo/Jaxwest1", timeout=30)
+measures = r.json()["measures_info"]
+df = pd.DataFrame([{
+    "measnum": m["measnum"],
+    "varname": m["varname"],
+    "descrip": m["descrip"],
+    "units": m.get("units"),
+    "sex": m.get("sextested"),
+    "age": m.get("ageweeks"),
+} for m in measures])
+print(f"Jaxwest1 has {len(df)} measures")
+print(df.head(10).to_string(index=False))
+```
+
+```python
+# Single-measure metadata lookup (protocol + dimensional details)
+r = requests.get(f"{MPD}/pheno/measureinfo/15101", timeout=30).json()
+m = r["measures_info"][0]
+print(f"measnum {m['measnum']} ({m['varname']}): {m['descrip']}")
+print(f"  units: {m.get('units')}")
+print(f"  project: {m.get('projsym')}  panel: {m.get('panelsym') or m.get('paneldesc')}")
+print(f"  sex tested: {m.get('sextested')}  age: {m.get('ageweeks')}")
+print(f"  method:  {(m.get('method') or '')[:120]}")
+```
+
+### Module 4: Strain Means — `/pheno/strainmeans/{selector}`
+
+Returns strain × sex summary statistics. The selector takes a project symbol (all strain means for the project) or one-or-more comma-separated measnums. Each row contains `measnum, varname, strain, strainid, sex, mean, sd, sem, cv, minval, maxval, nmice, zscore`.
+
+```python
+import requests, pandas as pd
+
+MPD = "https://phenome.jax.org/api"
+
+# Strain means for one measure (heart rate, measnum=15101 from Jaxwest1)
+r = requests.get(f"{MPD}/pheno/strainmeans/15101", timeout=30)
+sm = pd.DataFrame(r.json()["strainmeans"])
+print(f"Rows: {len(sm)}  ({sm['strain'].nunique()} strains × {sm['sex'].nunique()} sexes)")
+
+# Rank strains by male HR
+male = sm[sm["sex"] == "m"].sort_values("mean", ascending=False)
+print(male[["strain", "mean", "sd", "sem", "nmice", "zscore"]].head(8).to_string(index=False))
+```
+
+```python
+# Optional: model-adjusted means (lsmeans) account for covariates fit in MPD's models.
+# Use lsmeans when comparing strains across cohorts within a project.
+r = requests.get(f"{MPD}/pheno/lsmeans/Jaxwest1", timeout=30).json()
+print("LS-mean measures available for Jaxwest1:", r.get("ls_measures", [])[:10])
+```
+
+### Module 5: Per-Animal Values — `/pheno/animalvals/{measnum}`
+
+Raw per-animal observations for one measure. Each row carries `animal_id, animal_projid, measnum, projsym, sex, stocknum, strain, strainid, value, varname, zscore`. Use this for QTL mapping, mixed-effects modeling, or distribution analysis.
+
+```python
+import requests, pandas as pd
+
+MPD = "https://phenome.jax.org/api"
+
+# Per-animal heart rate values
+r = requests.get(f"{MPD}/pheno/animalvals/15101", timeout=30)
+ad = pd.DataFrame(r.json()["animaldata"])
+print(f"Animals measured: {len(ad)}")
+print(ad[["animal_id", "strain", "sex", "value", "zscore"]].head(8).to_string(index=False))
+
+# Compare male-only strain distributions
+male = ad[ad["sex"] == "m"]
+stats = male.groupby("strain")["value"].agg(["mean", "std", "count"]).round(2)
+print(f"\nMale HR by strain (top 5 by mean):")
+print(stats.sort_values("mean", ascending=False).head(5))
+```
+
+### Module 6: Ontology-Based Measure Discovery — `/pheno/measures_by_ontology/{ont_term}`
+
+Find every MPD measure annotated to a Mammalian Phenotype (MP), Vertebrate Trait (VT), or Mouse Anatomy (MA) ontology term. Optional `this_term_only=yes` disables descendant-term expansion; `omit_baseline=yes` filters out baseline measures; `collapse_series=yes` collapses repeated time-points.
+
+```python
+import requests, pandas as pd
+
+MPD = "https://phenome.jax.org/api"
+
+# MP:0001262 = "decreased body weight"
+r = requests.get(f"{MPD}/pheno/measures_by_ontology/MP:0001262",
+                 params={"omit_baseline": "yes", "collapse_series": "yes"},
+                 timeout=30).json()
+print(f"Measures mapped to MP:0001262 ('{r['ontology_terms'][0]['descrip']}'): {r['count']}")
+if r["count"]:
+    df = pd.DataFrame(r["measures"])
+    print(df[["measnum", "varname", "descrip", "projsym"]].head(8).to_string(index=False))
+else:
+    print("(no direct measures; consider a broader parent term)")
+```
+
+### Module 7: Strain Nomenclature — `/straininfo`
+
+Validate and normalise strain names. Accepts `name`, `stocknum`, or `mginum` query params. Returns both `jaxinfo[]` (JAX availability/nomenclature) and `mpdinfo[]` (MPD's own metadata, including how many projects test this strain).
 
 ```python
 import requests
-import pandas as pd
 
-MPD_API = "https://phenome.jax.org/api"
+MPD = "https://phenome.jax.org/api"
 
-def mpd_get(endpoint, params=None):
-    r = requests.get(f"{MPD_API}{endpoint}", params=params, timeout=30)
-    r.raise_for_status()
-    return r.json()
-
-# List all available procedures (measurement categories)
-procedures = mpd_get("/procedure")
-print(f"Total procedures: {len(procedures)}")
-df_proc = pd.DataFrame(procedures)
-print(df_proc[["procedureid", "procedure", "category"]].head(15).to_string(index=False))
-# procedureid  procedure                      category
-#      10001   Body weight                    Morphology
-#      10002   Body length                    Morphology
-#      10010   Fasting plasma glucose         Metabolism
-#      10020   Total cholesterol              Metabolism
-#      10030   Triglycerides                  Metabolism
+# Validate C57BL/6J — note `requests` URL-encodes the slash automatically in params
+r = requests.get(f"{MPD}/straininfo", params={"name": "C57BL/6J"}, timeout=30).json()
+jax = r["jaxinfo"][0]
+mpd = r["mpdinfo"][0]
+print(f"JAX:  {jax['nomenclature']}  stock={jax['stocknum']}  status={jax['avl_status']}")
+print(f"MPD:  longname={mpd['longname']}  type={mpd['straintype']}  "
+      f"projects={mpd['nproj']}  snp_projects={mpd['nsnpproj']}  MGI={mpd['mginum']}")
 ```
 
-```python
-# Filter procedures by category
-metabolism_procs = [p for p in procedures if "Metabol" in p.get("category", "")]
-print(f"Metabolic procedures: {len(metabolism_procs)}")
-for p in metabolism_procs[:8]:
-    print(f"  {p.get('procedureid'):>6}  {p.get('procedure')}")
-```
+### Module 8: Gene Info — `/geneinfo/{symbol}`
 
-### Query 2: Strain Phenotype Measurements
-
-Query strain-level summary statistics (mean, SD, N) for a specific measurement across strains.
+Mouse-gene coordinates (GRCm39, in bp), strand, MGI ID, and a short description. Note the response key is the literal string `"gene info"` (with a space).
 
 ```python
-def get_strain_phenotype(measnum: int, sex: str = "m",
-                         strains: list = None) -> pd.DataFrame:
-    """Retrieve strain-level phenotype summaries for a measure."""
-    params = {"measnum": measnum, "sex": sex}
-    if strains:
-        params["strain"] = ",".join(strains)
-    result = mpd_get("/pheno/query", params=params)
-    return pd.DataFrame(result.get("data", []))
-
-# Body weight (measnum=10001) in male common strains
-common_strains = ["C57BL/6J", "DBA/2J", "BALB/cJ", "A/J", "C3H/HeJ",
-                  "FVB/NJ", "SJL/J", "129S1/SvImJ", "NOD/ShiLtJ"]
-
-df = get_strain_phenotype(measnum=10001, sex="m", strains=common_strains)
-print(f"Body weight data (male, {len(df)} strain-project combinations):")
-if len(df) > 0:
-    print(df[["strainname", "mean", "sd", "n"]].sort_values("mean", ascending=False).head(8).to_string(index=False))
-# strainname       mean    sd   n
-# C57BL/6J         27.4   2.1  24
-# NOD/ShiLtJ       25.8   2.8  18
-```
-
-### Query 3: Measurement Protocol Details
-
-Retrieve detailed protocol metadata for a measurement including units, age at collection, and measurement description.
-
-```python
-def get_measurement_details(measnum: int) -> dict:
-    """Retrieve measurement protocol metadata."""
-    result = mpd_get(f"/measurement/{measnum}")
-    return result
-
-# Get details for fasting plasma glucose (10010)
-meta = get_measurement_details(10010)
-print(f"Measurement: {meta.get('measnum')} — {meta.get('varname')}")
-print(f"Description: {meta.get('description', '')[:120]}")
-print(f"Units: {meta.get('units')}")
-print(f"Category: {meta.get('category')}")
-print(f"Protocol notes: {meta.get('protocoldesc', '')[:150]}")
-```
-
-```python
-# Batch-fetch metadata for multiple measures
-measure_ids = [10001, 10010, 10020, 10030, 10040]
-meta_rows = []
-for mid in measure_ids:
-    m = get_measurement_details(mid)
-    meta_rows.append({
-        "measnum": m.get("measnum"),
-        "varname": m.get("varname"),
-        "units": m.get("units"),
-        "category": m.get("category"),
-    })
-df_meta = pd.DataFrame(meta_rows)
-print(df_meta.to_string(index=False))
-```
-
-### Query 4: Individual Animal Data
-
-Download raw per-animal measurements for a project and measure, enabling distribution analysis and mixed-effects modeling.
-
-```python
-def get_individual_data(project_id: str, measnum: int,
-                        sex: str = None) -> pd.DataFrame:
-    """Retrieve individual-level phenotype measurements for a project."""
-    params = {"measnum": measnum}
-    if sex:
-        params["sex"] = sex
-    result = mpd_get(f"/project/{project_id}/data", params=params)
-    return pd.DataFrame(result.get("data", []))
-
-# Individual body weight measurements from Jaxwest1 project
-df_ind = get_individual_data("Jaxwest1", measnum=10001, sex="m")
-print(f"Individual records: {len(df_ind)}")
-if len(df_ind) > 0:
-    print(f"Columns: {df_ind.columns.tolist()}")
-    print(df_ind[["strainname", "sex", "value", "age"]].head(8).to_string(index=False))
-    print(f"\nStrain means from raw data:")
-    print(df_ind.groupby("strainname")["value"].agg(["mean", "std", "count"]).round(2).head(8))
-```
-
-### Query 5: Project Discovery
-
-List available projects (studies) and browse them by phenotype category or trait keyword.
-
-```python
-def list_projects(category: str = None, limit: int = 50) -> pd.DataFrame:
-    """List MPD projects; optionally filter by category."""
-    params = {"limit": limit}
-    if category:
-        params["category"] = category
-    result = mpd_get("/project", params=params)
-    records = result if isinstance(result, list) else result.get("data", [])
-    return pd.DataFrame(records)
-
-# List all available projects
-df_projects = list_projects(limit=200)
-print(f"Total projects available: {len(df_projects)}")
-if len(df_projects) > 0:
-    print(df_projects.columns.tolist())
-    print(df_projects.head(5).to_string(index=False))
-```
-
-```python
-# Search projects by keyword in description
 import requests
 
-def search_projects(keyword: str) -> list:
-    """Find projects containing a keyword in name or description."""
-    r = requests.get(f"{MPD_API}/project", timeout=30)
-    r.raise_for_status()
-    projects = r.json() if isinstance(r.json(), list) else r.json().get("data", [])
-    keyword_lower = keyword.lower()
-    return [p for p in projects
-            if keyword_lower in str(p.get("projsym", "")).lower()
-            or keyword_lower in str(p.get("title", "")).lower()]
+MPD = "https://phenome.jax.org/api"
 
-glucose_projects = search_projects("glucose")
-print(f"Projects with glucose data: {len(glucose_projects)}")
-for p in glucose_projects[:5]:
-    print(f"  {p.get('projsym'):<15}  {p.get('title', '')[:60]}")
-```
-
-### Query 6: Strain Details
-
-Retrieve metadata for a specific inbred strain including stock number, origin, and sub-strain details.
-
-```python
-import urllib.parse
-
-def get_strain_info(strain_name: str) -> dict:
-    """Retrieve strain metadata from MPD."""
-    encoded = urllib.parse.quote(strain_name, safe="")
-    result = mpd_get(f"/strain/{encoded}")
-    return result
-
-strains_of_interest = ["C57BL/6J", "DBA/2J", "NOD/ShiLtJ"]
-for strain in strains_of_interest:
-    info = get_strain_info(strain)
-    print(f"{strain}:")
-    print(f"  Stock: {info.get('stocknum', 'N/A')}")
-    print(f"  Category: {info.get('category', 'N/A')}")
-    print(f"  Origin: {info.get('origin', 'N/A')[:80]}")
-    print()
+r = requests.get(f"{MPD}/geneinfo/Lep", timeout=30).json()
+for g in r["gene info"]:
+    print(f"{g['descrip']}  chr{g['chrom']}:{g['startbp']:,}–{g['endbp']:,} ({g['strand']})")
+    print(f"  type: {g['featuretype']}  MGI: {g['mginum']}  cM: {g['centimorgan']}")
 ```
 
 ## Key Concepts
 
-### MPD Measure Numbering
+### Measnums Are Project-Scoped, Not Global
 
-Each phenotype measurement has a unique integer `measnum`. Commonly used IDs:
+Every `measnum` belongs to exactly one project. `15101` is "heart rate" only within Jaxwest1; the same physiological trait in another project has a different measnum (e.g., `35702` for body weight in Lightfoot1). Never hardcode measnums for a trait — always resolve them by:
 
-| measnum | Phenotype | Units |
-|---------|-----------|-------|
-| 10001 | Body weight | g |
-| 10002 | Body length (nose-to-rump) | cm |
-| 10010 | Fasting plasma glucose | mg/dL |
-| 10020 | Total cholesterol | mg/dL |
-| 10030 | Triglycerides | mg/dL |
-| 10040 | HDL cholesterol | mg/dL |
-| 10100 | Systolic blood pressure | mmHg |
-| 10200 | Open field total distance | cm |
-| 10210 | Open field center time | s |
+1. Finding the project: `GET /projects?panelsym=...` or `GET /projects?investigator=...`
+2. Listing its measures: `GET /pheno/measureinfo/{projsym}`
+3. Picking the right `varname` / `descrip` / `units` triple from the response
 
-Use `GET /procedure` to discover the full list, then `GET /measurement/{measnum}` for detailed protocol metadata.
+Or go the other way and discover measures by ontology term first (Module 6).
 
-### Strain Name Formatting
+### Selectors: Projsym vs Measnum
 
-MPD uses canonical JAX strain names (e.g., `C57BL/6J`, `DBA/2J`). When passing strain names as URL path parameters, URL-encode the slash: `C57BL%2F6J`. For query parameters in `requests`, use `params={"strain": "C57BL/6J"}` — `requests` handles encoding automatically.
+Most `/pheno/*` endpoints take a "selector" path parameter that's overloaded:
 
-### Project vs Measurement Units
+| Endpoint | Accepts as selector |
+|----------|---------------------|
+| `/pheno/strainmeans/{selector}` | projsym (e.g., `Jaxwest1`) **or** one or more comma-separated measnums |
+| `/pheno/lsmeans/{selector}` | same |
+| `/pheno/measureinfo/{selector}` | same |
+| `/pheno/animalvals/{measnum}` | measnum only (use measureinfo to discover) |
+| `/pheno/animalvals/series/{measnum}` | for timecourse/dose-response series |
 
-A single `measnum` (phenotype measurement type) may be measured by multiple independent projects using slightly different protocols. When combining data across projects, verify that units and age at measurement are consistent using the `/measurement/{measnum}` and `/project/{project_id}` endpoints.
+If you pass an unrecognised selector you get a 400 JSON response (`{"error": "...selector arg must either be measure IDs or a project symbol"}`), not an HTML 404 — those are diagnostic and worth surfacing.
+
+### Strain Means vs LS-Means
+
+- `strainmeans` are unadjusted: simple per-strain × per-sex arithmetic means of the raw animal values.
+- `lsmeans` are model-adjusted least-squares means from MPD's pre-fit ANOVA-style models (accounting for cohort, batch, or covariate effects when present).
+
+For cross-project comparisons or analyses sensitive to batch effects, prefer `lsmeans` when available. For simple ranking and exploratory work, `strainmeans` is fine.
+
+### MPD Sectors (`mpdsector` filter)
+
+| Sector | Content |
+|--------|---------|
+| `pheno` | Standard inbred-strain phenotyping projects |
+| `qtla` | QTL Archive — historical mapping studies with markers |
+| `komp` | Knockout Mouse Project (KOMP / JaxLIMS) data |
+| `snp` | SNP genotype panels (use `/snpdata`) |
+| `phenoarchive` | Archived legacy phenotype projects |
+| `onestrain` | Single-strain deep phenotyping |
+
+Discover the live list any time with `GET /project_filters/mpdsector`.
 
 ## Common Workflows
 
-### Workflow 1: Strain Survey for Metabolic Trait Selection
+### Workflow 1: Pick a Trait → Find a Project → Plot Strain Means
 
-**Goal**: Retrieve and rank inbred strains by fasting glucose, cholesterol, and body weight to select appropriate models for a metabolic study.
+**Goal**: From "I want to compare heart rate across inbred strains" → land on real data and produce a ranked barplot.
 
 ```python
-import requests
-import pandas as pd
-import time
-import matplotlib.pyplot as plt
+import requests, pandas as pd, matplotlib.pyplot as plt, time
 
-MPD_API = "https://phenome.jax.org/api"
+MPD = "https://phenome.jax.org/api"
 
-def mpd_get(endpoint, params=None):
-    r = requests.get(f"{MPD_API}{endpoint}", params=params, timeout=30)
-    r.raise_for_status()
-    return r.json()
+# 1) Find candidate projects whose name/description hints at the trait
+projects = requests.get(f"{MPD}/projects", timeout=30).json()["projects"]
+candidates = [p for p in projects
+              if any(kw in (p.get("title") or "").lower()
+                     for kw in ["cardiovascular", "heart", "ekg", "ecg"])]
+print(f"Candidate cardiovascular projects: {len(candidates)}")
+for p in candidates[:5]:
+    print(f"  {p['projsym']:<15}  nstrains={str(p.get('nstrains') or '--'):>3}  {(p.get('title') or '')[:60]}")
 
-# Target measures: fasting glucose, total cholesterol, body weight
-measures = {
-    10010: "fasting_glucose_mgdL",
-    10020: "total_cholesterol_mgdL",
-    10001: "body_weight_g",
-}
+# 2) Inspect measures for the chosen project
+projsym = "Jaxwest1"
+mi = requests.get(f"{MPD}/pheno/measureinfo/{projsym}", timeout=30).json()["measures_info"]
+hr = next(m for m in mi if m["varname"] == "HR")
+print(f"\nPicked: {projsym} measnum={hr['measnum']} varname={hr['varname']} ({hr['descrip']}, {hr['units']})")
 
-target_strains = [
-    "C57BL/6J", "DBA/2J", "BALB/cJ", "A/J", "C3H/HeJ",
-    "FVB/NJ", "SJL/J", "NOD/ShiLtJ", "NZO/HlLtJ", "AKR/J"
-]
+# 3) Pull strain means, plot male strains ranked
+sm = pd.DataFrame(requests.get(f"{MPD}/pheno/strainmeans/{hr['measnum']}", timeout=30).json()["strainmeans"])
+male = sm[sm["sex"] == "m"].sort_values("mean", ascending=False).reset_index(drop=True)
 
-dfs = []
-for measnum, col_name in measures.items():
-    result = mpd_get("/pheno/query", params={
-        "measnum": measnum,
-        "sex": "m",
-        "strain": ",".join(target_strains)
-    })
-    df = pd.DataFrame(result.get("data", []))
-    if len(df) > 0:
-        strain_means = df.groupby("strainname")["mean"].mean().reset_index()
-        strain_means.columns = ["strain", col_name]
-        dfs.append(strain_means)
-    time.sleep(0.5)
-
-# Merge all traits
-from functools import reduce
-if dfs:
-    df_merged = reduce(lambda a, b: pd.merge(a, b, on="strain", how="outer"), dfs)
-    df_merged = df_merged.sort_values("fasting_glucose_mgdL", ascending=False)
-    print("Strain metabolic survey (sorted by fasting glucose):")
-    print(df_merged.to_string(index=False))
-    df_merged.to_csv("strain_metabolic_survey.csv", index=False)
-
-    # Bar chart of fasting glucose by strain
-    fig, ax = plt.subplots(figsize=(11, 5))
-    df_plot = df_merged.dropna(subset=["fasting_glucose_mgdL"]).sort_values("fasting_glucose_mgdL")
-    bars = ax.barh(df_plot["strain"], df_plot["fasting_glucose_mgdL"], color="#E65100")
-    ax.bar_label(bars, fmt="%.0f", padding=3, fontsize=9)
-    ax.set_xlabel("Fasting Plasma Glucose (mg/dL)")
-    ax.set_title("Fasting Glucose by Inbred Strain (MPD, male)")
-    plt.tight_layout()
-    plt.savefig("mpd_fasting_glucose_strains.png", dpi=150, bbox_inches="tight")
-    print("Saved mpd_fasting_glucose_strains.png")
+fig, ax = plt.subplots(figsize=(9, 4))
+bars = ax.bar(male["strain"], male["mean"], yerr=male["sem"],
+              color="#1976D2", capsize=3, edgecolor="white")
+ax.bar_label(bars, fmt="%.0f", padding=3, fontsize=8)
+ax.set_xlabel("Strain")
+ax.set_ylabel(f"Mean {hr['varname']} ({hr['units']})")
+ax.set_title(f"{hr['descrip']} by inbred strain (male) — {projsym}")
+plt.xticks(rotation=30, ha="right")
+plt.tight_layout()
+plt.savefig("mpd_strain_means.png", dpi=150, bbox_inches="tight")
+print("Saved mpd_strain_means.png")
 ```
 
-### Workflow 2: Multi-Trait Strain Comparison and Correlation
+### Workflow 2: Per-Animal Data → R/qtl2 CSV Export
 
-**Goal**: Retrieve body weight and blood pressure for a strain panel, test their correlation, and identify outliers.
+**Goal**: Pull individual animal observations for a measure and shape them into a phenotype file ready for QTL mapping.
 
 ```python
-import requests
-import pandas as pd
-import matplotlib.pyplot as plt
-import time
+import requests, pandas as pd
 
-MPD_API = "https://phenome.jax.org/api"
+MPD = "https://phenome.jax.org/api"
 
-def mpd_get(endpoint, params=None):
-    r = requests.get(f"{MPD_API}{endpoint}", params=params, timeout=30)
-    r.raise_for_status()
-    return r.json()
+measnum = 15101  # heart rate in Jaxwest1
+mi = requests.get(f"{MPD}/pheno/measureinfo/{measnum}", timeout=30).json()["measures_info"][0]
+ad = pd.DataFrame(requests.get(f"{MPD}/pheno/animalvals/{measnum}", timeout=30).json()["animaldata"])
+print(f"measnum {measnum}: {mi['varname']} ({mi['descrip']}, {mi['units']}) — {len(ad)} animals")
 
-panel_strains = [
-    "C57BL/6J", "DBA/2J", "BALB/cJ", "A/J", "C3H/HeJ",
-    "FVB/NJ", "SJL/J", "NOD/ShiLtJ", "NZO/HlLtJ", "AKR/J",
-    "CBA/J", "C57L/J", "LP/J", "P/J", "SM/J"
-]
-
-# Fetch body weight (10001) and systolic blood pressure (10100)
-records = {}
-for measnum, trait in [(10001, "body_weight_g"), (10100, "systolic_bp_mmHg")]:
-    result = mpd_get("/pheno/query", params={
-        "measnum": measnum,
-        "sex": "m",
-        "strain": ",".join(panel_strains)
-    })
-    df = pd.DataFrame(result.get("data", []))
-    if len(df) > 0:
-        records[trait] = df.groupby("strainname")["mean"].mean()
-    time.sleep(0.5)
-
-if len(records) == 2:
-    df_corr = pd.DataFrame(records).dropna()
-    print(f"Strains with both measures: {len(df_corr)}")
-
-    # Pearson correlation
-    r_val = df_corr["body_weight_g"].corr(df_corr["systolic_bp_mmHg"])
-    print(f"Pearson r (weight vs BP): {r_val:.3f}")
-
-    # Scatter plot
-    fig, ax = plt.subplots(figsize=(7, 6))
-    ax.scatter(df_corr["body_weight_g"], df_corr["systolic_bp_mmHg"],
-               s=60, color="#1565C0", alpha=0.8)
-    for strain, row in df_corr.iterrows():
-        ax.annotate(strain, (row["body_weight_g"], row["systolic_bp_mmHg"]),
-                    fontsize=7, ha="left", xytext=(3, 2), textcoords="offset points")
-    ax.set_xlabel("Body Weight (g)")
-    ax.set_ylabel("Systolic Blood Pressure (mmHg)")
-    ax.set_title(f"Body Weight vs Systolic BP Across Strains\n(r={r_val:.3f})")
-    plt.tight_layout()
-    plt.savefig("mpd_weight_vs_bp.png", dpi=150, bbox_inches="tight")
-    print("Saved mpd_weight_vs_bp.png")
-
-    df_corr.reset_index().rename(columns={"strainname": "strain"}).to_csv(
-        "mpd_weight_bp_correlation.csv", index=False
-    )
+# R/qtl2-ready phenotype CSV: rows = individuals, cols = id + covariates + phenotype
+out = ad[["animal_id", "strain", "sex", "value"]].rename(
+    columns={"animal_id": "id", "value": mi["varname"]}
+)
+out.to_csv(f"{measnum}_{mi['varname']}_qtl_pheno.csv", index=False)
+print(f"Wrote {measnum}_{mi['varname']}_qtl_pheno.csv  ({len(out)} animals)")
+print(out.head().to_string(index=False))
 ```
 
-### Workflow 3: Individual-Level Data Export for QTL Analysis
+### Workflow 3: Multi-Measure Heatmap Across a Strain Panel
 
-**Goal**: Download individual animal measurements from a project and format them for QTL mapping software (R/qtl2, R/qtl).
+**Goal**: Build a wide-format strain × measure table (z-scored) from one project for comparative visualisation.
 
 ```python
-import requests
-import pandas as pd
+import requests, pandas as pd, matplotlib.pyplot as plt
 
-MPD_API = "https://phenome.jax.org/api"
+MPD = "https://phenome.jax.org/api"
+projsym = "Jaxwest1"
 
-def mpd_get(endpoint, params=None):
-    r = requests.get(f"{MPD_API}{endpoint}", params=params, timeout=30)
-    r.raise_for_status()
-    return r.json()
+# Pull all strain means for the project in one call
+sm = pd.DataFrame(requests.get(f"{MPD}/pheno/strainmeans/{projsym}", timeout=30).json()["strainmeans"])
 
-# Download individual data (fasting glucose) from a specific project
-project_id = "Jaxwest1"   # replace with target project
-measnum = 10010            # fasting plasma glucose
+# Use the precomputed z-scores; pivot to strain × varname (male only for simplicity)
+male = sm[sm["sex"] == "m"]
+wide = male.pivot_table(index="strain", columns="varname", values="zscore", aggfunc="mean")
+print(f"Shape: {wide.shape}  (strains × measures)")
 
-result = mpd_get(f"/project/{project_id}/data", params={"measnum": measnum})
-df = pd.DataFrame(result.get("data", []))
-print(f"Individual records from {project_id}: {len(df)}")
+# Subset to a handful of measures with full coverage
+keep = wide.dropna(axis=1, thresh=int(0.8 * len(wide))).columns[:10]
+wide = wide[keep].dropna()
+print(f"After coverage filter: {wide.shape}")
 
-if len(df) > 0:
-    print(f"Columns: {df.columns.tolist()}")
-    # Summary statistics per strain
-    strain_stats = df.groupby(["strainname", "sex"])["value"].agg(
-        ["mean", "std", "count"]
-    ).round(2)
-    print(f"\nStrain statistics (fasting glucose):")
-    print(strain_stats.head(10))
-
-    # Export in R/qtl-compatible format: rows = individuals, columns = phenotype + covariate
-    df_qtl = df[["animalid", "strainname", "sex", "age", "value"]].copy()
-    df_qtl.columns = ["id", "strain", "sex", "age_weeks", "fasting_glucose_mgdL"]
-    df_qtl.to_csv(f"{project_id}_glucose_qtl_input.csv", index=False)
-    print(f"\nExported {len(df_qtl)} animals to {project_id}_glucose_qtl_input.csv")
+fig, ax = plt.subplots(figsize=(8, max(3, 0.3 * len(wide))))
+im = ax.imshow(wide.values, aspect="auto", cmap="RdBu_r", vmin=-2, vmax=2)
+ax.set_xticks(range(len(wide.columns)))
+ax.set_xticklabels(wide.columns, rotation=45, ha="right", fontsize=8)
+ax.set_yticks(range(len(wide.index)))
+ax.set_yticklabels(wide.index, fontsize=8)
+fig.colorbar(im, ax=ax, label="z-score")
+ax.set_title(f"{projsym} — strain × measure z-score heatmap (male)")
+plt.tight_layout()
+plt.savefig("mpd_strain_measure_heatmap.png", dpi=150, bbox_inches="tight")
+print("Saved mpd_strain_measure_heatmap.png")
 ```
 
 ## Key Parameters
 
-| Parameter | Function/Endpoint | Default | Range / Options | Effect |
-|-----------|-------------------|---------|-----------------|--------|
-| `measnum` | `/pheno/query`, `/project/{id}/data` | (required) | integer measure ID | Selects the phenotype measurement to retrieve |
-| `sex` | `/pheno/query`, `/project/{id}/data` | (all sexes) | `"m"`, `"f"`, `"b"` (both) | Filters by animal sex |
-| `strain` | `/pheno/query` | (all strains) | comma-separated strain names | Restricts results to specified strains |
-| `project_id` | `/project/{id}/data` | (required) | MPD project symbol string | Specifies which study to retrieve individual data from |
-| `strain_name` | `/strain/{name}` | (required) | URL-encoded strain name | Returns metadata for a specific inbred strain |
-| `limit` | `/project` | varies | integer | Maximum records returned in project list |
-| `category` | `/procedure` | (all) | category string | Filters procedure list by phenotype category |
+| Parameter | Endpoint | Default | Range / Options | Effect |
+|-----------|----------|---------|-----------------|--------|
+| `panelsym` | `/projects` | — | strain panel symbol (`BXD`, `CC`, `DO`, …) | Filter projects to one mouse panel |
+| `mpdsector` | `/projects` | — | `pheno`, `qtla`, `komp`, `snp`, `phenoarchive`, `onestrain` | Filter projects by data sector |
+| `investigator` | `/projects`, `/investigators` | — | investigator name substring | Filter projects by PI |
+| `csv` | `/projects`, `/investigators`, `/projects/{projsym}/dataset`, etc. | `no` | `yes` | Return CSV instead of JSON |
+| `json` | `/projects/{projsym}/dataset` | — | `yes` | Return JSON instead of default CSV |
+| `this_term_only` | `/pheno/measures_by_ontology/{ont_term}` | `no` | `yes` | Disable descendant-term expansion |
+| `omit_baseline` | `/pheno/measures_by_ontology/{ont_term}` | `no` | `yes` | Drop baseline measures from results |
+| `collapse_series` | `/pheno/measures_by_ontology/{ont_term}` | `no` | `yes` | Collapse timecourse/dose series into single entries |
+| `region`, `dataset`, `strains` | `/snpdata` | required | genomic region, dataset name, strain CSV | Pull SNP genotypes for region across strains |
+| `name` / `stocknum` / `mginum` | `/straininfo` | one required | strain name, JAX stock #, or MGI ID | Validate / look up strain |
 
 ## Best Practices
 
-1. **Use `/procedure` to discover measure IDs**: MPD has hundreds of measure IDs. Query the procedure list first and filter by category to find relevant `measnum` values before fetching data.
+1. **Always discover measnums via `/pheno/measureinfo/{projsym}` before querying data.** Measnums are project-scoped 5-digit integers; there is no global trait → measnum table. Hardcoding measnums you got from elsewhere will silently 404 or return "no data".
 
-2. **Check units and protocols before combining data across projects**: Multiple projects may measure the same trait with different protocols (fasted vs fed glucose, different ages). Use `GET /measurement/{measnum}` to verify protocol consistency before merging.
+2. **Use plural resource paths.** MPD uses `/projects`, `/projects/{projsym}/strains`, `/projects/{projsym}/dataset` — not singular. Old MPD documentation and several third-party wrappers list singular paths that return HTML 404s.
 
-3. **Prefer strain-level summaries for initial screening, individual data for modeling**: The `/pheno/query` endpoint returns pre-computed strain means (fast); use `/project/{id}/data` for individual-level data only when statistical modeling requires it.
+3. **Prefer the project-level dataset CSV for bulk analysis.** When you want every animal × every measure for a project, `GET /projects/{projsym}/dataset` returns a single CSV in one request — much faster than looping `animalvals` per measnum.
 
-4. **URL-encode strain names with slashes when using path parameters**: Use `urllib.parse.quote("C57BL/6J", safe="")` → `C57BL%2F6J` for `/strain/{name}` endpoint; `requests` handles encoding automatically in `params` dictionaries.
+4. **Use `lsmeans` instead of `strainmeans` when MPD has fit a model.** LS-means adjust for covariates (cohort, age, batch) baked into MPD's project-level statistical models. For comparative ranking across strains within a project, lsmeans is the more honest summary when available (`/pheno/lsmeans/{projsym}` returns the list of `ls_measures`).
 
-5. **Handle missing data explicitly**: Not all strains have data for all measures. After querying, check for `NaN` values and note which strains lack data for your trait of interest before drawing conclusions about strain differences.
+5. **Validate strain names with `/straininfo` before assuming a match.** MPD uses strict JAX canonical nomenclature; nearby synonyms (`B6`, `C57Bl/6`, `C57BL/6`) won't always resolve. `/straininfo?name=...` returns both JAX and MPD records and tells you the canonical form.
+
+6. **Be polite — add `time.sleep(0.3)` in loops.** MPD doesn't publish a hard rate limit, but the server runs on shared academic infrastructure. Keep bursts under ~5 req/s.
 
 ## Common Recipes
 
-### Recipe: Find Strains with Extreme Phenotype Values
-
-When to use: Select high- and low-phenotype strains for controlled genetic studies or F2 cross design.
+### Recipe: Find Projects Testing a Trait by Free-Text Search
 
 ```python
-import requests
-import pandas as pd
+import requests, pandas as pd
 
-MPD_API = "https://phenome.jax.org/api"
+MPD = "https://phenome.jax.org/api"
 
-def get_extreme_strains(measnum: int, sex: str = "m",
-                        n_extremes: int = 5) -> pd.DataFrame:
-    """Return top-N and bottom-N strains for a phenotype."""
-    r = requests.get(f"{MPD_API}/pheno/query",
-                     params={"measnum": measnum, "sex": sex},
-                     timeout=30)
-    r.raise_for_status()
-    df = pd.DataFrame(r.json().get("data", []))
-    if df.empty:
-        return df
-    strain_means = df.groupby("strainname")["mean"].mean().reset_index()
-    strain_means.columns = ["strain", "mean_value"]
-    strain_means = strain_means.sort_values("mean_value")
-    high = strain_means.tail(n_extremes).assign(rank="high")
-    low = strain_means.head(n_extremes).assign(rank="low")
-    return pd.concat([low, high]).reset_index(drop=True)
+def find_projects(keyword):
+    """Search project titles for a keyword (case-insensitive)."""
+    projects = requests.get(f"{MPD}/projects", timeout=30).json()["projects"]
+    kw = keyword.lower()
+    hits = [p for p in projects if kw in (p.get("title") or "").lower()]
+    return pd.DataFrame([{
+        "projsym": p["projsym"],
+        "panel": p.get("panelsym"),
+        "nstrains": p.get("nstrains"),
+        "year": p.get("projyear"),
+        "title": (p.get("title") or "")[:80],
+    } for p in hits])
 
-df_extremes = get_extreme_strains(measnum=10010, sex="m", n_extremes=5)
-print("Extreme strains for fasting glucose (male):")
-print(df_extremes.to_string(index=False))
-# strain           mean_value  rank
-# A/J              101.2       low
-# SJL/J            105.8       low
-# ...
-# NZO/HlLtJ        245.3       high
-# NOD/ShiLtJ       198.7       high
+print(find_projects("glucose").head(10).to_string(index=False))
 ```
 
-### Recipe: Phenotype Distribution Plot for a Single Strain
-
-When to use: Visualize the distribution of individual measurements within a strain for a QC or power analysis.
+### Recipe: Pull a Whole Project as a DataFrame in One Call
 
 ```python
-import requests
-import matplotlib.pyplot as plt
-import pandas as pd
+import requests, io, pandas as pd
 
-MPD_API = "https://phenome.jax.org/api"
+MPD = "https://phenome.jax.org/api"
 
-def plot_strain_distribution(project_id: str, measnum: int,
-                              strain: str, sex: str = "m",
-                              units: str = ""):
-    """Plot histogram of individual measurements for one strain."""
-    r = requests.get(f"{MPD_API}/project/{project_id}/data",
-                     params={"measnum": measnum, "sex": sex},
-                     timeout=30)
+def load_project_dataset(projsym):
+    """Fetch /projects/{projsym}/dataset CSV directly into a DataFrame."""
+    r = requests.get(f"{MPD}/projects/{projsym}/dataset", timeout=120)
     r.raise_for_status()
-    df = pd.DataFrame(r.json().get("data", []))
-    if df.empty:
-        print(f"No data for project {project_id}, measnum {measnum}")
-        return
-    subset = df[df["strainname"] == strain]
-    if subset.empty:
-        print(f"Strain {strain} not found in project {project_id}")
-        return
-    vals = subset["value"].dropna()
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.hist(vals, bins=15, color="#1B5E20", edgecolor="white", alpha=0.8)
-    ax.axvline(vals.mean(), color="red", linestyle="--", label=f"Mean={vals.mean():.1f}")
-    ax.set_xlabel(units or "Value")
-    ax.set_ylabel("Count")
-    ax.set_title(f"{strain} — measure {measnum} ({project_id})\nn={len(vals)}, SD={vals.std():.1f}")
-    ax.legend()
-    plt.tight_layout()
-    fname = f"{strain.replace('/', '_')}_{measnum}_dist.png"
-    plt.savefig(fname, dpi=150, bbox_inches="tight")
-    print(f"Saved {fname}")
+    return pd.read_csv(io.StringIO(r.text))
 
-plot_strain_distribution("Jaxwest1", measnum=10001, strain="C57BL/6J",
-                          sex="m", units="Body weight (g)")
+df = load_project_dataset("Jaxwest1")
+print(f"Jaxwest1: {df.shape[0]} animals × {df.shape[1]} columns")
+print("Numeric columns:", df.select_dtypes("number").columns.tolist()[:8])
 ```
 
-### Recipe: Batch Multi-Trait Summary Table
+### Recipe: Cross-Strain Comparison from Strain Means
 
-When to use: Build a wide-format table of multiple phenotypes per strain for comparative analysis or heatmap generation.
+```python
+import requests, pandas as pd
+
+MPD = "https://phenome.jax.org/api"
+
+# Multiple measnums in one call (comma-separated selector)
+selector = "15101,15102,15103"   # HR, QRS, PR from Jaxwest1
+sm = pd.DataFrame(requests.get(f"{MPD}/pheno/strainmeans/{selector}", timeout=30).json()["strainmeans"])
+wide = (sm[sm["sex"] == "m"]
+        .pivot_table(index="strain", columns="varname", values="mean", aggfunc="mean")
+        .round(1))
+print(wide.head(8).to_string())
+```
+
+### Recipe: Resolve Gene → Coordinates → Adjacent Region
 
 ```python
 import requests
-import pandas as pd
-import time
 
-MPD_API = "https://phenome.jax.org/api"
+MPD = "https://phenome.jax.org/api"
 
-def build_phenotype_table(measure_ids: dict, strains: list,
-                           sex: str = "m") -> pd.DataFrame:
-    """
-    Build a wide-format DataFrame: rows=strains, columns=phenotypes.
-    measure_ids: dict of {measnum: column_name}
-    """
-    frames = []
-    for measnum, col_name in measure_ids.items():
-        r = requests.get(f"{MPD_API}/pheno/query",
-                         params={"measnum": measnum, "sex": sex,
-                                 "strain": ",".join(strains)},
-                         timeout=30)
-        r.raise_for_status()
-        df = pd.DataFrame(r.json().get("data", []))
-        if not df.empty:
-            avg = df.groupby("strainname")["mean"].mean().rename(col_name)
-            frames.append(avg)
-        time.sleep(0.5)
-    if not frames:
-        return pd.DataFrame()
-    wide = pd.concat(frames, axis=1).reset_index().rename(columns={"strainname": "strain"})
-    return wide
+def gene_window(symbol, flank_kb=100):
+    r = requests.get(f"{MPD}/geneinfo/{symbol}", timeout=30).json()
+    if not r.get("gene info"):
+        return None
+    g = r["gene info"][0]
+    return {
+        "symbol": symbol,
+        "chrom": g["chrom"],
+        "start": max(0, g["startbp"] - flank_kb * 1000),
+        "stop": g["endbp"] + flank_kb * 1000,
+        "mgi": g["mginum"],
+        "descrip": g["descrip"],
+    }
 
-panel = ["C57BL/6J", "DBA/2J", "BALB/cJ", "A/J", "NOD/ShiLtJ", "NZO/HlLtJ"]
-measures = {10001: "body_wt_g", 10010: "fast_glucose_mgdL",
-            10020: "cholesterol_mgdL", 10100: "systolic_bp_mmHg"}
-
-df_wide = build_phenotype_table(measures, panel)
-print(df_wide.round(1).to_string(index=False))
-df_wide.to_csv("mpd_multi_trait_table.csv", index=False)
-print(f"\nSaved mpd_multi_trait_table.csv ({df_wide.shape[0]} strains x {df_wide.shape[1]-1} traits)")
+print(gene_window("Lep", flank_kb=50))
+# {'symbol': 'Lep', 'chrom': '6', 'start': 29010220, 'stop': 29123877, 'mgi': 'MGI:104663', ...}
 ```
 
 ## Troubleshooting
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| Empty `data` list from `/pheno/query` | Measure ID not present for requested strains | Confirm `measnum` is valid via `/procedure`; not all strains have all measures |
-| `404 Not Found` for `/strain/{name}` | Slash not URL-encoded in path | Use `urllib.parse.quote("C57BL/6J", safe="")` → `C57BL%2F6J`; or use query param approach |
-| `requests.exceptions.Timeout` | Slow API response for large strain lists | Reduce strain list size; increase `timeout=60`; split large batches |
-| Project `/data` endpoint returns no data | Project symbol is wrong or project has no individual data | Verify project symbol using `/project` endpoint; some projects only have summary data |
-| Units inconsistent across projects for same measnum | Different protocols in different labs | Confirm units via `/measurement/{measnum}`; filter to a single project when protocol consistency is critical |
-| Strain name mismatch | MPD uses specific JAX strain nomenclature | Search for similar names using the `/strain` listing; verify exact spelling with JAX stock number |
-| `KeyError` when accessing response keys | API response structure varies by endpoint | Print `r.json().keys()` or `r.json()` to inspect actual structure before parsing |
+| `HTTP 404` with HTML body on `/strain/...`, `/procedure`, `/pheno/query`, `/measurement/...`, `/project/...` | These paths don't exist — MPD's real API uses plural resource names and a different layout | Use `/projects` (plural), `/projects/{projsym}/dataset`, `/pheno/strainmeans/{selector}`, `/pheno/measureinfo/{selector}`, `/straininfo` |
+| `HTTP 400` with `{"error": "...selector arg must either be measure IDs or a project symbol"}` | The path's selector arg got something else (a strain name, a varname, a category) | Resolve the right projsym or measnum first via `/projects` or `/pheno/measureinfo/{projsym}` |
+| `HTTP 404` with `{"error": "No strainmeans data found for {selector}"}` | The selector is the right kind but has no data (e.g., a measnum from a different project, or a typo) | Confirm the measnum exists via `/pheno/measureinfo/{measnum}`; check it belongs to the project you think |
+| `KeyError: 'gene info'` when parsing `/geneinfo/{sym}` | Response key has a literal space: `"gene info"`, not `gene_info` | Access via `r.json()["gene info"]` exactly |
+| `dataset` endpoint returns plain text instead of JSON | Default content type is CSV | Pass `params={"json": "yes"}` to force JSON; or parse the CSV with `pd.read_csv(io.StringIO(r.text))` |
+| Strain name returns empty `mpdinfo` from `/straininfo` | Non-canonical name (e.g., `B6`, `C57Bl/6`) | Use exact JAX nomenclature (`C57BL/6J`); try `stocknum=` lookup if you have the JAX stock number |
+| `/pheno/measures_by_ontology/{term}` returns `count: 0` but the term exists | No direct mappings; the term is too specific | Re-query with the term's parent (the response includes `ontology_terms[].parent`); or drop `this_term_only=yes` |
+| `HTTP 5xx` intermittently on large CSV pulls | MPD's per-project datasets can be tens of MB | Increase `timeout=120`; for very large projects use `csv=yes` + stream with `requests.get(..., stream=True)` |
 
 ## Related Skills
 
-- `monarch-database` — disease-gene-phenotype knowledge graph with HPO annotations and cross-species gene associations
-- `ensembl-database` — mouse genome annotation, gene coordinates, and transcript information
-- `gwas-database` — GWAS Catalog for human SNP-trait associations (parallel to MPD mouse QTL data)
-- `gseapy-gene-enrichment` — pathway enrichment analysis on gene lists derived from QTL-driven candidate gene sets
+- `monarch-database` — disease-gene-phenotype knowledge graph with HPO ↔ MP cross-mappings; complement MPD's mouse-only data with human disease links
+- `ensembl-database` — mouse genome annotation (GRCm39 coordinates, transcripts, VEP) — pairs with MPD `/geneinfo` for fine-grained gene-model details
+- `gwas-database` — human GWAS Catalog SNP-trait associations; conceptual analogue of MPD's QTL projects for human populations
+- `clinvar-database` — clinical variant interpretation; relevant when mapping a mouse QTL to a human disease gene
 
 ## References
 
-- [Mouse Phenome Database](https://phenome.jax.org/) — main portal with dataset browser and download interface
-- [MPD REST API Documentation](https://phenome.jax.org/api) — interactive Swagger documentation for all endpoints
-- [Bogue et al., Mammalian Genome 2020](https://doi.org/10.1007/s00335-020-09839-9) — MPD overview paper (data content, strain coverage, use cases)
-- [Jackson Laboratory Inbred Strain Catalog](https://www.jax.org/inbred-strains) — canonical strain names and stock numbers
+- [Mouse Phenome Database portal](https://phenome.jax.org/) — interactive dataset browser and download UI
+- [MPD REST API documentation](https://phenome.jax.org/about/api) — authoritative endpoint reference (the one used to build this skill)
+- [Bogue et al., *Mammalian Genome* 2020](https://doi.org/10.1007/s00335-020-09839-9) — MPD overview paper (architecture, data content, strain coverage)
+- [Jackson Laboratory Inbred Strain Catalog](https://www.jax.org/inbred-strains) — canonical strain nomenclature and stock numbers
+- [Mammalian Phenotype Ontology](https://www.informatics.jax.org/vocab/mp_ontology) — MP term browser (used by `/pheno/measures_by_ontology/{term}`)
 - [MPD Data Use Policy](https://phenome.jax.org/about/datause) — CC-BY-4.0 license terms and citation requirements

@@ -51,14 +51,17 @@ def interpro_get(path: str, params: dict = None) -> dict:
     return r.json()
 
 # Get domain architecture for TP53 (P04637)
-data = interpro_get("protein/uniprot/P04637/")
-entries = data.get("entries", [])
-print(f"InterPro entries for TP53: {len(entries)}")
+# Note: `protein/uniprot/{acc}/` returns only {metadata}; the entries-per-protein
+# data lives at `entry/interpro/protein/uniprot/{acc}/` and is keyed `results`.
+data = interpro_get("entry/interpro/protein/uniprot/P04637/")
+entries = data.get("results", [])
+print(f"InterPro entries for TP53: {data.get('count')}  (this page: {len(entries)})")
 for e in entries[:4]:
-    print(f"  {e['metadata']['accession']}  {e['metadata']['type']:<20}  {e['metadata']['name']}")
-# InterPro entries for TP53: 12
-#   IPR011615  domain               P53 DNA-binding domain
-#   IPR012346  homologous_superfamily  p53-like transcription factor
+    m = e["metadata"]
+    print(f"  {m['accession']}  {m['type']:<25}  {m['name']}")
+# InterPro entries for TP53: 9
+#   IPR002117  family                     p53 tumour suppressor family
+#   IPR036674  homologous_superfamily     p53-like tetramerisation domain superfamily
 ```
 
 ## Core API
@@ -129,22 +132,29 @@ import requests
 INTERPRO_BASE = "https://www.ebi.ac.uk/interpro/api"
 
 def get_protein_domain_architecture(uniprot_acc: str) -> dict:
-    """Return protein metadata and all InterPro domain matches."""
+    """Return all InterPro entry matches for a protein. Uses the
+    `entry/interpro/protein/uniprot/{acc}/` endpoint, which returns
+    {count, next, previous, results}. Each result has metadata + a
+    nested `proteins[0].entry_protein_locations` for the per-protein match."""
     r = requests.get(
-        f"{INTERPRO_BASE}/protein/uniprot/{uniprot_acc}/",
+        f"{INTERPRO_BASE}/entry/interpro/protein/uniprot/{uniprot_acc}/",
         headers={"Accept": "application/json"},
-        timeout=30
+        timeout=60
     )
     r.raise_for_status()
     return r.json()
 
 data = get_protein_domain_architecture("P04637")   # TP53
-print(f"Protein length : {data['metadata']['length']}")
-print(f"Source DB      : {data['metadata']['source_database']}")
-print(f"InterPro entries: {len(data.get('entries', []))}")
-for entry in data.get("entries", [])[:6]:
+results = data.get("results", [])
+# Pull length/source from the first match's nested protein record
+prot0 = results[0]["proteins"][0] if results and results[0].get("proteins") else {}
+print(f"Protein length : {prot0.get('protein_length')}")
+print(f"Source DB      : {prot0.get('source_database')}")
+print(f"InterPro entries: {data.get('count')}")
+for entry in results[:6]:
     m = entry["metadata"]
-    locs = entry.get("entry_protein_locations", [])
+    # Locations are nested under proteins[0].entry_protein_locations
+    locs = entry["proteins"][0].get("entry_protein_locations", []) if entry.get("proteins") else []
     loc_str = ", ".join(
         f"{frag['start']}-{frag['end']}"
         for loc in locs for frag in loc.get("fragments", [])
@@ -158,7 +168,7 @@ import pandas as pd
 
 def domain_set(uniprot_acc: str) -> set:
     data = get_protein_domain_architecture(uniprot_acc)
-    return {e["metadata"]["accession"] for e in data.get("entries", [])}
+    return {e["metadata"]["accession"] for e in data.get("results", [])}
 
 brca1_domains = domain_set("P38398")   # BRCA1
 tp53_domains   = domain_set("P04637")  # TP53
@@ -182,10 +192,12 @@ INTERPRO_BASE = "https://www.ebi.ac.uk/interpro/api"
 
 def get_entry_proteins(interpro_acc: str, reviewed_only: bool = True,
                        page_size: int = 50) -> list:
-    """Return proteins (UniProt) containing a given InterPro entry."""
+    """Return proteins (UniProt) containing a given InterPro entry.
+    Path order is `/protein/{db}/entry/interpro/{IPR}/` — the inverse
+    `entry/interpro/{IPR}/protein/{db}/` times out (408) on large families."""
     db = "reviewed" if reviewed_only else "uniprot"
     r = requests.get(
-        f"{INTERPRO_BASE}/entry/interpro/{interpro_acc}/protein/{db}/",
+        f"{INTERPRO_BASE}/protein/{db}/entry/interpro/{interpro_acc}/",
         params={"page_size": page_size},
         headers={"Accept": "application/json"},
         timeout=60
@@ -194,11 +206,13 @@ def get_entry_proteins(interpro_acc: str, reviewed_only: bool = True,
     return r.json().get("results", [])
 
 proteins = get_entry_proteins("IPR011009")   # Protein kinase-like domain SF
-print(f"Reviewed proteins with IPR011009: {len(proteins)}")
+print(f"Reviewed proteins with IPR011009 (page 1): {len(proteins)}")
 for p in proteins[:4]:
     m = p["metadata"]
-    print(f"  {m['accession']}  {m.get('name', {}).get('short', ''):<25}  "
-          f"len={m.get('length', '?')}")
+    # metadata fields: accession, gene, length, name, source_database, source_organism
+    print(f"  {m['accession']}  {(m.get('gene') or ''):<8}  "
+          f"len={m.get('length', '?')}  "
+          f"org={(m.get('source_organism') or {}).get('scientificName', '')[:30]}")
 ```
 
 ```python
@@ -207,7 +221,8 @@ def get_all_entry_proteins(interpro_acc: str,
                             reviewed_only: bool = True) -> list:
     INTERPRO_BASE = "https://www.ebi.ac.uk/interpro/api"
     db = "reviewed" if reviewed_only else "uniprot"
-    url = f"{INTERPRO_BASE}/entry/interpro/{interpro_acc}/protein/{db}/"
+    # Path-inverted: /protein/{db}/entry/interpro/{IPR}/ is the working order
+    url = f"{INTERPRO_BASE}/protein/{db}/entry/interpro/{interpro_acc}/"
     all_proteins = []
     params = {"page_size": 200}
     while url:
@@ -237,22 +252,26 @@ INTERPRO_BASE = "https://www.ebi.ac.uk/interpro/api"
 
 def get_entry_taxonomy(interpro_acc: str,
                         page_size: int = 50) -> list:
-    """Return taxonomic summary for proteins in a given InterPro entry."""
+    """Return taxonomic summary for proteins in a given InterPro entry.
+    Path-inverted: `/taxonomy/uniprot/entry/interpro/{IPR}/`. Each result
+    has `metadata` (taxon: accession=taxId, name, parent, children, rank)
+    and `entries[]` (representative protein-match locations for that taxon)."""
     r = requests.get(
-        f"{INTERPRO_BASE}/entry/interpro/{interpro_acc}/taxonomy/uniprot/",
+        f"{INTERPRO_BASE}/taxonomy/uniprot/entry/interpro/{interpro_acc}/",
         params={"page_size": page_size},
         headers={"Accept": "application/json"},
-        timeout=60
+        timeout=90
     )
     r.raise_for_status()
     return r.json().get("results", [])
 
-taxa = get_entry_taxonomy("IPR000719")   # Protein kinase domain
-print(f"Top taxa for protein kinase domain (IPR000719):")
+# Use a smaller entry (p53 DBD); IPR000719 (kinase) has ~270k taxa and times out.
+taxa = get_entry_taxonomy("IPR011615")
+print(f"Top taxa for IPR011615 (p53 DNA-binding domain):")
 for t in taxa[:8]:
     m = t["metadata"]
-    protein_count = t.get("proteins", 0)
-    print(f"  taxId={m['accession']}  {m.get('name', ''):<30}  proteins={protein_count}")
+    print(f"  taxId={m['accession']:>10}  {m.get('name', ''):<30}  "
+          f"rank={m.get('rank') or 'n/a'}")
 ```
 
 ### Query 5: Structure Integration
@@ -265,10 +284,12 @@ import requests
 INTERPRO_BASE = "https://www.ebi.ac.uk/interpro/api"
 
 def get_entry_structures(interpro_acc: str, page_size: int = 25) -> list:
-    """Return PDB structures that include a match to a given InterPro entry."""
+    """Return PDB structures that include a match to a given InterPro entry.
+    Path-inverted: `/structure/pdb/entry/interpro/{IPR}/`. The flat form with
+    `?entry_interpro=...` is silently slow / 408s on this resource."""
     r = requests.get(
-        f"{INTERPRO_BASE}/structure/pdb/",
-        params={"entry_interpro": interpro_acc, "page_size": page_size},
+        f"{INTERPRO_BASE}/structure/pdb/entry/interpro/{interpro_acc}/",
+        params={"page_size": page_size},
         headers={"Accept": "application/json"},
         timeout=60
     )
@@ -276,14 +297,14 @@ def get_entry_structures(interpro_acc: str, page_size: int = 25) -> list:
     return r.json().get("results", [])
 
 structures = get_entry_structures("IPR011009")   # Protein kinase-like SF
-print(f"PDB structures linked to IPR011009: {len(structures)}")
+print(f"PDB structures linked to IPR011009 (page 1): {len(structures)}")
 for s in structures[:5]:
     m = s["metadata"]
-    print(f"  {m['accession']}  resolution={m.get('resolution', 'N/A')} Å  "
+    print(f"  {m['accession'].upper()}  resolution={m.get('resolution', 'N/A')} Å  "
           f"experiment={m.get('experiment_type', 'N/A')}")
-# PDB structures linked to IPR011009: 25
-#   1ATP  resolution=2.2 Å  experiment=X-ray diffraction
-#   2SRC  resolution=1.5 Å  experiment=X-ray diffraction
+# PDB structures linked to IPR011009: ~8,000+
+#   1A06  resolution=2.5 Å  experiment=x-ray
+#   ...
 ```
 
 ### Query 6: Domain Sequence Retrieval
@@ -301,7 +322,8 @@ def get_family_fasta(interpro_acc: str,
     """Retrieve FASTA sequences for proteins in an InterPro entry."""
     db = "reviewed" if reviewed_only else "uniprot"
     proteins = []
-    url = f"{INTERPRO_BASE}/entry/interpro/{interpro_acc}/protein/{db}/"
+    # Path-inverted: protein-list-for-entry is /protein/{db}/entry/interpro/{IPR}/
+    url = f"{INTERPRO_BASE}/protein/{db}/entry/interpro/{interpro_acc}/"
     params = {"page_size": min(max_sequences, 200)}
     while url and len(proteins) < max_sequences:
         r = requests.get(url, params=params,
@@ -395,9 +417,11 @@ import requests, time, pandas as pd
 INTERPRO_BASE = "https://www.ebi.ac.uk/interpro/api"
 
 def get_domains(uniprot_acc: str) -> list:
+    """List InterPro entries for a protein. Uses the
+    `entry/interpro/protein/uniprot/{acc}/` endpoint (keyed `results`)."""
     r = requests.get(
-        f"{INTERPRO_BASE}/protein/uniprot/{uniprot_acc}/",
-        headers={"Accept": "application/json"}, timeout=30
+        f"{INTERPRO_BASE}/entry/interpro/protein/uniprot/{uniprot_acc}/",
+        headers={"Accept": "application/json"}, timeout=60
     )
     if r.status_code == 404:
         return []
@@ -411,7 +435,7 @@ def get_domains(uniprot_acc: str) -> list:
             "type": e["metadata"]["type"],
             "source_db": list(e["metadata"].get("member_databases", {}).keys()),
         }
-        for e in data.get("entries", [])
+        for e in data.get("results", [])
     ]
 
 proteins = ["P04637", "P38398", "Q00987", "P10415"]  # TP53, BRCA1, MDM2, BCL2
@@ -441,15 +465,16 @@ import requests, time, pandas as pd
 
 INTERPRO_BASE = "https://www.ebi.ac.uk/interpro/api"
 
-# Step 1: Get PDB structures linked to the protein kinase domain entry
+# Step 1: Get PDB structures linked to the protein kinase-like SF entry.
+# Use the path-inverted form; the flat `?entry_interpro=` filter 408s.
 r = requests.get(
-    f"{INTERPRO_BASE}/structure/pdb/",
-    params={"entry_interpro": "IPR000719", "page_size": 200},
+    f"{INTERPRO_BASE}/structure/pdb/entry/interpro/IPR011009/",
+    params={"page_size": 200},
     headers={"Accept": "application/json"}, timeout=60
 )
 r.raise_for_status()
 structures = r.json().get("results", [])
-print(f"PDB structures with IPR000719 (kinase domain): {len(structures)}")
+print(f"PDB structures with IPR011009 (kinase-like SF, page 1): {len(structures)}")
 
 rows = []
 for s in structures:
@@ -480,39 +505,46 @@ import matplotlib.pyplot as plt
 
 INTERPRO_BASE = "https://www.ebi.ac.uk/interpro/api"
 
-def get_taxonomy_counts(interpro_acc: str, page_size: int = 100) -> pd.DataFrame:
-    results, url = [], f"{INTERPRO_BASE}/entry/interpro/{interpro_acc}/taxonomy/uniprot/"
+def get_taxonomy_counts(interpro_acc: str, page_size: int = 100,
+                        max_pages: int = 5) -> pd.DataFrame:
+    """Walk the taxonomy results for an InterPro entry. The API does not
+    expose a per-taxon protein count at this endpoint — instead each
+    paged record is one (taxon × representative protein-match) row.
+    Aggregate client-side by taxon name to approximate frequency."""
+    rows, url = [], f"{INTERPRO_BASE}/taxonomy/uniprot/entry/interpro/{interpro_acc}/"
     params = {"page_size": page_size}
-    while url:
+    for _ in range(max_pages):
+        if not url:
+            break
         r = requests.get(url, params=params,
-                         headers={"Accept": "application/json"}, timeout=60)
+                         headers={"Accept": "application/json"}, timeout=90)
         r.raise_for_status()
         data = r.json()
         for t in data.get("results", []):
             m = t["metadata"]
-            results.append({
+            rows.append({
                 "taxon_id": m["accession"],
                 "name": m.get("name", ""),
-                "proteins": t.get("proteins", 0),
-                "rank": m.get("rank", ""),
+                "rank": m.get("rank") or "",
             })
         url = data.get("next")
         params = None
         if url:
             time.sleep(1.0)
-    return pd.DataFrame(results)
+    return pd.DataFrame(rows)
 
-IPR_ACC = "IPR000719"   # Protein kinase domain
-df = get_taxonomy_counts(IPR_ACC)
-print(f"Tax entries for {IPR_ACC}: {len(df)}")
+IPR_ACC = "IPR011615"   # p53 DNA-binding domain (smaller; kinase 408s)
+df = get_taxonomy_counts(IPR_ACC, max_pages=3)
+print(f"Tax entries pulled for {IPR_ACC}: {len(df)}")
 
-# Filter to top-level lineage entries with most proteins
-top = df.nlargest(15, "proteins")
+# Aggregate by name and take top 15 (each row = one rep. protein-match)
+top = (df.groupby("name").size().sort_values(ascending=False).head(15)
+       .reset_index(name="rep_matches"))
 fig, ax = plt.subplots(figsize=(10, 5))
-bars = ax.barh(top["name"], top["proteins"], color="#2171B5")
+bars = ax.barh(top["name"], top["rep_matches"], color="#2171B5")
 ax.bar_label(bars, fmt="%d", padding=3, fontsize=8)
-ax.set_xlabel("Number of Reviewed Proteins")
-ax.set_title(f"Taxonomic Distribution of {IPR_ACC} (Protein Kinase Domain)")
+ax.set_xlabel("Representative protein-matches")
+ax.set_title(f"Taxonomic distribution of {IPR_ACC} (p53 DNA-binding domain)")
 ax.invert_yaxis()
 plt.tight_layout()
 plt.savefig(f"{IPR_ACC}_taxonomy.png", dpi=150, bbox_inches="tight")
@@ -558,13 +590,13 @@ INTERPRO_BASE = "https://www.ebi.ac.uk/interpro/api"
 def list_protein_domains(uniprot_acc: str) -> list:
     """Return list of (accession, type, name) tuples for a protein."""
     r = requests.get(
-        f"{INTERPRO_BASE}/protein/uniprot/{uniprot_acc}/",
-        headers={"Accept": "application/json"}, timeout=30
+        f"{INTERPRO_BASE}/entry/interpro/protein/uniprot/{uniprot_acc}/",
+        headers={"Accept": "application/json"}, timeout=60
     )
     r.raise_for_status()
     return [
         (e["metadata"]["accession"], e["metadata"]["type"], e["metadata"]["name"])
-        for e in r.json().get("entries", [])
+        for e in r.json().get("results", [])
     ]
 
 domains = list_protein_domains("P00533")   # EGFR
@@ -646,7 +678,11 @@ for g in go_terms:
 | Problem | Cause | Solution |
 |---------|-------|----------|
 | `HTTP 404` on protein lookup | Accession not found in InterPro | Verify the UniProt accession exists; isoform accessions (P12345-2) may not be indexed separately |
-| Empty `entries` list for a protein | Protein has no InterPro matches (e.g., intrinsically disordered) | Check UniProt directly; not all proteins have classified domains |
+| Empty entries list for a protein | Protein has no InterPro matches (e.g., intrinsically disordered) | Check UniProt directly; not all proteins have classified domains |
+| `protein/uniprot/{acc}/` returns only `metadata` (no entries) | That endpoint is *protein-only*; entry matches live elsewhere | Use `entry/interpro/protein/uniprot/{acc}/` and read the `results[]` key |
+| `entry/interpro/{IPR}/protein/{db}/` returns 408 / hangs | The path with `entry/...` first does a slow join | Invert the path: `protein/{db}/entry/interpro/{IPR}/` |
+| `structure/pdb/?entry_interpro={IPR}` times out (408) | Same join order issue | Use `structure/pdb/entry/interpro/{IPR}/` |
+| `entry/interpro/{IPR}/taxonomy/uniprot/` 408s for large families | Same | Use `taxonomy/uniprot/entry/interpro/{IPR}/`; for very large entries (e.g. IPR000719 kinase) the inverted form may still 408 — fall back to a more specific sub-family entry |
 | `HTTP 400` on entry search | Invalid query parameters or unsupported `type` value | Use one of: `family`, `domain`, `homologous_superfamily`, `repeat`, `site` |
 | Pagination stops early | `next` is `null` before expected count | This is correct; all results have been returned |
 | Very slow response for large families | Protein set has thousands of members | Increase `page_size` to `200`; persist results after each page |

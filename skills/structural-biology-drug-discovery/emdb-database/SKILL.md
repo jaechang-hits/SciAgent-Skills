@@ -1,6 +1,6 @@
 ---
 name: "emdb-database"
-description: "Search EMDB cryo-EM density maps, fitted atomic models, and metadata via REST API. Query by keyword, resolution, method, or organism; fetch entries, map URLs, linked PDB models, and publications. No auth. For atomic coordinates use pdb-database; for AlphaFold predictions use alphafold-database-access."
+description: "Look up EMDB cryo-EM density maps and fitted atomic models via the entry REST API + EBI Search WS. Fetch entry metadata (resolution, method, organism, sample), map download URLs, fitted PDB IDs, and citations. Keyword search via EBI Search. No auth. For atomic coordinates use pdb-database; for AlphaFold predictions use alphafold-database-access."
 license: "CC-BY-4.0"
 ---
 
@@ -8,24 +8,29 @@ license: "CC-BY-4.0"
 
 ## Overview
 
-The Electron Microscopy Data Bank (EMDB) at EBI archives 3D electron microscopy density maps — primarily cryo-EM and cryo-ET maps — for macromolecular assemblies. It holds 30,000+ entries including ribosomes, membrane proteins, viruses, and large complexes not tractable by X-ray crystallography. The EMDB REST API at `https://www.ebi.ac.uk/emdb/api/` provides JSON responses for entry metadata, map download info, fitted atomic models (PDB IDs), and publications. No authentication or API key is required.
+The Electron Microscopy Data Bank (EMDB) at EBI archives 3D electron microscopy density maps — primarily cryo-EM and cryo-ET — for macromolecular assemblies (30,000+ entries: ribosomes, membrane proteins, viruses, large complexes). Access is split across two services:
+
+- **EMDB Entry API** (`https://www.ebi.ac.uk/emdb/api/entry/{EMD-XXXXX}`) — the canonical per-entry JSON containing metadata, map header, fitted PDB list, and citation. Sub-endpoints like `/map`, `/fitted`, `/publications` do **not** exist — all those data live inside the single entry response.
+- **EBI Search WS** (`https://www.ebi.ac.uk/ebisearch/ws/rest/emdb`) — the real keyword search backend (the bare `https://www.ebi.ac.uk/emdb/api/search/` endpoint ignores the query and just returns recent entries).
+
+No authentication or API key is required.
 
 ## When to Use
 
-- Finding cryo-EM density maps for a protein or complex by keyword (e.g., "spike protein", "ribosome 70S")
-- Fetching the download URL for a `.map.gz` density file to use in local structure visualization (UCSF ChimeraX, PyMOL)
-- Identifying which PDB atomic models have been fitted into an EMDB map (and vice versa)
-- Retrieving EMDB entry metadata — resolution, reconstruction method, fitted model count, and organism — for a literature search or database survey
-- Searching for cryo-EM structures of a specific organism or filtered by resolution cutoff (e.g., < 3 Å)
-- Linking EMDB maps to their primary publications for citation retrieval
-- Use `pdb-database` instead when you need experimentally determined atomic coordinates (X-ray, NMR, or cryo-EM deposited with coordinates); EMDB provides the raw density map, PDB provides the atom positions
-- For AlphaFold AI-predicted structures use `alphafold-database-access`; EMDB is for experimental EM maps only
+- Finding cryo-EM density maps by keyword (e.g., "spike protein", "ribosome 70S")
+- Fetching the download URL of a `.map.gz` density file for use in ChimeraX / PyMOL
+- Identifying fitted PDB atomic models for an EMDB map (and the reverse)
+- Retrieving entry metadata — resolution, reconstruction method, organism, sample
+- Listing cryo-EM structures filtered by organism or resolution cutoff
+- Pulling the primary citation (journal, DOI, PubMed ID) for an EMDB entry
+- Use `pdb-database` instead when you need experimentally determined atomic coordinates
+- Use `alphafold-database-access` for AI-predicted structures; EMDB is for experimental EM maps only
 
 ## Prerequisites
 
 - **Python packages**: `requests`, `pandas`, `matplotlib`
-- **Data requirements**: EMDB entry IDs (format: `EMD-XXXX`), keyword search strings, or PDB IDs for cross-referencing
-- **Environment**: internet connection; no API key required
+- **Data requirements**: EMDB entry IDs (`EMD-XXXXX`), keyword search strings, or PDB IDs for cross-referencing
+- **Environment**: internet connection; no API key
 - **Rate limits**: no official published limits; add `time.sleep(0.2)` between requests in batch loops for polite access
 
 ```bash
@@ -37,586 +42,421 @@ pip install requests pandas matplotlib
 ```python
 import requests
 
-EMDB_API = "https://www.ebi.ac.uk/emdb/api"
+EMDB_API   = "https://www.ebi.ac.uk/emdb/api"
+EBI_SEARCH = "https://www.ebi.ac.uk/ebisearch/ws/rest/emdb"
 
-# Search for cryo-EM maps of the SARS-CoV-2 spike protein
-response = requests.get(f"{EMDB_API}/search/", params={"q": "spike protein SARS-CoV-2"}, timeout=30)
-response.raise_for_status()
-results = response.json()
-
-hits = results.get("results", [])
-print(f"Total hits: {results.get('numFound', 0)}")
-for entry in hits[:5]:
-    emdb_id = entry.get("emdbId", "")
-    title   = entry.get("title", "")
-    resol   = entry.get("resolution", "?")
-    print(f"  {emdb_id}: {title[:60]}  ({resol} Å)")
-# EMD-30210: SARS-CoV-2 spike protein in the prefusion conf...  (3.46 Å)
-# EMD-22221: SARS-CoV-2 spike protein glycoprotein structure...  (2.8 Å)
+# Keyword search via EBI Search WS (NOT /emdb/api/search/, which ignores q=)
+r = requests.get(EBI_SEARCH,
+                 params={"query": "sars-cov-2 spike", "size": 5, "format": "json",
+                         "fields": "id,name,resolution,em_method,organism"},
+                 timeout=30)
+r.raise_for_status()
+res = r.json()
+print(f"Total hits: {res['hitCount']}")
+for e in res["entries"]:
+    f = e["fields"]
+    name = (f.get("name") or [""])[0][:60]
+    resol = (f.get("resolution") or ["?"])[0]
+    print(f"  {e['id']}: {name}  ({resol} Å)")
 ```
 
 ## Core API
 
-### Query 1: Full-Text Search
+### Query 1: Keyword Search (EBI Search WS)
 
-Search EMDB entries by keyword. Returns a paginated result list with basic metadata for each hit.
+Returns a paged hit list keyed by EMDB ID, with the requested `fields` per entry.
 
 ```python
-import requests
-import pandas as pd
+import requests, pandas as pd
 
-EMDB_API = "https://www.ebi.ac.uk/emdb/api"
+EBI_SEARCH = "https://www.ebi.ac.uk/ebisearch/ws/rest/emdb"
 
-def emdb_search(query: str, rows: int = 20, start: int = 0) -> dict:
-    """Full-text search of EMDB entries. Returns JSON response."""
-    params = {"q": query, "rows": rows, "start": start}
-    r = requests.get(f"{EMDB_API}/search/", params=params, timeout=30)
+def emdb_search(query, size=20, start=0,
+                fields="id,name,resolution,em_method,organism"):
+    r = requests.get(EBI_SEARCH,
+                     params={"query": query, "size": size, "start": start,
+                             "format": "json", "fields": fields},
+                     timeout=30)
     r.raise_for_status()
     return r.json()
 
-data = emdb_search("ribosome 70S bacterial", rows=10)
-print(f"Total entries found: {data.get('numFound', 0)}")
-
+data = emdb_search("ribosome 70S", size=10)
 rows = []
-for entry in data.get("results", []):
+for e in data["entries"]:
+    f = e["fields"]
     rows.append({
-        "emdb_id":    entry.get("emdbId"),
-        "title":      entry.get("title", "")[:80],
-        "resolution": entry.get("resolution"),
-        "method":     entry.get("imageAcquisition", {}).get("imagingMethod", ""),
-        "organism":   entry.get("organism", ""),
+        "emdb_id": e["id"],
+        "name": (f.get("name") or [""])[0],
+        "resolution_A": float((f.get("resolution") or [0])[0] or 0) or None,
+        "em_method": (f.get("em_method") or [""])[0],
+        "organism": (f.get("organism") or [""])[0],
     })
-
 df = pd.DataFrame(rows)
+print(f"hitCount={data['hitCount']}; first {len(df)} rows:")
 print(df.to_string(index=False))
 ```
 
 ```python
-# Search with resolution filter using pandas post-filtering
-data = emdb_search("membrane protein", rows=50)
-rows = []
-for entry in data.get("results", []):
-    resol = entry.get("resolution")
-    if resol is not None and resol <= 3.0:
-        rows.append({
-            "emdb_id":    entry.get("emdbId"),
-            "title":      entry.get("title", "")[:70],
-            "resolution": resol,
-        })
+# Paged retrieval — iterate `start` until exhausting hitCount
+def emdb_search_all(query, size=100, max_pages=5,
+                    fields="id,name,resolution,em_method"):
+    out = []
+    for page in range(max_pages):
+        d = emdb_search(query, size=size, start=page * size, fields=fields)
+        if not d["entries"]:
+            break
+        out.extend(d["entries"])
+        if len(out) >= d["hitCount"]:
+            break
+    return out
 
-df_highres = pd.DataFrame(rows).sort_values("resolution") if rows else pd.DataFrame()
-print(f"High-resolution membrane protein maps (≤3.0 Å): {len(df_highres)}")
-if not df_highres.empty:
-    print(df_highres.head(5).to_string(index=False))
+hits = emdb_search_all("ferritin", size=50, max_pages=2)
+print(f"Pulled {len(hits)} ferritin entries")
 ```
 
-### Query 2: Entry Details
+### Query 2: Entry Metadata
 
-Retrieve full metadata for a single EMDB entry by its ID (e.g., `EMD-1234`).
+The single entry endpoint returns all metadata, the map header, fitted PDB list, and the citation in one document. Read field paths carefully — most are nested.
 
 ```python
 import requests
 
 EMDB_API = "https://www.ebi.ac.uk/emdb/api"
 
-def get_entry(emdb_id: str) -> dict:
-    """Fetch full metadata for a single EMDB entry. emdb_id e.g. 'EMD-1234'."""
+def emdb_entry(emdb_id):
     r = requests.get(f"{EMDB_API}/entry/{emdb_id}", timeout=30)
     r.raise_for_status()
     return r.json()
 
-entry = get_entry("EMD-30210")   # SARS-CoV-2 spike
+e = emdb_entry("EMD-30210")  # nsp12-nsp7-nsp8 + Remdesivir (RdRp)
+print(f"Title       : {e['admin']['title']}")
+print(f"Status      : {e['admin']['current_status']}")
+print(f"Key dates   : {e['admin'].get('key_dates')}")
 
-# Navigate the nested JSON
-header = entry.get("map", {}).get("header", {})
-title  = header.get("title", "")
-deposited = header.get("depositionDate", "")
-
-print(f"Entry: EMD-30210")
-print(f"Title: {title}")
-print(f"Deposited: {deposited}")
-
-# Resolution
-resol_block = entry.get("processing", {}).get("reconstruction", {}).get("resolutionByAuthor", "")
-print(f"Resolution: {resol_block}")
-
-# Sample organism
-sample = entry.get("sample", {})
-name_block = sample.get("name", "")
-print(f"Sample: {name_block}")
+sd = e["structure_determination_list"]["structure_determination"][0]
+ip = sd["image_processing"][0]
+res = ip["final_reconstruction"]["resolution"]
+print(f"Method      : {sd['method']}")
+print(f"Resolution  : {res['valueOf_']} {res['units']}  (type: {res['res_type']})")
 ```
 
-### Query 3: Map Download Information
+### Query 3: Map Header / Download Info
 
-Retrieve the download URL and file format for the associated `.map.gz` density file.
+`entry["map"]` contains the file name, format, voxel grid, axis order, cell, contour level(s), and recommended display threshold.
 
 ```python
 import requests
 
 EMDB_API = "https://www.ebi.ac.uk/emdb/api"
+e = requests.get(f"{EMDB_API}/entry/EMD-30210", timeout=30).json()
 
-def get_map_info(emdb_id: str) -> dict:
-    """Retrieve map file download metadata for an EMDB entry."""
-    r = requests.get(f"{EMDB_API}/entry/{emdb_id}/map", timeout=30)
-    r.raise_for_status()
-    return r.json()
+m = e["map"]
+print(f"Map file     : {m.get('file')}")          # e.g. emd_30210.map.gz
+print(f"Format       : {m.get('format')}")        # 'CCP4'
+print(f"Dimensions   : {m.get('dimensions')}")    # {'col': ..., 'row': ..., 'sec': ...}
+print(f"Axis order   : {m.get('axis_order')}")    # {'fast': 'X', 'medium': 'Y', 'slow': 'Z'}
+print(f"Contour list : {m.get('contour_list')}")  # recommended threshold(s)
 
-map_info = get_map_info("EMD-30210")
-print("Map download info:")
-for item in map_info if isinstance(map_info, list) else [map_info]:
-    file_url  = item.get("url", "")
-    file_size = item.get("size", "")
-    format_   = item.get("format", "")
-    print(f"  URL:    {file_url}")
-    print(f"  Format: {format_}  |  Size: {file_size}")
-
-# Construct standard download URL manually (always available)
-num = "30210"  # numeric part of EMD-30210
-standard_url = f"https://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-{num}/map/emd_{num}.map.gz"
-print(f"\nFTP map URL: {standard_url}")
+# Conventional FTP/HTTPS download URL pattern (mirror at EBI):
+EMDB_FTP = "https://ftp.ebi.ac.uk/pub/databases/emdb/structures"
+emdb_num = "EMD-30210"
+print(f"Download URL : {EMDB_FTP}/{emdb_num}/map/{m['file']}")
 ```
 
-### Query 4: Fitted Atomic Models (PDB Cross-Reference)
+### Query 4: Fitted PDB Atomic Models
 
-List the PDB IDs of atomic models that have been fitted into this EM map.
+EMDB cross-references the PDB entries that fitted into the map. Each item has the PDB ID and a relationship tag (e.g., `FULLOVERLAP`).
 
 ```python
 import requests
 
 EMDB_API = "https://www.ebi.ac.uk/emdb/api"
+e = requests.get(f"{EMDB_API}/entry/EMD-30210", timeout=30).json()
 
-def get_fitted_models(emdb_id: str) -> list:
-    """Return list of PDB IDs fitted to the EMDB map."""
-    r = requests.get(f"{EMDB_API}/entry/{emdb_id}/fitted", timeout=30)
-    r.raise_for_status()
-    data = r.json()
-    if isinstance(data, list):
-        return data
-    return data.get("fittedModels", [])
-
-models = get_fitted_models("EMD-30210")
-print(f"Fitted PDB models for EMD-30210: {len(models)}")
-for m in models:
-    pdb_id = m.get("pdbId") if isinstance(m, dict) else m
-    print(f"  PDB: {pdb_id}")
+pdblist = e.get("crossreferences", {}).get("pdb_list", {})
+pdb_refs = pdblist.get("pdb_reference", []) if isinstance(pdblist, dict) else []
+print(f"Fitted PDB entries: {len(pdb_refs)}")
+for ref in pdb_refs:
+    in_frame = (ref.get("relationship") or {}).get("in_frame")
+    print(f"  {ref['pdb_id'].upper():6s}  relationship={in_frame}")
+# 7BV2  relationship=FULLOVERLAP
 ```
 
-```python
-# Reverse lookup: given a PDB ID, find associated EMDB entries via search
-import requests
+### Query 5: Citation and Publications
 
-EMDB_API = "https://www.ebi.ac.uk/emdb/api"
-
-def find_emdb_for_pdb(pdb_id: str) -> list:
-    """Search EMDB for entries associated with a PDB ID."""
-    r = requests.get(f"{EMDB_API}/search/", params={"q": pdb_id, "rows": 10}, timeout=30)
-    r.raise_for_status()
-    results = r.json().get("results", [])
-    return [e.get("emdbId") for e in results if e.get("emdbId")]
-
-pdb_id = "7BNM"   # SARS-CoV-2 spike structure
-associated = find_emdb_for_pdb(pdb_id)
-print(f"EMDB entries associated with PDB {pdb_id}: {associated}")
-```
-
-### Query 5: Publications
-
-Retrieve primary publications (citations) linked to an EMDB entry.
+Primary citation lives at `entry["crossreferences"]["citation_list"]`. The shape varies by citation type (journal vs. preprint).
 
 ```python
 import requests
 
 EMDB_API = "https://www.ebi.ac.uk/emdb/api"
+e = requests.get(f"{EMDB_API}/entry/EMD-30210", timeout=30).json()
 
-def get_publications(emdb_id: str) -> list:
-    """Retrieve publications associated with an EMDB entry."""
-    r = requests.get(f"{EMDB_API}/entry/{emdb_id}/publications", timeout=30)
-    r.raise_for_status()
-    data = r.json()
-    if isinstance(data, list):
-        return data
-    return data.get("publications", [])
+citations = e.get("crossreferences", {}).get("citation_list", {})
+primary = citations.get("primary_citation", {})
+ct = primary.get("citation_type") or primary
 
-pubs = get_publications("EMD-30210")
-print(f"Publications for EMD-30210: {len(pubs)}")
-for pub in pubs:
-    title  = pub.get("title", "")
-    doi    = pub.get("doi", "")
-    year   = pub.get("year", "")
-    print(f"  [{year}] {title[:70]}")
-    if doi:
-        print(f"         DOI: {doi}")
+title   = (ct.get("title") or "").strip()
+journal = ct.get("journal") or ct.get("book_title")
+year    = ct.get("year")
+authors = [a.get("name") or a.get("name_str")
+           for a in (ct.get("author") or ct.get("author_order") or [])
+           if a]
+xrefs = ct.get("external_references", []) or ct.get("xref", [])
+
+doi = next((x.get("valueOf_") for x in xrefs if x.get("type") == "DOI"), None)
+pmid = next((x.get("valueOf_") for x in xrefs if x.get("type") == "PUBMED"), None)
+
+print(f"Title   : {title[:80]}")
+print(f"Journal : {journal} ({year})")
+print(f"Authors : {', '.join(a for a in authors[:5] if a)}{'...' if len(authors) > 5 else ''}")
+print(f"DOI     : {doi}")
+print(f"PMID    : {pmid}")
 ```
 
-### Query 6: Overall Statistics
-
-Retrieve aggregate EMDB database statistics — total entry count, resolution distribution, method breakdown.
+### Query 6: Sample and Organism
 
 ```python
 import requests
 
 EMDB_API = "https://www.ebi.ac.uk/emdb/api"
+e = requests.get(f"{EMDB_API}/entry/EMD-30210", timeout=30).json()
 
-def get_statistics() -> dict:
-    """Retrieve overall EMDB database statistics."""
-    r = requests.get(f"{EMDB_API}/statistics/", timeout=30)
-    r.raise_for_status()
-    return r.json()
-
-stats = get_statistics()
-print("EMDB Database Statistics:")
-total = stats.get("totalEntries", stats.get("total", "n/a"))
-print(f"  Total entries: {total}")
-
-# Method breakdown if available
-methods = stats.get("methods", stats.get("imagingMethods", {}))
-if methods:
-    print("  By method:")
-    for method, count in sorted(methods.items(), key=lambda x: -x[1] if isinstance(x[1], int) else 0):
-        print(f"    {method}: {count}")
-```
-
-### Query 7: Visualization — Resolution Distribution
-
-Plot the resolution distribution of a set of EMDB search results.
-
-```python
-import requests
-import matplotlib.pyplot as plt
-
-EMDB_API = "https://www.ebi.ac.uk/emdb/api"
-
-# Fetch 200 entries for visualization
-r = requests.get(f"{EMDB_API}/search/", params={"q": "cryo-EM", "rows": 200}, timeout=60)
-r.raise_for_status()
-results = r.json().get("results", [])
-
-resolutions = [
-    entry["resolution"] for entry in results
-    if entry.get("resolution") is not None and 1.0 <= entry["resolution"] <= 10.0
-]
-
-fig, ax = plt.subplots(figsize=(8, 4))
-ax.hist(resolutions, bins=30, color="#2c7fb8", edgecolor="white", alpha=0.85)
-ax.axvline(x=3.0, color="#d62728", lw=1.5, ls="--", label="3 Å threshold")
-ax.set_xlabel("Resolution (Å)")
-ax.set_ylabel("Number of entries")
-ax.set_title(f"EMDB Resolution Distribution (n={len(resolutions)})")
-ax.legend()
-plt.tight_layout()
-plt.savefig("emdb_resolution_distribution.png", dpi=150, bbox_inches="tight")
-print(f"Saved emdb_resolution_distribution.png  ({len(resolutions)} entries)")
-below3 = sum(1 for r in resolutions if r <= 3.0)
-print(f"Entries at ≤3.0 Å: {below3}/{len(resolutions)} ({below3/len(resolutions)*100:.1f}%)")
+sample = e.get("sample", {})
+sm_list = (sample.get("supramolecule_list") or {}).get("supramolecule", [])
+for sm in sm_list:
+    ns = sm.get("natural_source") or sm.get("natural_source_list", {}).get("natural_source") or []
+    if isinstance(ns, dict):
+        ns = [ns]
+    for n in ns:
+        org = (n.get("organism") or {}).get("valueOf_")
+        print(f"  Supramolecule '{sm.get('name', {}).get('valueOf_', '?')}': {org}")
 ```
 
 ## Key Concepts
 
-### EMDB ID Format
+### Field-Path Map (`/api/entry/{id}` document)
 
-EMDB IDs follow the pattern `EMD-XXXX` (e.g., `EMD-1234`, `EMD-30210`). The numeric part is used in FTP paths. The API accepts both `EMD-1234` and `1234` in most endpoints. FTP download paths use zero-padded 4-digit numbers for older entries.
+| What | Path |
+|------|------|
+| Title | `admin.title` |
+| Release dates | `admin.key_dates` |
+| Authors | `admin.authors_list.author[*].name`/`name_str` |
+| EM method | `structure_determination_list.structure_determination[0].method` (e.g. `singleParticle`, `tomography`) |
+| Resolution | `structure_determination_list.structure_determination[0].image_processing[0].final_reconstruction.resolution.valueOf_` (string Å; cast to float) |
+| Map file name | `map.file` |
+| Map format/dims | `map.format` / `map.dimensions` |
+| Contour level(s) | `map.contour_list` |
+| Fitted PDB | `crossreferences.pdb_list.pdb_reference[*].pdb_id` |
+| Citation | `crossreferences.citation_list.primary_citation.citation_type` (journal/year/title/authors/external_references) |
+| DOI/PubMed | `…citation_type.external_references[]` with `type` in `{DOI, PUBMED}` |
+| Organism | `sample.supramolecule_list.supramolecule[*].natural_source[*].organism.valueOf_` |
 
-### Map vs. Atomic Model
+### Search vs. Entry
 
-An EMDB entry holds the raw **electron density map** (`.map` or `.map.gz`, in MRC/CCP4 format) — a 3D voxel grid of electron scattering density. The fitted **atomic model** (PDB entry) is a separate record with ATOM/HETATM coordinates interpreted from the map. Many maps have multiple fitted models from different groups; some maps have none (primary data without model deposition).
-
-### Resolution and Quality
-
-| Resolution | Typical interpretability |
-|------------|--------------------------|
-| < 2.5 Å   | Near-atomic: side-chain positions visible |
-| 2.5–3.5 Å | High-res: backbone well-resolved, some side chains |
-| 3.5–5.0 Å | Medium: secondary structure clear, limited side-chain detail |
-| > 5.0 Å   | Low-res: domain arrangement only |
-
-Use the `resolution` field from search results to filter for structures appropriate for your analysis task.
+- **Keyword search** → EBI Search WS (`/ebisearch/ws/rest/emdb`). Use this for `query=`, `size=`, `start=`, and `fields=` selection.
+- **`/emdb/api/search/` is unreliable** — it silently ignores `q=` and returns the latest released entries. Don't depend on it.
+- **Entry detail** → `/emdb/api/entry/{EMD-XXXXX}`. There is **no** `/map`, `/fitted`, or `/publications` sub-endpoint — they're all inside the entry document.
 
 ## Common Workflows
 
-### Workflow 1: Survey All High-Resolution Entries for a Target
+### Workflow 1: Resolution Filter for a Topic
 
-**Goal**: Find all EMDB maps for a protein target with resolution ≤ 3.5 Å, export to CSV with PDB model cross-references.
-
-```python
-import requests
-import time
-import pandas as pd
-
-EMDB_API = "https://www.ebi.ac.uk/emdb/api"
-
-def emdb_search_all(query: str, rows_per_page: int = 50) -> list:
-    """Paginate through all search results."""
-    all_results = []
-    start = 0
-    while True:
-        r = requests.get(f"{EMDB_API}/search/",
-                         params={"q": query, "rows": rows_per_page, "start": start},
-                         timeout=30)
-        r.raise_for_status()
-        data = r.json()
-        batch = data.get("results", [])
-        all_results.extend(batch)
-        if start + rows_per_page >= data.get("numFound", 0) or not batch:
-            break
-        start += rows_per_page
-        time.sleep(0.2)
-    return all_results
-
-target = "ACE2"
-print(f"Searching EMDB for: {target}")
-entries = emdb_search_all(target)
-print(f"Total entries: {len(entries)}")
-
-rows = []
-for entry in entries:
-    resol = entry.get("resolution")
-    if resol is None or resol > 3.5:
-        continue
-    emdb_id = entry.get("emdbId", "")
-    # Fetch fitted PDB models
-    try:
-        r2 = requests.get(f"{EMDB_API}/entry/{emdb_id}/fitted", timeout=15)
-        models = r2.json() if r2.status_code == 200 else []
-        pdb_ids = [m.get("pdbId") if isinstance(m, dict) else str(m) for m in (models if isinstance(models, list) else [])]
-    except Exception:
-        pdb_ids = []
-    time.sleep(0.2)
-    rows.append({
-        "emdb_id":    emdb_id,
-        "title":      entry.get("title", "")[:80],
-        "resolution": resol,
-        "pdb_models": ";".join(pdb_ids) if pdb_ids else "",
-        "organism":   entry.get("organism", ""),
-    })
-
-df = pd.DataFrame(rows).sort_values("resolution")
-df.to_csv(f"{target}_emdb_highres.csv", index=False)
-print(f"High-res entries (≤3.5 Å): {len(df)}")
-print(df[["emdb_id", "resolution", "pdb_models", "title"]].head(8).to_string(index=False))
-```
-
-### Workflow 2: Batch Metadata Collection from Entry ID List
-
-**Goal**: Given a list of EMDB IDs from a literature search, fetch structured metadata and build a summary table.
+**Goal**: Find SARS-CoV-2 spike entries at high resolution and report their fitted PDB models.
 
 ```python
-import requests
-import time
-import pandas as pd
+import requests, time, pandas as pd
 
-EMDB_API = "https://www.ebi.ac.uk/emdb/api"
+EBI_SEARCH = "https://www.ebi.ac.uk/ebisearch/ws/rest/emdb"
+EMDB_API   = "https://www.ebi.ac.uk/emdb/api"
 
-emdb_ids = ["EMD-30210", "EMD-22221", "EMD-23970", "EMD-13731", "EMD-14127"]
-
-records = []
-for emdb_id in emdb_ids:
-    try:
-        r = requests.get(f"{EMDB_API}/entry/{emdb_id}", timeout=20)
-        r.raise_for_status()
-        entry = r.json()
-
-        header     = entry.get("map", {}).get("header", {})
-        processing = entry.get("processing", {})
-        recon      = processing.get("reconstruction", {})
-
-        records.append({
-            "emdb_id":    emdb_id,
-            "title":      header.get("title", "")[:80],
-            "deposited":  header.get("depositionDate", ""),
-            "resolution": recon.get("resolutionByAuthor", ""),
-            "software":   recon.get("software", {}).get("name", "") if isinstance(recon.get("software"), dict) else "",
-        })
-    except Exception as e:
-        print(f"Warning: {emdb_id} failed — {e}")
-    time.sleep(0.2)
-
-df = pd.DataFrame(records)
-print(df.to_string(index=False))
-df.to_csv("emdb_batch_metadata.csv", index=False)
-print(f"\nSaved emdb_batch_metadata.csv ({len(df)} entries)")
-```
-
-### Workflow 3: Download a Density Map File
-
-**Goal**: Download an EMDB `.map.gz` file programmatically for use in ChimeraX or PyMOL.
-
-```python
-import requests
-from pathlib import Path
-
-def download_emdb_map(emdb_id: str, output_dir: str = ".") -> str:
-    """
-    Download an EMDB map file (.map.gz) via FTP.
-    Returns the path to the downloaded file.
-    """
-    num = emdb_id.replace("EMD-", "").replace("emd-", "").lstrip("0") or "0"
-    num_padded = num.zfill(4) if len(num) < 4 else num
-    url = (f"https://ftp.ebi.ac.uk/pub/databases/emdb/structures/"
-           f"EMD-{num_padded}/map/emd_{num_padded}.map.gz")
-    out_path = Path(output_dir) / f"emd_{num_padded}.map.gz"
-
-    print(f"Downloading {emdb_id} map from EBI FTP...")
-    print(f"  URL: {url}")
-    r = requests.get(url, stream=True, timeout=120)
+# Step 1: keyword search via EBI Search
+hits = []
+for start in (0, 50):
+    r = requests.get(EBI_SEARCH,
+        params={"query": "sars-cov-2 spike", "size": 50, "start": start,
+                "format": "json", "fields": "id,name,resolution"},
+        timeout=30)
     r.raise_for_status()
+    hits.extend(r.json()["entries"])
+    time.sleep(0.2)
 
-    total_mb = int(r.headers.get("content-length", 0)) / 1e6
-    downloaded = 0
-    with open(out_path, "wb") as f:
-        for chunk in r.iter_content(chunk_size=1024 * 1024):
-            f.write(chunk)
-            downloaded += len(chunk)
+# Step 2: filter to resolution ≤ 3.0 Å (skip entries with missing field)
+rows = []
+for h in hits:
+    f = h["fields"]
+    name = (f.get("name") or [""])[0]
+    try:
+        resol = float((f.get("resolution") or [None])[0])
+    except (TypeError, ValueError):
+        continue
+    if resol <= 3.0:
+        rows.append({"emdb_id": h["id"], "resolution_A": resol, "name": name[:60]})
 
-    print(f"  Saved: {out_path}  ({downloaded/1e6:.1f} MB)")
-    return str(out_path)
+df = pd.DataFrame(rows).sort_values("resolution_A")
+print(f"Spike entries ≤ 3.0 Å: {len(df)}")
+print(df.head(10).to_string(index=False))
 
-# Example: download spike protein map
-path = download_emdb_map("EMD-30210", output_dir="/tmp")
-print(f"Map file: {path}")
-print("Open in ChimeraX with: open /tmp/emd_30210.map.gz")
+# Step 3: pull fitted PDB ids for the top 5
+for emdb_id in df["emdb_id"].head(5):
+    e = requests.get(f"{EMDB_API}/entry/{emdb_id}", timeout=30).json()
+    pdblist = e.get("crossreferences", {}).get("pdb_list", {}) or {}
+    pdbs = [p["pdb_id"].upper() for p in pdblist.get("pdb_reference", [])]
+    print(f"  {emdb_id} -> PDB: {', '.join(pdbs) if pdbs else '(none fitted)'}")
+    time.sleep(0.2)
+```
+
+### Workflow 2: Build a Cohort Metadata Table
+
+**Goal**: For a query, return a DataFrame with method, resolution, organism, and map download URL — useful for survey papers.
+
+```python
+import requests, time, pandas as pd
+
+EBI_SEARCH = "https://www.ebi.ac.uk/ebisearch/ws/rest/emdb"
+EMDB_API   = "https://www.ebi.ac.uk/emdb/api"
+EMDB_FTP   = "https://ftp.ebi.ac.uk/pub/databases/emdb/structures"
+
+def cohort_table(query, size=10):
+    r = requests.get(EBI_SEARCH,
+        params={"query": query, "size": size, "format": "json", "fields": "id"},
+        timeout=30)
+    r.raise_for_status()
+    rows = []
+    for h in r.json()["entries"]:
+        emdb_id = h["id"]
+        e = requests.get(f"{EMDB_API}/entry/{emdb_id}", timeout=30).json()
+        sd = e["structure_determination_list"]["structure_determination"][0]
+        ip = sd["image_processing"][0]
+        try:
+            resol = float(ip["final_reconstruction"]["resolution"]["valueOf_"])
+        except (KeyError, ValueError, TypeError):
+            resol = None
+        m = e["map"]
+        rows.append({
+            "emdb_id": emdb_id,
+            "title": e["admin"]["title"][:60],
+            "method": sd.get("method"),
+            "resolution_A": resol,
+            "map_url": f"{EMDB_FTP}/{emdb_id}/map/{m['file']}" if m.get("file") else None,
+        })
+        time.sleep(0.2)
+    return pd.DataFrame(rows)
+
+df = cohort_table("ribosome 70S bacterial", size=6)
+print(df.to_string(index=False))
+df.to_csv("emdb_cohort.csv", index=False)
 ```
 
 ## Key Parameters
 
-| Parameter | Function/Endpoint | Default | Range / Options | Effect |
-|-----------|-------------------|---------|-----------------|--------|
-| `q` | `/search/` | — | Any keyword string | Full-text search query; supports boolean and phrase matching |
-| `rows` | `/search/` | `10` | `1`–`200` | Number of results per page |
-| `start` | `/search/` | `0` | `0`–`numFound` | Pagination offset for large result sets |
-| `emdb_id` | `/entry/{id}` | — | `EMD-XXXX` format | Specific entry identifier |
-| `resolution` | Result field | — | float (Å) | Filter post-query by `entry["resolution"]` threshold |
-| `imagingMethod` | Result field | — | `"cryo EM"`, `"cryo ET"` | Method filter; applies via pandas post-fetch |
-| `organism` | Result field | — | organism name string | Organism filter; match with `.str.contains()` |
+| Parameter | Endpoint | Default | Range / Options | Effect |
+|-----------|----------|---------|-----------------|--------|
+| `query` | EBI Search `/emdb` | required | text search string | Keyword to match |
+| `size` | EBI Search `/emdb` | `15` | 1–100 | Hits per page |
+| `start` | EBI Search `/emdb` | `0` | non-negative int | Pagination offset |
+| `fields` | EBI Search `/emdb` | (subset) | comma-separated EBI Search fields | Which per-hit fields to return (`id,name,resolution,em_method,organism`, etc.) |
+| `format` | EBI Search `/emdb` | `json` | `json`, `xml` | Response format |
+| (path) `{EMD-XXXXX}` | `/api/entry/{id}` | required | EMDB accession | Single-entry detail |
 
 ## Best Practices
 
-1. **Use the FTP endpoint for large map files**: The REST API provides metadata; the actual `.map.gz` files are served via the EBI FTP. Construct the FTP URL as `https://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-XXXX/map/emd_XXXX.map.gz`.
-   ```python
-   num = "30210"
-   url = f"https://ftp.ebi.ac.uk/pub/databases/emdb/structures/EMD-{num}/map/emd_{num}.map.gz"
-   ```
-
-2. **Add `time.sleep(0.2)` in batch loops**: The EMDB REST API is shared infrastructure with no published rate limits. Polite delays prevent throttling.
-
-3. **Filter by resolution post-query**: The `/search/` endpoint does not support server-side numeric range filtering. Fetch a larger `rows` value and filter the `resolution` field with pandas locally.
-
-4. **Cross-reference via both directions**: An EMDB entry can have 0–10+ fitted PDB models. Always check `/entry/{emdb_id}/fitted` for the definitive PDB list; keyword search alone may miss older depositions.
-
-5. **Check for `None` resolution**: Some cryo-ET and subtomogram averages lack a numeric resolution estimate. Guard with `if entry.get("resolution") is not None` before numeric comparisons.
+1. **Always use EBI Search WS for keyword search.** `https://www.ebi.ac.uk/emdb/api/search/` ignores `q=` and just returns the latest releases — relying on it produces silently wrong cohorts.
+2. **There are no sub-endpoints.** Don't call `/api/entry/{id}/map`, `/fitted`, `/publications`, or `/api/statistics/` — all return 404 (or HTML for `/statistics/`). Read everything from the single entry document.
+3. **Cast `resolution.valueOf_` to float explicitly.** The field is a string like `"2.5"`; numeric filters need an explicit cast (with `try/except` for entries that lack a value).
+4. **EBI Search field values arrive as lists.** Even single-valued fields like `name` come as `{"name": ["..."]}` — always index `[0]` or join.
+5. **Add `time.sleep(0.2)` in entry-by-entry loops.** No rate limit is published, but the API is hosted on a shared service; polite spacing avoids transient 502s.
+6. **Map download URLs follow `https://ftp.ebi.ac.uk/pub/databases/emdb/structures/{EMDB_ID}/map/{file}`** — derive them from `entry["map"]["file"]`, don't hardcode.
 
 ## Common Recipes
 
-### Recipe: Get All PDB Models Fitted to a Map
-
-When to use: You have an EMDB ID and want to load all associated atomic coordinates.
+### Recipe: PDB → EMDB Cross-Reference
 
 ```python
 import requests
 
-def get_pdb_ids_for_emdb(emdb_id: str) -> list:
-    """Return list of PDB IDs fitted into the given EMDB map."""
-    r = requests.get(f"https://www.ebi.ac.uk/emdb/api/entry/{emdb_id}/fitted", timeout=15)
-    if r.status_code != 200:
-        return []
-    data = r.json()
-    models = data if isinstance(data, list) else data.get("fittedModels", [])
-    return [m.get("pdbId") if isinstance(m, dict) else str(m) for m in models]
-
-pdb_ids = get_pdb_ids_for_emdb("EMD-30210")
-print(f"PDB models for EMD-30210: {pdb_ids}")
-# PDB models for EMD-30210: ['7BNM', '7BNN']
+# Given an EMDB ID, get its fitted PDB; given a PDB ID, you'd query
+# RCSB PDB /rest/v2/entry/{pdb_id} and read `rcsb_external_references.emdb_id`.
+EMDB_API = "https://www.ebi.ac.uk/emdb/api"
+e = requests.get(f"{EMDB_API}/entry/EMD-30210", timeout=30).json()
+pdblist = e.get("crossreferences", {}).get("pdb_list") or {}
+print({"emdb": e["emdb_id"],
+       "pdbs": [p["pdb_id"].upper() for p in pdblist.get("pdb_reference", [])]})
 ```
 
-### Recipe: Batch Resolution Summary for a Gene List
-
-When to use: Survey EMDB coverage and resolution for a list of protein targets.
+### Recipe: Top Resolutions for an Organism
 
 ```python
-import requests
-import time
-import pandas as pd
+import requests, time, pandas as pd
 
-EMDB_API = "https://www.ebi.ac.uk/emdb/api"
+EBI_SEARCH = "https://www.ebi.ac.uk/ebisearch/ws/rest/emdb"
 
-targets = ["KRAS", "EGFR", "ACE2", "p53", "mTOR"]
-rows = []
-for target in targets:
-    r = requests.get(f"{EMDB_API}/search/",
-                     params={"q": target, "rows": 100}, timeout=30)
+def best_by_organism(organism, size=50):
+    r = requests.get(EBI_SEARCH,
+        params={"query": f'organism:"{organism}"', "size": size,
+                "format": "json", "fields": "id,name,resolution"},
+        timeout=30)
     r.raise_for_status()
-    entries = r.json().get("results", [])
-    resolutions = [e["resolution"] for e in entries if e.get("resolution") is not None]
-    rows.append({
-        "target":     target,
-        "n_entries":  len(entries),
-        "best_resol": min(resolutions) if resolutions else None,
-        "mean_resol": round(sum(resolutions)/len(resolutions), 2) if resolutions else None,
-    })
-    time.sleep(0.3)
-
-df = pd.DataFrame(rows)
-print(df.to_string(index=False))
-#   target  n_entries  best_resol  mean_resol
-#     KRAS         12        2.19        3.84
-#     EGFR         31        2.60        4.12
-#     ACE2         45        2.05        3.27
-```
-
-### Recipe: Find All Entries Below a Resolution Cutoff
-
-When to use: Build a benchmark set of high-resolution cryo-EM structures for a specific system.
-
-```python
-import requests
-import pandas as pd
-
-EMDB_API = "https://www.ebi.ac.uk/emdb/api"
-
-def find_highres_entries(query: str, resolution_cutoff: float = 3.0, max_results: int = 200) -> pd.DataFrame:
-    r = requests.get(f"{EMDB_API}/search/",
-                     params={"q": query, "rows": max_results}, timeout=60)
-    r.raise_for_status()
-    entries = r.json().get("results", [])
     rows = []
-    for e in entries:
-        resol = e.get("resolution")
-        if resol is not None and resol <= resolution_cutoff:
-            rows.append({
-                "emdb_id":    e.get("emdbId"),
-                "resolution": resol,
-                "title":      e.get("title", "")[:70],
-                "organism":   e.get("organism", ""),
-            })
-    return pd.DataFrame(rows).sort_values("resolution") if rows else pd.DataFrame()
+    for h in r.json()["entries"]:
+        f = h["fields"]
+        try:
+            resol = float((f.get("resolution") or [None])[0])
+        except (TypeError, ValueError):
+            continue
+        rows.append({"emdb_id": h["id"], "resolution_A": resol,
+                     "name": (f.get("name") or [""])[0][:60]})
+    return pd.DataFrame(rows).sort_values("resolution_A").reset_index(drop=True)
 
-df = find_highres_entries("ion channel", resolution_cutoff=3.0)
-print(f"Ion channel maps at ≤3.0 Å: {len(df)}")
-print(df.head(5).to_string(index=False))
-df.to_csv("ion_channel_highres_emdb.csv", index=False)
+df = best_by_organism("Saccharomyces cerevisiae", size=20)
+print(df.head(8).to_string(index=False))
+```
+
+### Recipe: Citation Export (BibTeX-ready)
+
+```python
+import requests
+
+EMDB_API = "https://www.ebi.ac.uk/emdb/api"
+e = requests.get(f"{EMDB_API}/entry/EMD-30210", timeout=30).json()
+ct = (e.get("crossreferences", {})
+        .get("citation_list", {})
+        .get("primary_citation", {})
+        .get("citation_type")) or {}
+authors = [a.get("name") or a.get("name_str")
+           for a in (ct.get("author") or ct.get("author_order") or [])]
+xrefs = ct.get("external_references", []) or ct.get("xref", [])
+doi = next((x.get("valueOf_") for x in xrefs if x.get("type") == "DOI"), "")
+print({"title": (ct.get("title") or "").strip(),
+       "journal": ct.get("journal"),
+       "year": ct.get("year"),
+       "authors_n": len(authors),
+       "doi": doi})
 ```
 
 ## Troubleshooting
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| `HTTPError: 404` for `/entry/{emdb_id}` | Entry ID not found or wrong format | Verify format is `EMD-XXXX` with correct numeric suffix; confirm entry exists on https://www.ebi.ac.uk/emdb/ |
-| Empty `results` list | Query too specific or misspelled | Broaden the search term; try the gene name alone without qualifiers |
-| `resolution` field is `None` | Cryo-ET or subtomogram averaging entries without reported resolution | Skip with `if entry.get("resolution") is not None`; these are valid entries |
-| FTP download returns `404` | Wrong numeric padding in FTP path | Use the raw number without leading zeros for EMD-XXXX where XXXX is < 4 digits; verify the path at https://ftp.ebi.ac.uk/pub/databases/emdb/structures/ |
-| Fitted models list is empty | Map has no associated deposited PDB model | Some authors deposit maps without atomic models; cross-reference by keyword search with the EMDB title |
-| Slow search for common terms | Large result sets | Limit `rows` to a manageable number (50–200) and filter post-fetch; avoid open-ended queries like `q=protein` |
-| `ConnectionError` / `Timeout` | Network issue or server overload | Retry with exponential backoff; increase `timeout` to 60s for large requests |
+| `KeyError: 'results'` or `'numFound'` on EMDB search | `/api/search/` returns a raw JSON array and ignores `q=` | Use EBI Search WS (`/ebisearch/ws/rest/emdb`) — wrapper is `{hitCount, entries, facets}` |
+| HTTP 404 on `/api/entry/{id}/map` (or `/fitted`, `/publications`) | These sub-endpoints don't exist | Read `entry["map"]`, `entry["crossreferences"]["pdb_list"]`, `entry["crossreferences"]["citation_list"]` from the single entry response |
+| Resolution comes back as a string | EMDB stores numeric fields as strings | `float(entry[...]['resolution']['valueOf_'])` — wrap in try/except |
+| EBI Search fields look like single-element lists | EBI Search returns multi-valued fields as lists | Read `f["name"][0]` (or fall back to `(... or [""])[0]`) |
+| Empty `entries` from EBI Search | Wrong field qualifier or typo | Drop the field qualifier, search plain text; check at https://www.ebi.ac.uk/ebisearch/ |
+| HTML response from `/api/statistics/` | `/statistics/` returns HTML, not JSON | Endpoint is for the web UI; don't call it programmatically |
+| `pdb_list` is `{}` for an entry | Map has no fitted atomic model | This is genuine — many tomograms / sub-tomogram averages lack fitted PDB |
 
 ## Related Skills
 
-- `pdb-database` — RCSB PDB REST API for experimental atomic coordinates; complement to EMDB maps
-- `alphafold-database-access` — AlphaFold predicted structures (200M+ proteins), no EM map
-- `pubmed-database` — Retrieve publications by DOI or PMID retrieved from EMDB publications endpoint
-- `mdanalysis-trajectory` — Analyze MD trajectories of structures initially determined by cryo-EM
+- `pdb-database` — RCSB PDB for the atomic-model side of EMDB cross-references
+- `alphafold-database-access` — AI-predicted structures (complement to experimental EMDB maps)
+- `uniprot-protein-database` — Resolve organism / sequence context for an EMDB sample
+- `cellxgene-census` — Tissue/cell-type expression data complementary to structural surveys
 
 ## References
 
-- [EMDB website](https://www.ebi.ac.uk/emdb/) — Browse entries, access documentation, and download maps via web interface
-- [EMDB REST API documentation](https://www.ebi.ac.uk/emdb/api/) — Endpoint reference and JSON schema for all API routes
-- [Lawson et al., Nucleic Acids Res. 2016](https://doi.org/10.1093/nar/gkv1054) — EMDB database description and content overview
-- [EMDB FTP archive](https://ftp.ebi.ac.uk/pub/databases/emdb/structures/) — Direct download of `.map.gz` density files and XML metadata
+- [EMDB at EBI](https://www.ebi.ac.uk/emdb/) — Browse, download, statistics, deposition
+- [EMDB Entry API](https://www.ebi.ac.uk/emdb/api/entry/EMD-30210) — Example entry JSON
+- [EBI Search WS — EMDB](https://www.ebi.ac.uk/ebisearch/swagger.ebi#/emdb) — Keyword search docs
+- [EMDB FTP mirror](https://ftp.ebi.ac.uk/pub/databases/emdb/structures/) — Density map and metadata downloads
+- Lawson CL et al. "EMDB — the Electron Microscopy Data Bank." *Nucleic Acids Research* 52(D1): D456–D465 (2024). https://doi.org/10.1093/nar/gkad1019

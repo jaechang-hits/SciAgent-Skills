@@ -45,7 +45,7 @@ def search_experiments(assay="TF ChIP-seq", target="CTCF", biosample="K562", lim
         "type": "Experiment",
         "assay_title": assay,
         "target.label": target,
-        "biosample_summary": biosample,
+        "biosample_ontology.term_name": biosample,   # `biosample_summary` is a verbose freetext string; filter by ontology term name
         "status": "released",
         "format": "json",
         "limit": limit,
@@ -91,7 +91,7 @@ def search_experiments(assay_title=None, target=None, biosample=None,
     if target:
         params["target.label"] = target
     if biosample:
-        params["biosample_summary"] = biosample
+        params["biosample_ontology.term_name"] = biosample   # filter by ontology term, not the freetext `biosample_summary`
 
     r = requests.get(f"{BASE}/search/", params=params, timeout=30)
     r.raise_for_status()
@@ -492,7 +492,7 @@ def download_tf_peaks_for_cell_type(tf_name, biosample, assembly="GRCh38"):
         "type": "Experiment",
         "assay_title": "TF ChIP-seq",
         "target.label": tf_name,
-        "biosample_summary": biosample,
+        "biosample_ontology.term_name": biosample,   # filter by ontology term, not the freetext `biosample_summary`
         "files.assembly": assembly,
         "status": "released",
         "format": "json",
@@ -712,7 +712,7 @@ r.raise_for_status()
 # Facets contain aggregated counts per assay type
 for facet in r.json().get("facets", []):
     if facet.get("field") == "assay_title":
-        for term in sorted(facet.get("terms", []), key=lambda x: -x["count"])[:20]:
+        for term in sorted(facet.get("terms", []), key=lambda x: -x["doc_count"])[:20]:
             print(f"  {term['doc_count']:6d}  {term['key']}")
 ```
 

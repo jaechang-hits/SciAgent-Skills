@@ -161,7 +161,9 @@ for a in authors[:3]:
     print(f"Author: {a['display_name']}")
     print(f"  OpenAlex ID : {a['id']}")
     print(f"  ORCID       : {a.get('orcid', 'n/a')}")
-    print(f"  Institution : {a.get('last_known_institution', {}).get('display_name', 'n/a')}")
+    # 2024+: singular `last_known_institution` was replaced by plural list `last_known_institutions[0]`
+    insts = a.get("last_known_institutions") or []
+    print(f"  Institution : {insts[0]['display_name'] if insts else 'n/a'}")
     print(f"  Works count : {a['works_count']}")
     print(f"  h-index     : {a['summary_stats'].get('h_index', 'n/a')}")
     print()
@@ -169,7 +171,7 @@ for a in authors[:3]:
 
 ```python
 # Get all papers by an author (by ORCID)
-orcid = "0000-0001-8742-3594"  # Jennifer Doudna
+orcid = "0000-0001-9161-999X"  # Jennifer A. Doudna (correct ORCID; the 8742-3594 variant 404s)
 r = requests.get(f"{BASE}/works",
                  params={"filter": f"author.orcid:{orcid}",
                          "sort": "cited_by_count:desc",
@@ -221,9 +223,10 @@ import requests, pandas as pd
 
 BASE = "https://api.openalex.org"
 
-# Get concept ID for "Machine Learning"
+# Get concept ID for "Machine Learning". OpenAlex concept search is brittle for
+# multi-word phrases ("machine learning biology" returns 0); use the single core term.
 r = requests.get(f"{BASE}/concepts",
-                 params={"search": "machine learning biology",
+                 params={"search": "machine learning",
                          "per_page": 3,
                          "mailto": "your@email.com"})
 concepts = r.json()["results"]
@@ -359,7 +362,7 @@ def extract_collaborators(works):
     return collab_count
 
 # Map collaborators for a researcher
-orcid = "0000-0001-8742-3594"
+orcid = "0000-0001-9161-999X"   # Jennifer A. Doudna
 works = get_author_works(orcid, max_papers=50)
 collabs = extract_collaborators(works)
 

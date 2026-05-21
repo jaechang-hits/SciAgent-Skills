@@ -58,7 +58,7 @@ def ena_query(endpoint, params=None, base=BASE_PORTAL):
 # Search for human RNA-seq studies
 resp = ena_query("search", params={
     "result": "study",
-    "query": 'tax_tree(9606) AND library_strategy="RNA-Seq"',
+    "query": 'tax_tree(9606)',   # `library_strategy` is a `read_run`/`read_experiment` field, not a `study` field
     "fields": "study_accession,study_title",
     "format": "json",
     "limit": 3,
@@ -157,9 +157,10 @@ print(f"{tax['scientificName']} (taxId: {tax['taxId']}, rank: {tax['rank']})")
 # Homo sapiens (taxId: 9606, rank: species)
 print(f"Lineage: {tax['lineage'][:80]}...")
 
-# Search by scientific name
+# Search by scientific name — endpoint returns a list (one entry per matching taxon)
 resp = ena_query("scientific-name/Arabidopsis thaliana", base=BASE_TAXONOMY)
-result = resp.json()
+matches = resp.json()
+result = matches[0] if isinstance(matches, list) else matches
 print(f"Tax ID: {result['taxId']}, Common: {result.get('commonName', 'N/A')}")
 # Tax ID: 3702, Common: thale cress
 
@@ -284,10 +285,11 @@ Search for a study, list its samples, then retrieve run metadata.
 ```python
 import json
 
-# Step 1: Find studies by keyword
+# Step 1: Find studies by organism — `study_title="*…*"` wildcards no longer match;
+# use `tax_tree()` against the species tax ID (SARS-CoV-2 = 2697049).
 resp = ena_query("search", params={
     "result": "study",
-    "query": 'study_title="*SARS-CoV-2*" AND first_public>=2023-01-01',
+    "query": 'tax_tree(2697049) AND first_public>=2023-01-01',
     "fields": "study_accession,study_title,center_name",
     "format": "json",
     "limit": 3,
@@ -369,32 +371,29 @@ for d in download_list[:4]:
 Find organisms, search their assemblies, and check quality statistics.
 
 ```python
-# Step 1: Find organism by partial name
-resp = ena_query("suggest-for-search/drosophila", base=BASE_TAXONOMY)
-taxa = resp.json()
-target_tax = None
-for t in taxa[:5]:
-    print(f"  {t['scientificName']} (taxId: {t['taxId']})")
-    if t["scientificName"] == "Drosophila melanogaster":
-        target_tax = t["taxId"]
-print(f"\nSelected: taxId={target_tax}")
+# Step 1: Resolve organism by exact scientific name (returns a list, take the first match).
+# `suggest-for-search` only returns prefix matches and may not include the species you want.
+resp = ena_query("scientific-name/Drosophila melanogaster", base=BASE_TAXONOMY)
+matches = resp.json()
+target_tax = matches[0]["taxId"]
+print(f"Selected: {matches[0]['scientificName']} (taxId={target_tax})")
 
-# Step 2: Search assemblies for this organism
+# Step 2: Search assemblies for this organism. `n50` is no longer a valid `assembly`
+# field — use `base_count` and `program` for what's available.
 resp = ena_query("search", params={
     "result": "assembly",
     "query": f'tax_eq({target_tax}) AND assembly_level="chromosome"',
     "fields": ("assembly_accession,assembly_name,assembly_level,"
-               "genome_representation,n50,total_length"),
+               "genome_representation,base_count"),
     "format": "json",
     "limit": 5,
 })
 assemblies = resp.json()
 for a in assemblies:
-    n50 = int(a.get("n50", 0))
-    size = int(a.get("total_length", 0))
+    size = int(a.get("base_count", 0))
     print(f"  {a['assembly_accession']}: {a.get('assembly_name','N/A')}, "
-          f"N50={n50:,}, Size={size/1e6:.1f} Mb")
-# GCA_000001215.4: Release 6 plus ISO1 MT, N50=25,286,936, Size=143.7 Mb
+          f"Size={size/1e6:.1f} Mb")
+# GCA_000001215.4: Release 6 plus ISO1 MT, Size=143.7 Mb
 ```
 
 ## Key Parameters
@@ -428,19 +427,20 @@ for a in assemblies:
 ### Recipe: Assembly Quality Filtering
 
 ```python
-# Find high-quality chromosome-level assemblies
+# Find chromosome-level, full-representation assemblies.
+# `n50` is no longer a valid `assembly` field — filter by base_count instead.
 resp = ena_query("search", params={
     "result": "assembly",
     "query": ('tax_tree(7742) AND assembly_level="chromosome" '
               'AND genome_representation="full"'),
-    "fields": "assembly_accession,scientific_name,n50,total_length,assembly_level",
+    "fields": "assembly_accession,scientific_name,base_count,assembly_level",
     "format": "json",
     "limit": 10,
 })
 for a in resp.json():
-    n50 = int(a.get("n50", 0))
-    if n50 > 1_000_000:  # N50 > 1 Mb
-        print(f"{a['assembly_accession']}: {a['scientific_name']}, N50={n50:,}")
+    size = int(a.get("base_count", 0))
+    if size > 100_000_000:   # >100 Mb (proxy for "well-assembled")
+        print(f"{a['assembly_accession']}: {a.get('scientific_name','?')}, Size={size/1e6:.0f} Mb")
 ```
 
 ### Recipe: Cross-Database Linking

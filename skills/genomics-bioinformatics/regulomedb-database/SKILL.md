@@ -1,6 +1,6 @@
 ---
 name: "regulomedb-database"
-description: "Query RegulomeDB v2 REST API to score variants for regulatory function and retrieve overlapping evidence (TF binding, histone marks, DNase peaks, eQTLs, motifs). Score single rsID/position, batch lists, region searches, and full annotations. Scores range 1a (strongest: eQTL+TF+DNase+motif) to 7 (none). Use for GWAS hit prioritization, regulatory variant annotation, cis-regulatory discovery. Use clinvar-database for pathogenicity; gwas-database for trait associations."
+description: "Query RegulomeDB v2 GET REST API to score variants for regulatory function and retrieve overlapping evidence (TF binding, histone marks, DNase peaks, footprints, motifs, eQTLs, chromatin state). Scores range 1a (strongest) to 7 (none). Use for GWAS hit prioritization, regulatory variant annotation, cis-regulatory discovery. Use clinvar-database for pathogenicity; gwas-database for trait associations."
 license: "CC-BY-4.0"
 ---
 
@@ -8,17 +8,17 @@ license: "CC-BY-4.0"
 
 ## Overview
 
-RegulomeDB integrates large-scale functional genomics data (ENCODE, Roadmap Epigenomics) to score genetic variants for regulatory potential. Each variant receives a score from 1a (highest regulatory confidence: eQTL + TF binding + DNase accessibility + motif + chromatin) to 7 (no known regulatory function). The v2 REST API supports single-variant queries, batch scoring, and region-based searches. Access is free and requires no authentication.
+RegulomeDB integrates large-scale functional genomics data (ENCODE, Roadmap Epigenomics) to score genetic variants for regulatory potential. Each variant receives a ranking from 1a (highest regulatory confidence: eQTL + TF + DNase + motif + chromatin) to 7 (no known regulatory function). The v2 API is exposed as **GET** `https://regulomedb.org/regulome-search/`; the legacy POST `/regulome-search/`, POST `/regulome-summary/`, and GET `/regulome-datasets/` JSON endpoints are no longer functional (return `regulome-notfound` stubs or 500). Access is free and requires no authentication.
 
 ## When to Use
 
 - Prioritizing GWAS hits for regulatory follow-up — identify which SNPs land in active regulatory elements
 - Annotating a VCF or variant list with regulatory scores to filter to functionally relevant variants
-- Identifying which transcription factors bind near a variant of interest
-- Checking whether a non-coding variant overlaps an eQTL and active chromatin simultaneously
-- Retrieving all high-confidence regulatory variants in a genomic region for cis-regulatory analysis
-- Use `clinvar-database` instead when you need clinical pathogenicity classifications (ClinSig); RegulomeDB is for regulatory function, not germline disease association
-- Use `gwas-database` instead when you want published GWAS associations with traits; RegulomeDB scores regulatory evidence regardless of trait association
+- Identifying which transcription factors bind near a variant of interest (via the `@graph` evidence rows)
+- Checking whether a non-coding variant overlaps a QTL and active chromatin simultaneously (`features.QTL`)
+- Retrieving all annotated rsIDs in a genomic region for cis-regulatory analysis (region query with `nearby_snps`)
+- Use `clinvar-database` instead when you need clinical pathogenicity classifications; RegulomeDB scores regulatory function, not germline disease association
+- Use `gwas-database` instead when you want published GWAS associations with traits
 
 ## Prerequisites
 
@@ -36,31 +36,38 @@ pip install requests pandas matplotlib
 ```python
 import requests
 
+BASE = "https://regulomedb.org"
+
 def regulome_score(variant, genome="GRCh38"):
-    """Score a single variant (rsID or chr:pos) for regulatory function."""
-    r = requests.post(
-        "https://regulomedb.org/regulome-search/",
-        json={"variants": [variant], "genome": genome, "limit": 1},
-        headers={"Content-Type": "application/json"}
+    """Score a single variant (rsID or chr:pos-pos) via the GET /regulome-search/ endpoint."""
+    r = requests.get(
+        f"{BASE}/regulome-search/",
+        params={"regions": variant, "genome": genome, "format": "json"},
+        timeout=30,
     )
     r.raise_for_status()
-    data = r.json()
-    hits = data.get("variants", [])
-    if not hits:
-        return None
-    v = hits[0]
-    return {"rsid": variant, "score": v.get("regulomedb_score"), "chrom": v.get("chrom"), "pos": v.get("start")}
+    d = r.json()
+    rs = d.get("regulome_score", {})
+    vs = d.get("variants", [])
+    return {
+        "query": variant,
+        "ranking": rs.get("ranking"),           # 1a / 1b / ... / 7
+        "probability": float(rs.get("probability", 0)),
+        "rsids": vs[0].get("rsids") if vs else [],
+        "chrom": vs[0].get("chrom") if vs else None,
+        "pos": vs[0].get("start") if vs else None,
+    }
 
-result = regulome_score("rs4946036")
-print(f"Variant: {result['rsid']}  Score: {result['score']}  Position: {result['chrom']}:{result['pos']}")
-# Variant: rs4946036  Score: 1b  Position: chr5:1295228
+print(regulome_score("rs4946036"))
+# {'query': 'rs4946036', 'ranking': '7', 'probability': 0.18412,
+#  'rsids': ['rs4946036'], 'chrom': 'chr6', 'pos': 114819799}
 ```
 
 ## Core API
 
-### Query 1: Variant Scoring — Single rsID or Genomic Position
+### Query 1: Score a Single Variant (rsID or position)
 
-Post a single variant to the main search endpoint and retrieve its regulatory score.
+The GET `/regulome-search/` endpoint accepts an rsID or coordinate as `regions=`. Returns a `regulome_score` block (probability, ranking, tissue-specific scores) plus `features` flags and the per-dataset `@graph` evidence rows.
 
 ```python
 import requests
@@ -68,313 +75,230 @@ import requests
 BASE = "https://regulomedb.org"
 
 def score_variant(variant, genome="GRCh38"):
-    """
-    Score a single variant for regulatory potential.
-    variant: rsID (e.g. 'rs4946036') or chr:pos (e.g. 'chr5:1295228')
-    Returns: dict with score, coordinates, and hit count.
-    """
-    r = requests.post(
+    """Return the regulome_score block and resolved coordinates."""
+    r = requests.get(
         f"{BASE}/regulome-search/",
-        json={"variants": [variant], "genome": genome, "limit": 10},
-        headers={"Content-Type": "application/json"},
-        timeout=30
+        params={"regions": variant, "genome": genome, "format": "json"},
+        timeout=30,
     )
     r.raise_for_status()
-    data = r.json()
-    hits = data.get("variants", [])
-    if not hits:
-        print(f"{variant}: no RegulomeDB annotation found")
-        return None
-    v = hits[0]
-    print(f"Variant  : {v.get('rsids', [variant])}")
-    print(f"Score    : {v.get('regulomedb_score')}")
-    print(f"Location : {v.get('chrom')}:{v.get('start')}-{v.get('end')}")
-    print(f"Evidence : {v.get('num_peaks', 0)} overlapping peaks")
-    return v
+    d = r.json()
+    rs = d.get("regulome_score", {})
+    vs = d.get("variants", [])
+    feats = d.get("features", {})
+    print(f"Variant   : {variant}")
+    print(f"Resolved  : {vs[0]['chrom']}:{vs[0]['start']} ({', '.join(vs[0].get('rsids', []))})")
+    print(f"Ranking   : {rs.get('ranking')}  prob={rs.get('probability')}")
+    print(f"Features  : ChIP={feats['ChIP']} Chromatin_accessibility={feats['Chromatin_accessibility']} "
+          f"QTL={feats['QTL']} Footprint={feats['Footprint']} PWM_matched={feats['PWM_matched']}")
+    return d
 
-result = score_variant("rs4946036")
+# Strong-regulatory locus example
+score_variant("chr11:5226739-5226740")
+# Ranking: 1a (HBB beta-globin promoter, multi-evidence)
 ```
 
 ```python
-# Query by genomic coordinate instead of rsID
-result = score_variant("chr17:43092919", genome="GRCh38")
-# Covers TP53 region
+# Score by chromosomal position alone
+score_variant("chr17:7670000-7670001")  # TP53 region
 ```
 
-### Query 2: Batch Variant Scoring — Multiple Variants
+### Query 2: Region Scan — List Annotated Variants in a Window
 
-Score a list of variants in a single POST request; handle large lists in batches of 100.
-
-```python
-import requests, time, pandas as pd
-
-BASE = "https://regulomedb.org"
-
-def batch_score_variants(variants, genome="GRCh38", batch_size=100):
-    """
-    Score multiple variants and return a DataFrame of results.
-    variants: list of rsIDs or chr:pos strings
-    Returns: pd.DataFrame with columns [variant, score, chrom, pos, num_peaks]
-    """
-    records = []
-    for i in range(0, len(variants), batch_size):
-        batch = variants[i:i + batch_size]
-        r = requests.post(
-            f"{BASE}/regulome-search/",
-            json={"variants": batch, "genome": genome, "limit": batch_size},
-            headers={"Content-Type": "application/json"},
-            timeout=60
-        )
-        r.raise_for_status()
-        data = r.json()
-        for v in data.get("variants", []):
-            records.append({
-                "query": batch[len(records) % batch_size] if len(records) < len(batch) else "",
-                "rsids": "; ".join(v.get("rsids", [])),
-                "score": v.get("regulomedb_score"),
-                "chrom": v.get("chrom"),
-                "pos": v.get("start"),
-                "num_peaks": v.get("num_peaks", 0),
-            })
-        if i + batch_size < len(variants):
-            time.sleep(0.3)
-
-    df = pd.DataFrame(records)
-    print(f"Scored {len(df)} variants out of {len(variants)} queried")
-    print(df["score"].value_counts().sort_index())
-    return df
-
-gwas_hits = [
-    "rs4946036", "rs12345678", "rs7903146", "rs10811661",
-    "rs1801282", "rs1799853", "rs662799",  "rs2268177"
-]
-df = batch_score_variants(gwas_hits)
-df.to_csv("gwas_hits_regulome_scores.csv", index=False)
-print(df[["rsids", "score", "chrom", "pos"]].head())
-```
-
-### Query 3: Region Search — Find Regulatory Variants in a Genomic Window
-
-Retrieve all annotated variants within a chromosomal region using the GET endpoint.
+A range query returns up to `limit` resolved variants (`variants[]`) and all `@graph` evidence rows in the window, plus `nearby_snps` (rsIDs adjacent to the resolved hits).
 
 ```python
 import requests, pandas as pd
 
 BASE = "https://regulomedb.org"
 
-def search_region(chrom, start, end, genome="GRCh38", limit=200):
-    """
-    Find all RegulomeDB-annotated variants in a genomic region.
-    Returns: pd.DataFrame of variants with scores.
-    """
-    params = {
-        "regions": f"{chrom}:{start}-{end}",
-        "genome": genome,
-        "limit": limit,
-    }
-    r = requests.get(f"{BASE}/regulome-search/", params=params, timeout=60)
-    r.raise_for_status()
-    data = r.json()
-    variants = data.get("variants", [])
-    print(f"Found {len(variants)} annotated variants in {chrom}:{start}-{end}")
-
-    records = []
-    for v in variants:
-        records.append({
-            "rsids": "; ".join(v.get("rsids", [])),
-            "score": v.get("regulomedb_score"),
-            "chrom": v.get("chrom"),
-            "start": v.get("start"),
-            "end": v.get("end"),
-            "num_peaks": v.get("num_peaks", 0),
-        })
-    return pd.DataFrame(records)
-
-# Search the BRCA1 promoter region (GRCh38)
-df_region = search_region("chr17", 43_044_295, 43_125_370)
-# Score 1a/1b = highest regulatory confidence
-high_conf = df_region[df_region["score"].isin(["1a", "1b", "2a", "2b"])]
-print(f"High-confidence regulatory variants: {len(high_conf)}")
-print(df_region.sort_values("score").head(10).to_string(index=False))
-```
-
-### Query 4: Annotation Details — Full Regulatory Evidence for a Variant
-
-Retrieve the complete evidence set for a variant: TF names, histone marks, eQTL status, motif hits.
-
-```python
-import requests
-
-BASE = "https://regulomedb.org"
-
-def get_annotation_details(variant, genome="GRCh38"):
-    """
-    Fetch full regulatory annotation details for a single variant.
-    Returns raw JSON response with peak-level evidence.
-    """
-    r = requests.post(
+def scan_region(chrom, start, end, genome="GRCh38", limit=200):
+    """List variants in a region with their resolved positions and overlapping rsIDs."""
+    r = requests.get(
         f"{BASE}/regulome-search/",
-        json={"variants": [variant], "genome": genome, "limit": 1},
-        headers={"Content-Type": "application/json"},
-        timeout=30
+        params={"regions": f"{chrom}:{start}-{end}", "genome": genome,
+                "format": "json", "limit": limit},
+        timeout=60,
     )
     r.raise_for_status()
-    data = r.json()
-    hits = data.get("variants", [])
-    if not hits:
-        print(f"No annotation found for {variant}")
-        return None
+    d = r.json()
+    variants = d.get("variants", [])
+    print(f"Variants in {chrom}:{start}-{end}: {len(variants)} (total indexed = {d.get('total')})")
+    rows = [{"rsids": ", ".join(v.get("rsids", [])),
+             "chrom": v.get("chrom"),
+             "start": v.get("start"),
+             "end": v.get("end")} for v in variants]
+    return pd.DataFrame(rows)
 
-    v = hits[0]
-    print(f"=== {variant} | Score: {v.get('regulomedb_score')} ===")
-
-    # Evidence breakdown
-    peaks = v.get("peaks", [])
-    tf_peaks = [p for p in peaks if p.get("assay_type") == "TF ChIP-seq"]
-    dnase_peaks = [p for p in peaks if p.get("assay_type") == "DNase-seq"]
-    histone_peaks = [p for p in peaks if "histone" in p.get("assay_type", "").lower()]
-
-    print(f"TF binding sites    : {len(tf_peaks)}")
-    print(f"DNase-seq peaks     : {len(dnase_peaks)}")
-    print(f"Histone mark peaks  : {len(histone_peaks)}")
-
-    # List unique TFs
-    tfs = sorted(set(p.get("target", {}).get("label", "Unknown") for p in tf_peaks))
-    print(f"TFs bound ({len(tfs)}): {', '.join(tfs[:10])}{'...' if len(tfs) > 10 else ''}")
-
-    eqtls = v.get("eqtls", [])
-    print(f"eQTL associations   : {len(eqtls)}")
-    for eq in eqtls[:3]:
-        print(f"  Gene: {eq.get('gene_name')}  Tissue: {eq.get('tissue')}")
-
-    return v
-
-detail = get_annotation_details("rs4946036")
+df = scan_region("chr11", 5226000, 5227000)
+print(df.head(10).to_string(index=False))
 ```
 
-### Query 5: Summary Statistics — Score Distribution in a Region
+### Query 3: Full Evidence — Parse the `@graph` Rows
 
-Get counts of variants by regulatory score category using the summary endpoint.
-
-```python
-import requests
-
-BASE = "https://regulomedb.org"
-
-def get_region_summary(chrom, start, end, genome="GRCh38"):
-    """
-    Retrieve summary statistics: count of variants per score category in a region.
-    Returns: dict mapping score → count.
-    """
-    r = requests.post(
-        f"{BASE}/regulome-summary/",
-        json={"regions": [f"{chrom}:{start}-{end}"], "genome": genome},
-        headers={"Content-Type": "application/json"},
-        timeout=30
-    )
-    r.raise_for_status()
-    data = r.json()
-    summary = data.get("summary", {})
-    print(f"Regulatory score summary for {chrom}:{start}-{end}")
-    score_order = ["1a", "1b", "2a", "2b", "2c", "3a", "3b", "4", "5", "6", "7"]
-    for score in score_order:
-        count = summary.get(score, 0)
-        bar = "#" * min(count, 40)
-        print(f"  Score {score:3s}: {count:5d}  {bar}")
-    total = sum(summary.values())
-    print(f"  Total annotated: {total}")
-    return summary
-
-# TP53 locus region summary
-summary = get_region_summary("chr17", 7_661_779, 7_687_538)
-```
-
-### Query 6: Dataset Information — Available Regulatory Datasets
-
-List the regulatory datasets (cell types, assay types) included in RegulomeDB.
+Each `@graph[i]` row is one experimental piece of evidence overlapping the query. Fields: `method, target_label, biosample_ontology{term_name, organ_slims, classification}, dataset, file, value, chrom, start, end, strand, ancestry, disease_term_name`.
 
 ```python
 import requests, pandas as pd
 
 BASE = "https://regulomedb.org"
 
-def list_datasets(assay_type=None):
-    """
-    List available regulatory datasets (cell types and assay types).
-    assay_type: optional filter, e.g. 'TF ChIP-seq', 'DNase-seq', 'Histone ChIP-seq'
-    Returns: pd.DataFrame of datasets.
-    """
-    params = {"format": "json"}
-    if assay_type:
-        params["assay_type"] = assay_type
-
-    r = requests.get(f"{BASE}/regulome-datasets/", params=params, timeout=30)
+def evidence_rows(variant, genome="GRCh38"):
+    r = requests.get(
+        f"{BASE}/regulome-search/",
+        params={"regions": variant, "genome": genome, "format": "json"},
+        timeout=60,
+    )
     r.raise_for_status()
-    data = r.json()
-    datasets = data.get("datasets", [])
-    print(f"Total datasets: {len(datasets)}")
-
-    records = []
-    for ds in datasets[:20]:  # show first 20
-        records.append({
-            "dataset_id": ds.get("@id", "").split("/")[-2],
-            "assay_type": ds.get("assay_type"),
-            "biosample": ds.get("biosample_term_name"),
-            "target": ds.get("target", {}).get("label", ""),
+    g = r.json().get("@graph", [])
+    rows = []
+    for row in g:
+        bs = row.get("biosample_ontology") or {}
+        rows.append({
+            "method": row.get("method"),
+            "target_label": row.get("target_label"),
+            "biosample": bs.get("term_name"),
+            "organ_slims": ", ".join(bs.get("organ_slims") or []),
+            "dataset": row.get("dataset", "").split("/")[-2] if row.get("dataset") else None,
+            "value": row.get("value"),
         })
-    df = pd.DataFrame(records)
-    print(df.to_string(index=False))
-    return df
+    return pd.DataFrame(rows)
 
-df_datasets = list_datasets(assay_type="TF ChIP-seq")
-print(f"\nUnique cell types: {df_datasets['biosample'].nunique()}")
+df_evidence = evidence_rows("chr11:5226739-5226740")
+# Each method is one of: ChIP-seq, Histone ChIP-seq, ATAC-seq, DNase-seq,
+# footprints, PWMs, chromatin state, eQTLs
+print(df_evidence["method"].value_counts())
+```
+
+### Query 4: TF ChIP-seq Hits — Filter Evidence by Method
+
+To list the transcription factors binding near a variant, filter `@graph` rows where `method == "ChIP-seq"` and read `target_label` + `biosample_ontology.term_name`.
+
+```python
+import requests, pandas as pd
+
+BASE = "https://regulomedb.org"
+
+def tf_binding(variant, genome="GRCh38"):
+    r = requests.get(f"{BASE}/regulome-search/",
+                     params={"regions": variant, "genome": genome, "format": "json"},
+                     timeout=60)
+    r.raise_for_status()
+    rows = []
+    for g in r.json().get("@graph", []):
+        if g.get("method") != "ChIP-seq":
+            continue
+        bs = g.get("biosample_ontology") or {}
+        rows.append({
+            "tf": g.get("target_label"),
+            "biosample": bs.get("term_name"),
+            "classification": bs.get("classification"),
+        })
+    return pd.DataFrame(rows)
+
+df_tfs = tf_binding("chr11:5226739-5226740")
+print(f"TF ChIP-seq peaks overlapping query: {len(df_tfs)}")
+print(df_tfs.groupby("tf").size().sort_values(ascending=False).head(10))
+```
+
+### Query 5: Tissue-Specific Regulatory Score
+
+`regulome_score.tissue_specific_scores` maps ~50 tissues to per-tissue regulatory probabilities (0–1). Rank tissues to identify where the variant has the strongest regulatory signal.
+
+```python
+import requests, pandas as pd
+
+BASE = "https://regulomedb.org"
+
+def tissue_scores(variant, genome="GRCh38", top_n=10):
+    r = requests.get(f"{BASE}/regulome-search/",
+                     params={"regions": variant, "genome": genome, "format": "json"},
+                     timeout=30)
+    r.raise_for_status()
+    ts = r.json().get("regulome_score", {}).get("tissue_specific_scores", {})
+    s = pd.Series({k: float(v) for k, v in ts.items()})
+    return s.sort_values(ascending=False).head(top_n)
+
+print("Top tissues by regulatory probability for chr11:5226739-5226740:")
+print(tissue_scores("chr11:5226739-5226740"))
+```
+
+### Query 6: Nearby SNPs — List rsIDs Adjacent to a Position
+
+`nearby_snps` carries dbSNP rsIDs near the resolved coordinates, with reference/alt allele frequencies (when GnomAD-indexed).
+
+```python
+import requests, pandas as pd
+
+BASE = "https://regulomedb.org"
+
+def nearby(variant, genome="GRCh38"):
+    r = requests.get(f"{BASE}/regulome-search/",
+                     params={"regions": variant, "genome": genome, "format": "json"},
+                     timeout=30)
+    r.raise_for_status()
+    rows = []
+    for s in r.json().get("nearby_snps", []):
+        rows.append({
+            "rsid": s.get("rsid"),
+            "chrom": s.get("chrom"),
+            "pos": s.get("coordinates", {}).get("gte"),
+            "type": s.get("variation_type"),
+            "maf": s.get("maf"),
+        })
+    return pd.DataFrame(rows)
+
+df_nearby = nearby("rs4946036")
+print(f"Nearby SNPs to rs4946036: {len(df_nearby)}")
+print(df_nearby.head(10).to_string(index=False))
 ```
 
 ## Key Concepts
 
 ### RegulomeDB Scoring Schema
 
-RegulomeDB scores encode the type and strength of regulatory evidence overlapping a variant:
+RegulomeDB ranks encode the strength of evidence overlapping a variant. The `regulome_score.ranking` string is one of:
 
-| Score | Evidence | Regulatory Confidence |
-|-------|----------|-----------------------|
-| 1a | eQTL + TF binding + DNase + motif + chromatin | Highest |
-| 1b | TF binding + DNase + motif + chromatin (no eQTL) | Very high |
+| Ranking | Evidence | Confidence |
+|---------|----------|------------|
+| 1a | eQTL + TF + DNase + motif + matched footprint | Highest |
+| 1b–1f | Multi-evidence (sub-ranks reflect which inputs match) | Very high |
 | 2a | TF binding + DNase + motif | High |
-| 2b | TF binding + DNase (no motif) | High |
-| 2c | TF binding only (with DNase) | Moderate-high |
-| 3a | DNase + motif | Moderate |
-| 3b | Motif only | Moderate |
+| 2b | TF binding + any DNase (no motif required) | High |
+| 2c | TF binding + DNase (limited) | Moderate-high |
+| 3a | DNase + motif (no TF ChIP-seq) | Moderate |
+| 3b | Motif only (no DNase) | Moderate |
 | 4 | Single TF binding evidence | Low-moderate |
-| 5 | Chromatin accessibility only | Low |
+| 5 | DNase peak only | Low |
 | 6 | Other regulatory evidence | Minimal |
 | 7 | No known regulatory function | None |
 
-Scores 1a–2b are the most actionable for prioritizing GWAS hits or regulatory variant interpretation. Score 7 means the variant has not been overlapped by any ENCODE/Roadmap regulatory dataset.
+`regulome_score.probability` is the numeric model score (0–1) underlying the discrete ranking.
+
+### `features` Booleans vs `@graph` Detail
+
+`features` is a high-level summary — boolean flags indicating presence of `ChIP`, `Chromatin_accessibility`, `Footprint`, `PWM`, `QTL`, etc. For per-dataset detail (which exact TF / cell type / experiment), iterate `@graph[]` and filter by `method`.
 
 ### Variant Input Formats
 
-RegulomeDB accepts three input formats for variants:
+`regions=` accepts:
 
 ```python
-# Format 1: rsID (resolved to GRCh38 coordinates internally)
-variants_rsid = ["rs4946036", "rs7903146", "rs12345678"]
+# rsID — resolved server-side to current-build coordinates
+"rs4946036"
 
-# Format 2: chr:pos (single nucleotide position)
-variants_pos = ["chr5:1295228", "chr10:112998251", "chr3:185511687"]
+# Single-position range
+"chr11:5226739-5226740"
 
-# Format 3: chr:start-end (short range, typically SNP-sized)
-variants_range = ["chr17:43092919-43092920", "chr7:117548628-117548629"]
-
-# Mix all formats in one request
-mixed = variants_rsid + variants_pos
+# Wider region (returns multiple variants[] entries + larger @graph)
+"chr11:5226000-5227000"
 ```
 
 ## Common Workflows
 
 ### Workflow 1: GWAS Hit Prioritization
 
-**Goal**: Take a list of GWAS lead SNPs and identify which have strong regulatory evidence for functional follow-up.
+**Goal**: Score a list of GWAS lead SNPs and rank by regulatory confidence.
 
 ```python
 import requests, time, pandas as pd
@@ -382,257 +306,198 @@ import matplotlib.pyplot as plt
 
 BASE = "https://regulomedb.org"
 
-# GWAS lead SNPs from a type 2 diabetes GWAS
-gwas_snps = [
-    "rs7903146",   # TCF7L2 locus
-    "rs10811661",  # CDKN2A/B locus
-    "rs1801282",   # PPARG locus
-    "rs4946036",   # PCSK1 locus
-    "rs2268177",   # HNF4A locus
-    "rs11605924",  # CRY2 locus
-    "rs10830963",  # MTNR1B locus
-    "rs1111875",   # HHEX locus
-]
+gwas_snps = ["rs7903146", "rs10811661", "rs1801282", "rs4946036",
+             "rs2268177", "rs10830963", "rs1111875"]
 
 records = []
 for snp in gwas_snps:
-    r = requests.post(
-        f"{BASE}/regulome-search/",
-        json={"variants": [snp], "genome": "GRCh38", "limit": 1},
-        headers={"Content-Type": "application/json"},
-        timeout=30
-    )
+    r = requests.get(f"{BASE}/regulome-search/",
+                     params={"regions": snp, "genome": "GRCh38", "format": "json"},
+                     timeout=30)
     r.raise_for_status()
-    data = r.json()
-    hits = data.get("variants", [])
-    if hits:
-        v = hits[0]
-        peaks = v.get("peaks", [])
-        tfs = [p.get("target", {}).get("label", "") for p in peaks if p.get("assay_type") == "TF ChIP-seq"]
-        records.append({
-            "snp": snp,
-            "score": v.get("regulomedb_score"),
-            "num_peaks": v.get("num_peaks", 0),
-            "num_tfs": len(set(tfs)),
-            "has_eqtl": len(v.get("eqtls", [])) > 0,
-        })
-    else:
-        records.append({"snp": snp, "score": "7", "num_peaks": 0, "num_tfs": 0, "has_eqtl": False})
+    d = r.json()
+    rs = d.get("regulome_score", {})
+    feats = d.get("features", {})
+    g = d.get("@graph", [])
+    tfs = sorted({row["target_label"] for row in g
+                  if row.get("method") == "ChIP-seq" and row.get("target_label")})
+    records.append({
+        "snp": snp,
+        "ranking": rs.get("ranking"),
+        "probability": float(rs.get("probability", 0)),
+        "has_qtl": feats.get("QTL", False),
+        "tf_count": len(tfs),
+        "num_evidence_rows": len(g),
+    })
     time.sleep(0.3)
 
-df = pd.DataFrame(records)
-df["score_numeric"] = df["score"].str.replace("a", ".1").str.replace("b", ".2").str.replace("c", ".3").astype(float)
-df_sorted = df.sort_values("score_numeric")
+df = pd.DataFrame(records).sort_values("probability", ascending=False)
+print(df.to_string(index=False))
+df.to_csv("gwas_regulatory_priority.csv", index=False)
 
-print("=== GWAS Hit Regulatory Prioritization ===")
-print(df_sorted[["snp", "score", "num_peaks", "num_tfs", "has_eqtl"]].to_string(index=False))
-print(f"\nHigh-confidence variants (score ≤ 2b): {(df['score_numeric'] <= 2.2).sum()}")
-df_sorted.to_csv("gwas_regulatory_priority.csv", index=False)
-
-# Bar chart of score distribution
-fig, ax = plt.subplots(figsize=(10, 4))
-score_counts = df["score"].value_counts().sort_index()
-ax.bar(score_counts.index, score_counts.values, color="steelblue", edgecolor="black")
-ax.set_xlabel("RegulomeDB Score")
-ax.set_ylabel("Number of Variants")
-ax.set_title("Regulatory Score Distribution of GWAS Lead SNPs")
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.bar(df["snp"], df["probability"], color="steelblue", edgecolor="black")
+ax.set_ylabel("Regulatory probability")
+ax.set_title("GWAS lead-SNP regulatory probabilities")
+plt.xticks(rotation=45, ha="right")
 plt.tight_layout()
 plt.savefig("gwas_score_distribution.png", dpi=150, bbox_inches="tight")
-print("Saved gwas_score_distribution.png")
 ```
 
-### Workflow 2: TF Binding Heatmap for a Variant Set
+### Workflow 2: Locus Evidence Profile
 
-**Goal**: Retrieve annotation details for multiple variants and visualize which TFs bind near each variant.
+**Goal**: Summarize the methods underlying the score at a locus (e.g., HBB promoter).
 
 ```python
-import requests, time, pandas as pd
+import requests, pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
 BASE = "https://regulomedb.org"
 
-variants = ["rs4946036", "rs7903146", "rs10811661", "rs1801282", "rs2268177"]
-
-all_tfs = set()
-variant_tfs = {}
-
-for snp in variants:
-    r = requests.post(
-        f"{BASE}/regulome-search/",
-        json={"variants": [snp], "genome": "GRCh38", "limit": 1},
-        headers={"Content-Type": "application/json"},
-        timeout=30
-    )
+def locus_profile(region, genome="GRCh38"):
+    r = requests.get(f"{BASE}/regulome-search/",
+                     params={"regions": region, "genome": genome, "format": "json"},
+                     timeout=60)
     r.raise_for_status()
-    data = r.json()
-    hits = data.get("variants", [])
-    if not hits:
-        variant_tfs[snp] = {}
-        continue
-    v = hits[0]
-    peaks = v.get("peaks", [])
-    tfs = [p.get("target", {}).get("label", "Unknown")
-           for p in peaks if p.get("assay_type") == "TF ChIP-seq"]
-    tf_counts = {}
-    for tf in tfs:
-        tf_counts[tf] = tf_counts.get(tf, 0) + 1
-    variant_tfs[snp] = tf_counts
-    all_tfs.update(tf_counts.keys())
-    time.sleep(0.3)
+    d = r.json()
+    rs = d.get("regulome_score", {})
+    g = d.get("@graph", [])
+    counts = pd.Series([row.get("method") for row in g]).value_counts()
+    print(f"\n=== {region} | ranking={rs.get('ranking')} prob={rs.get('probability')} ===")
+    print(counts.to_string())
+    return counts
 
-# Build heatmap matrix
-tf_list = sorted(all_tfs - {"Unknown"})[:30]  # top 30 unique TFs
-matrix = np.zeros((len(variants), len(tf_list)))
-for i, snp in enumerate(variants):
-    for j, tf in enumerate(tf_list):
-        matrix[i, j] = variant_tfs[snp].get(tf, 0)
+counts = locus_profile("chr11:5226739-5226740")  # HBB
 
-fig, ax = plt.subplots(figsize=(max(14, len(tf_list) * 0.5), len(variants) * 0.8 + 2))
-im = ax.imshow(matrix, cmap="YlOrRd", aspect="auto")
-ax.set_xticks(range(len(tf_list)))
-ax.set_xticklabels(tf_list, rotation=90, fontsize=8)
-ax.set_yticks(range(len(variants)))
-ax.set_yticklabels(variants, fontsize=9)
-ax.set_title("TF ChIP-seq Peak Overlap per Variant (peak count)")
-plt.colorbar(im, ax=ax, label="Number of overlapping peaks")
+fig, ax = plt.subplots(figsize=(8, 4))
+counts.plot(kind="barh", color="seagreen", ax=ax)
+ax.set_xlabel("Evidence rows in @graph")
+ax.set_title("Regulatory evidence by method (HBB promoter)")
 plt.tight_layout()
-plt.savefig("variant_tf_heatmap.png", dpi=150, bbox_inches="tight")
-print(f"Saved variant_tf_heatmap.png  ({len(variants)} variants × {len(tf_list)} TFs)")
+plt.savefig("locus_evidence_profile.png", dpi=150, bbox_inches="tight")
 ```
 
 ## Key Parameters
 
 | Parameter | Endpoint | Default | Range / Options | Effect |
 |-----------|----------|---------|-----------------|--------|
-| `variants` | POST /regulome-search/ | required | list of rsIDs or chr:pos | Variants to score |
-| `genome` | All | `"GRCh38"` | `"GRCh38"`, `"GRCh37"` | Reference genome assembly |
-| `limit` | POST /regulome-search/ | `10` | `1`–`1000` | Max variants returned per request |
-| `regions` | GET /regulome-search/ | required | `"chrN:start-end"` | Genomic region for region search |
-| `assay_type` | GET /regulome-datasets/ | — | `"TF ChIP-seq"`, `"DNase-seq"`, `"Histone ChIP-seq"` | Filter datasets by assay |
-| `format` | GET endpoints | `"json"` | `"json"`, `"tsv"` | Response format |
+| `regions` | GET /regulome-search/ | required | rsID, `chrN:start-end`, or `chrN:pos-pos` | Variant/region to score |
+| `genome` | GET /regulome-search/ | `"GRCh38"` | `"GRCh38"`, `"GRCh37"` | Reference genome assembly |
+| `format` | GET /regulome-search/ | `"html"` | `"json"`, `"tsv"`, `"html"` | Use `"json"` for programmatic access |
+| `limit` | GET /regulome-search/ | `200` | `1`–`1000` | Max resolved variants in `variants[]` for region queries |
+| `from` | GET /regulome-search/ | `0` | non-negative int | Offset for paging through large `@graph` lists |
 
 ## Best Practices
 
-1. **Interpret scores in context**: Scores 1a–2b indicate multi-evidence regulatory annotation, but do not guarantee causality. A score of 7 means absence of evidence in RegulomeDB's curated datasets, not evidence of absence of regulation.
+1. **Use GET, not POST.** The POST `/regulome-search/`, POST `/regulome-summary/`, and GET `/regulome-datasets/` JSON endpoints return a `regulome-notfound` stub or HTTP 500. Only `GET /regulome-search/?regions=...&genome=...&format=json` returns real data.
 
-2. **Use region search for locus-level analysis**: When analyzing a GWAS locus, use `GET /regulome-search/?regions=` to retrieve all annotated variants in the LD block, then filter by score and linkage disequilibrium data.
+2. **Read `regulome_score.ranking`, not `regulomedb_score`.** The field used to be named `regulomedb_score` in legacy docs; the live API exposes it as `regulome_score.ranking` (string like `"1a"`, `"7"`).
 
-3. **Add `time.sleep(0.3)` in loops**: RegulomeDB has no published rate limit, but polite usage prevents server load issues that produce connection timeouts in long batch runs.
+3. **Add `time.sleep(0.3)` between calls.** RegulomeDB has no published rate limit, but polite spacing prevents intermittent 502s under load.
 
-4. **Cross-reference eQTL data**: Variants with score 1a have RegulomeDB-integrated eQTL evidence. Always verify eQTL tissue specificity (GTEx tissue list in the `eqtls` field) before drawing biological conclusions.
+4. **Score 7 ≠ "no regulation".** Score 7 means absence of evidence in RegulomeDB's curated datasets, not biological absence of regulation. Cross-check with ENCODE/Roadmap directly via `encode-database` for negative results.
 
-5. **Prefer rsIDs over coordinates for reproducibility**: When sharing results, store rsIDs alongside coordinates — RegulomeDB's internal coordinate system is GRCh38, and position-based queries are build-specific.
+5. **For tissue specificity, use `tissue_specific_scores`.** The single `ranking` is an aggregate; the per-tissue probabilities reveal where the variant has the strongest regulatory signal.
+
+6. **Watch the GRCh37 vs GRCh38 build.** rsIDs are auto-resolved to the requested build, but coordinate-based `regions=chrN:start-end` queries are build-specific — pass the matching `genome=` value.
 
 ## Common Recipes
 
-### Recipe: Check Score for a Single rsID
+### Recipe: Quick Score Lookup
 
-When to use: Quick lookup for one variant before running a full batch analysis.
+When to use: One-off check before kicking off a larger pipeline.
 
 ```python
 import requests
 
-def quick_score(rsid, genome="GRCh38"):
-    r = requests.post(
-        "https://regulomedb.org/regulome-search/",
-        json={"variants": [rsid], "genome": genome, "limit": 1},
-        headers={"Content-Type": "application/json"},
-        timeout=20
-    )
+def quick_score(variant, genome="GRCh38"):
+    r = requests.get("https://regulomedb.org/regulome-search/",
+                     params={"regions": variant, "genome": genome, "format": "json"},
+                     timeout=20)
     r.raise_for_status()
-    hits = r.json().get("variants", [])
-    score = hits[0].get("regulomedb_score") if hits else "not found"
-    print(f"{rsid}: RegulomeDB score = {score}")
-    return score
+    rs = r.json().get("regulome_score", {})
+    print(f"{variant}: ranking={rs.get('ranking')}  prob={rs.get('probability')}")
 
-quick_score("rs4946036")   # Expected: 1b (strong regulatory evidence)
-quick_score("rs12345678")  # Expected: 5 or 7 (weak/no evidence)
+quick_score("rs4946036")             # ranking=7 prob=0.18412
+quick_score("chr11:5226739-5226740") # ranking=1a (HBB promoter)
 ```
 
 ### Recipe: Filter Variants to High-Confidence Regulatory Set
 
-When to use: Downstream prioritization — keep only variants with strong regulatory evidence (scores 1a–2b).
-
 ```python
-import pandas as pd
+import requests, time, pandas as pd
 
-df = pd.read_csv("gwas_regulatory_priority.csv")
+HIGH_CONF = {"1a", "1b", "1c", "1d", "1e", "1f", "2a", "2b"}
 
-REGULATORY_SCORES = {"1a", "1b", "2a", "2b"}
-high_conf = df[df["score"].isin(REGULATORY_SCORES)].copy()
-print(f"Total variants   : {len(df)}")
-print(f"High-confidence  : {len(high_conf)}  ({100 * len(high_conf) / len(df):.1f}%)")
-print(high_conf[["snp", "score", "num_tfs", "has_eqtl"]].to_string(index=False))
-high_conf.to_csv("high_confidence_regulatory_variants.csv", index=False)
+def high_conf_only(variants, genome="GRCh38"):
+    keep = []
+    for v in variants:
+        r = requests.get("https://regulomedb.org/regulome-search/",
+                         params={"regions": v, "genome": genome, "format": "json"},
+                         timeout=30)
+        ranking = r.json().get("regulome_score", {}).get("ranking")
+        if ranking in HIGH_CONF:
+            keep.append({"variant": v, "ranking": ranking})
+        time.sleep(0.3)
+    return pd.DataFrame(keep)
+
+df = high_conf_only(["rs4946036", "rs7903146", "chr11:5226739-5226740"])
+print(df.to_string(index=False))
 ```
 
-### Recipe: Identify eQTL-Linked Regulatory Variants
+### Recipe: QTL-Linked Variants
 
-When to use: Integrate RegulomeDB eQTL evidence to find variants that affect gene expression through regulatory elements.
+When to use: Find variants with `features.QTL == True`, i.e. those overlapping a curated QTL row in `@graph` (method `"QTLs"`).
 
 ```python
-import requests, time
+import requests, time, pandas as pd
 
-BASE = "https://regulomedb.org"
-
-def get_eqtl_variants(variant_list, genome="GRCh38"):
-    """Return variants that have both high regulatory score and eQTL evidence."""
-    eqtl_variants = []
-    for snp in variant_list:
-        r = requests.post(
-            f"{BASE}/regulome-search/",
-            json={"variants": [snp], "genome": genome, "limit": 1},
-            headers={"Content-Type": "application/json"},
-            timeout=30
-        )
-        r.raise_for_status()
-        hits = r.json().get("variants", [])
-        if not hits:
-            time.sleep(0.3)
-            continue
-        v = hits[0]
-        eqtls = v.get("eqtls", [])
-        score = v.get("regulomedb_score", "7")
-        if eqtls and score in {"1a", "1b", "2a", "2b"}:
-            for eq in eqtls:
-                eqtl_variants.append({
-                    "snp": snp,
-                    "score": score,
-                    "gene": eq.get("gene_name"),
-                    "tissue": eq.get("tissue"),
-                    "slope": eq.get("slope"),
+def qtl_overlap(variants, genome="GRCh38"):
+    rows = []
+    for v in variants:
+        r = requests.get("https://regulomedb.org/regulome-search/",
+                         params={"regions": v, "genome": genome, "format": "json"},
+                         timeout=30)
+        d = r.json()
+        if not d.get("features", {}).get("QTL"):
+            time.sleep(0.3); continue
+        for g in d.get("@graph", []):
+            if g.get("method") == "QTLs":
+                rows.append({
+                    "variant": v,
+                    "ranking": d.get("regulome_score", {}).get("ranking"),
+                    "qtl_target": g.get("target_label"),
+                    "value": g.get("value"),
+                    "biosample": (g.get("biosample_ontology") or {}).get("term_name"),
                 })
         time.sleep(0.3)
-    return eqtl_variants
+    return pd.DataFrame(rows)
 
-snps = ["rs4946036", "rs7903146", "rs10811661"]
-results = get_eqtl_variants(snps)
-for r in results:
-    print(f"{r['snp']}  Score={r['score']}  Gene={r['gene']}  Tissue={r['tissue']}")
+print(qtl_overlap(["rs4946036", "chr11:5226739-5226740"]))
 ```
 
 ## Troubleshooting
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| `HTTP 400` on POST request | Malformed JSON body or missing `Content-Type` header | Add `headers={"Content-Type": "application/json"}` and use `json=` kwarg, not `data=` |
-| Empty `variants` list in response | Variant not in RegulomeDB index | Try alternate input format (rsID → chr:pos, or vice versa); some rare variants are absent |
-| `ConnectionError` or timeout | Server timeout on large batch | Reduce batch size to 50; add `time.sleep(0.5)` between batches |
-| Score is `"7"` for all variants | Using GRCh37 coordinates with `genome="GRCh38"` | Specify `"genome": "GRCh37"` or liftover coordinates to GRCh38 before querying |
-| `peaks` field is empty but score is not `"7"` | Score assigned from summary-level evidence, not peak-level | Scores are computed from multiple evidence types; peak list may be incomplete in API response |
-| Region search returns 0 results | Region is too small or on an uncharacterized chromosome | Use at least 10 kb windows; avoid alternative contigs (chrUn_*, random_*) |
+| Response body `{"@id":"/regulome-notfound","@type":["regulome-help"]...}` | Using the legacy POST `/regulome-search/` with a JSON body | Switch to GET with `regions=` query param + `format=json` |
+| HTTP 500 | Hitting the deprecated `/regulome-summary/` endpoint | Endpoint is dead; aggregate counts client-side from `@graph[].method` |
+| `KeyError: 'regulomedb_score'` | Field renamed | Use `regulome_score.ranking` (string) and `regulome_score.probability` (float-as-string) |
+| `peaks` / `eqtls` / `assay_type` missing | Old schema | Iterate `@graph[]` and filter by `method` (`ChIP-seq`, `DNase-seq`, `Histone ChIP-seq`, `ATAC-seq`, `footprints`, `PWMs`, `QTLs`, `chromatin state`) |
+| Empty `variants[]` for an rsID | rsID not in RegulomeDB index or build mismatch | Try the chr:pos form; check `genome=` matches the coordinates |
+| Region search returns 0 `@graph` rows | Region size too small or in an uncharacterized chromosome | Widen the window to ≥ 200 bp; avoid alt contigs (`chrUn_*`, `*_random`) |
+| Region query truncates at 200 results | Default `limit=200` | Pass `limit=1000` or page with `from=0,200,400,...` |
 
 ## Related Skills
 
-- `gwas-database` — NHGRI-EBI GWAS Catalog for published SNP-trait associations; use alongside RegulomeDB to prioritize GWAS hits
+- `gwas-database` — NHGRI-EBI GWAS Catalog for published SNP-trait associations; pair with RegulomeDB to prioritize GWAS hits
 - `clinvar-database` — Clinical pathogenicity classifications; complements RegulomeDB's functional regulatory evidence
-- `encode-database` — Direct ENCODE REST API access for TF ChIP-seq and ATAC-seq peak sets that underlie RegulomeDB scores
-- `ensembl-database` — Variant annotation and gene coordinate lookup; use to map rsIDs to genomic positions
+- `encode-database` — Direct ENCODE REST API access for the TF ChIP-seq / ATAC-seq peak sets that underlie RegulomeDB scores
+- `ensembl-database` — Variant annotation and gene coordinate lookup; use to map rsIDs to genomic positions before region queries
 
 ## References
 
-- [RegulomeDB Official Help](https://regulomedb.org/regulome-help/) — Full documentation and scoring schema
-- [RegulomeDB API endpoint](https://regulomedb.org/regulome-search/) — Main REST API endpoint reference
+- [RegulomeDB Official Help](https://regulomedb.org/regulome-help/) — Documentation and scoring schema
+- [RegulomeDB search endpoint](https://regulomedb.org/regulome-search/) — Main REST API entry point (GET only)
 - Boyle AP et al. "Annotation of functional variation in personal genomes using RegulomeDB." *Genome Research* 22(9): 1790–1797 (2012). https://doi.org/10.1101/gr.137323.112
 - Dong S et al. "Annotating genomic variants and their functional effects using RegulomeDB 2.0." *Bioinformatics* 35(24): 5341–5343 (2019). https://doi.org/10.1093/bioinformatics/btz560

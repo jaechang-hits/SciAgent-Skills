@@ -118,9 +118,12 @@ result = esummary(sample_ids)
 
 for vid in result.get("uids", []):
     rec = result[vid]
+    # ClinVar 2024 schema: clinical_significance was replaced by germline_classification
+    # (also: clinical_impact_classification, oncogenicity_classification — same shape, often empty)
+    gc = rec.get("germline_classification", {})
     print(f"\nVariation {vid}: {rec.get('title')}")
-    print(f"  ClinSig  : {rec.get('clinical_significance', {}).get('description')}")
-    print(f"  Review   : {rec.get('clinical_significance', {}).get('review_status')}")
+    print(f"  ClinSig  : {gc.get('description')}")
+    print(f"  Review   : {gc.get('review_status')}")
     print(f"  Gene     : {rec.get('genes', [{}])[0].get('symbol')}")
 ```
 
@@ -135,21 +138,33 @@ import xml.etree.ElementTree as ET
 EMAIL = "your@email.com"
 BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
-def efetch_xml(ids):
+def efetch_xml(variation_ids):
+    # ClinVar 2024 XML overhaul: "clinvarset" rettype returns an empty stub.
+    # Use rettype="vcv" + is_variationid="true" to get the new <VariationArchive> records.
     r = requests.post(f"{BASE}/efetch.fcgi",
-                      data={"db": "clinvar", "id": ",".join(ids),
-                            "rettype": "clinvarset", "retmode": "xml", "email": EMAIL})
+                      data={"db": "clinvar", "id": ",".join(variation_ids),
+                            "rettype": "vcv", "is_variationid": "true",
+                            "retmode": "xml", "email": EMAIL})
     r.raise_for_status()
     return ET.fromstring(r.text)
 
-root = efetch_xml(["12375"])
+root = efetch_xml(["17677"])  # BRCA1 c.5266dupC (rs80357906)
 
-# Parse clinical assertions
-for ca in root.iter("ClinVarAssertion"):
-    clin_sig = ca.find(".//ClinicalSignificance/Description")
-    submitter = ca.find(".//ClinVarSubmissionID")
-    if clin_sig is not None and submitter is not None:
-        print(f"Submitter: {submitter.get('submitterDate', 'n/a')} | ClinSig: {clin_sig.text}")
+# Aggregate (germline) classification — one per VariationArchive
+for va in root.iter("VariationArchive"):
+    name = va.get("VariationName")
+    gc = va.find("./ClassifiedRecord/Classifications/GermlineClassification")
+    desc = gc.find("Description") if gc is not None else None
+    rstat = gc.find("ReviewStatus") if gc is not None else None
+    print(f"{name}: {desc.text if desc is not None else 'n/a'} "
+          f"({rstat.text if rstat is not None else 'n/a'})")
+
+    # Per-submitter assertions
+    for ca in va.iter("ClinicalAssertion"):
+        acc = ca.find("ClinVarAccession")
+        cls = ca.find("Classification/GermlineClassification")
+        if acc is not None and cls is not None:
+            print(f"  {acc.get('SubmitterName', '?')}: {cls.text}")
 ```
 
 ### Query 4: ClinVar FTP Bulk Data
@@ -232,7 +247,8 @@ def get_conditions(variation_ids):
     conditions = {}
     for vid in result.get("uids", []):
         rec = result[vid]
-        trait_set = rec.get("trait_set", [])
+        # trait_set moved under germline_classification in the 2024 ClinVar JSON
+        trait_set = rec.get("germline_classification", {}).get("trait_set", [])
         conditions[vid] = [t.get("trait_name") for t in trait_set]
     return conditions
 
@@ -286,14 +302,15 @@ def fetch_summaries(ids):
         result = r.json()["result"]
         for vid in result.get("uids", []):
             rec = result[vid]
-            clinsig = rec.get("clinical_significance", {})
+            # ClinVar 2024 schema: clinical_significance → germline_classification; trait_set nested inside it
+            gc = rec.get("germline_classification", {})
             records.append({
                 "variation_id": vid,
                 "name": rec.get("title"),
-                "clinsig": clinsig.get("description"),
-                "review_status": clinsig.get("review_status"),
+                "clinsig": gc.get("description"),
+                "review_status": gc.get("review_status"),
                 "gene": ",".join(g.get("symbol", "") for g in rec.get("genes", [])),
-                "conditions": "; ".join(t.get("trait_name", "") for t in rec.get("trait_set", [])),
+                "conditions": "; ".join(t.get("trait_name", "") for t in gc.get("trait_set", [])),
             })
         time.sleep(0.15)
     return records
@@ -335,12 +352,12 @@ for rsid in variants:
                        data={"db": "clinvar", "id": ",".join(ids[:1]),
                              "retmode": "json", "email": EMAIL})
     rec = r2.json()["result"][ids[0]]
-    clinsig = rec.get("clinical_significance", {})
+    gc = rec.get("germline_classification", {})  # 2024 ClinVar JSON
     results.append({
         "rsid": rsid,
         "variation_id": ids[0],
-        "clinsig": clinsig.get("description", "Unknown"),
-        "review_status": clinsig.get("review_status"),
+        "clinsig": gc.get("description", "Unknown"),
+        "review_status": gc.get("review_status"),
     })
     time.sleep(0.15)
 
@@ -354,7 +371,8 @@ print(df.to_string(index=False))
 |-----------|--------|---------|-----------------|--------|
 | `retmax` | ESearch | `20` | `1`–`10000` | Max records returned per query |
 | `retmode` | ESearch/ESummary | `"xml"` | `"json"`, `"xml"` | Response format |
-| `rettype` | EFetch | `"clinvarset"` | `"clinvarset"`, `"vcv"` | Record type for XML fetch |
+| `rettype` | EFetch | `"vcv"` | `"vcv"` | Record type for XML fetch (legacy `clinvarset` returns empty stub since 2024) |
+| `is_variationid` | EFetch | `"false"` | `"true"`/`"false"` | Set to `"true"` when fetching by ClinVar Variation ID with `rettype=vcv` |
 | `clinsig` query field | ESearch | — | `"pathogenic"`, `"likely pathogenic"`, `"VUS"` | Filter by clinical significance |
 | `review status` query field | ESearch | — | 0–4 star terms | Filter by evidence quality |
 | `email` | All | required | valid email | NCBI policy; prevents blocking |
@@ -437,6 +455,8 @@ print(f"First IDs: {result['idlist'][:5]}")
 | Empty `idlist` for rsID query | rsID not indexed in ClinVar | Try HGVS notation or gene+position query instead |
 | Missing `clinsig` in summary | Variant has no interpretation | Check `review_status`; "no interpretation for the single variant" means no ClinSig yet |
 | XML parse error in EFetch | Incomplete response (timeout) | Set `requests.get(..., timeout=30)` and retry once |
+| `<ClinVarResult-Set><set/></ClinVarResult-Set>` empty stub | Using legacy `rettype="clinvarset"` (deprecated in 2024) | Switch to `rettype="vcv"` + `is_variationid="true"`; parse `<VariationArchive>` root |
+| `KeyError: clinical_significance` in ESummary parsing | Field renamed in 2024 ClinVar JSON | Use `rec["germline_classification"]` (also `clinical_impact_classification`, `oncogenicity_classification`); `trait_set` now nested inside `germline_classification` |
 | Conflicting results for same rsID | Multiple submissions with different interpretations | Group by `review_status` and prefer higher-star entries |
 | FTP download fails | Large file / slow connection | Use `pandas.read_csv` with `chunksize=100000` or pre-filter with `grep` |
 

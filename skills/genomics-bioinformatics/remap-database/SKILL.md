@@ -1,701 +1,415 @@
 ---
 name: "remap-database"
-description: "Query ReMap 2022 TF ChIP-seq peak database via REST API and BED downloads. Retrieve TF peaks overlapping a region (chr:start-end), peaks near a gene, TFs by species, peaks filtered by biotype (promoter, enhancer), and BED files for a TF-cell type pair. Use for TF co-occupancy, regulatory annotation, and TF binding atlases. Use jaspar-database for PWM motifs; encode-database for ENCODE tracks."
+description: "Access ReMap 2022 TF ChIP-seq peaks via per-TF BED downloads (https://remap.univ-amu.fr/storage/remap2022/.../MACS2/TF/{TF}/). REST API at remap2022.univ-amu.fr/api/v1/ is currently unreachable (backend on port 802 refuses connections); BED downloads + local pandas/pybedtools is the working path. Use jaspar-database for PWM motifs; encode-database for raw ENCODE tracks."
 license: "CC-BY-4.0"
 ---
 
-# ReMap Database
+# ReMap TF ChIP-seq Database (BED-Download Access)
 
 ## Overview
 
-ReMap 2022 is an integrative database of transcription factor (TF), cofactor, and chromatin regulator binding sites derived from uniformly reprocessed ChIP-seq experiments. The 2022 release catalogs 165 million non-redundant peaks from 8,113 ChIP-seq datasets covering 1,210 TFs across human (hg38/hg19), mouse (mm10), Drosophila, and Arabidopsis genomes. All peaks are called with a consistent pipeline from public GEO/ArrayExpress experiments. Access is via the ReMap 2022 REST API at `https://remap2022.univ-amu.fr/api/` and bulk BED file downloads; no authentication required.
+> **API status (verified live 2026-05): the REST API at `remap2022.univ-amu.fr/api/v1/` is unreachable.** Every `/api/*` URL issues a 301 redirect to port 802, which refuses TCP connections (ECONNREFUSED). The web frontend is alive; only the API backend is dead. The official BED download URLs continue to serve — this skill uses them as the primary access path.
+
+ReMap 2022 is an integrated catalogue of public TF ChIP-seq, ChIP-exo, and DAP-seq experiments (≈ 8,000 datasets, ≈ 1,210 TFs, ≈ 800 million peaks across human and other species). Two flavours are served:
+
+- **Per-TF "non-redundant" (NR) BED files** — peak summit-clustered across all experiments for one TF, one assembly. Tens of MB per TF.
+- **Per-TF "all" BED files** — every peak from every experiment for one TF (no clustering). Hundreds of MB to a few GB.
+- **Bulk NR / CRM files** — atlas-wide non-redundant peaks (~1.5 GB) and cis-regulatory modules (~200 MB).
+
+No authentication is required.
 
 ## When to Use
 
-- Finding all TFs with ChIP-seq peaks overlapping a genomic region of interest (e.g., a GWAS SNP locus or candidate enhancer)
-- Retrieving TF peaks near a gene's transcription start site to map its proximal regulatory landscape
-- Listing all TFs available in ReMap for human or mouse with their peak and dataset counts
-- Filtering ChIP-seq peaks by regulatory biotype annotation (promoter, enhancer, exon, intron, intergenic) for a TF in a specific cell line
-- Downloading a BED file of all binding peaks for a TF across all cell types for offline analysis
-- Identifying co-binding TFs at a locus by querying all overlapping peaks and grouping by TF name
-- Use `jaspar-database` instead when you need PWM/PFM sequence models of TF binding specificity rather than ChIP-seq peak locations
-- For ENCODE-specific regulatory tracks and accessibility data use `encode-database`; ReMap aggregates TF binding peaks from many sources including ENCODE
+- Listing TF ChIP-seq peaks near a gene or in a region (intersect a per-TF NR BED with your query interval)
+- Finding which TFs bind a regulatory element (intersect a small region with several per-TF NRs, or with the bulk NR atlas)
+- Generating co-occupancy matrices across a TF panel
+- Building enhancer/promoter TF-binding annotation tracks at scale
+- Computing cell-type-specific TF occupancy (NR `name` field exposes cell-type provenance per peak)
+- Use `jaspar-database` instead when you need PWM motif scoring rather than experimental peak overlap
+- Use `encode-database` when you need the raw ENCODE experiment-level metadata / files rather than ReMap's harmonised peak sets
 
 ## Prerequisites
 
-- **Python packages**: `requests`, `pandas`, `matplotlib`
-- **Data requirements**: genomic coordinates (GRCh38/hg38 or hg19), gene names, or TF names
-- **Environment**: internet connection; no API key required
-- **Rate limits**: no official published limits; use `time.sleep(0.5)` between batch requests to avoid server overload
-- **Note**: The ReMap API is a research API; endpoint availability may vary. All examples include a BED download fallback.
+- **Python packages**: `requests`, `pandas`, `pybedtools` (optional but recommended for interval intersections)
+- **Disk**: tens of MB per TF (NR) up to a few GB (per-TF "all"); bulk NR ≈ 1.5 GB
+- **Bedtools binary**: only required if you use `pybedtools` (`pixi run` will already have it inside the env when added to `pixi.toml`; otherwise `apt install bedtools`)
+- **No API key** required
 
 ```bash
-pip install requests pandas matplotlib
+pip install requests pandas pybedtools
+# Optional system dep for pybedtools (skip if bedtools is already on PATH):
+# conda install -c bioconda bedtools
 ```
 
 ## Quick Start
 
 ```python
-import requests
+import requests, gzip, io, pandas as pd
 
-REMAP_API = "https://remap2022.univ-amu.fr/api/v1"
+ROOT = "https://remap.univ-amu.fr/storage/remap2022"
 
-# Query TF peaks overlapping a genomic region
-r = requests.get(f"{REMAP_API}/peaks/overlap/", params={
-    "chr": "chr17",
-    "start": 7_670_000,
-    "end": 7_690_000,
-    "assembly": "hg38"
-}, timeout=30)
-r.raise_for_status()
-peaks = r.json()
-print(f"Peaks overlapping TP53 locus: {len(peaks)}")
-tfs = set(p.get("name", "").split(":")[0] for p in peaks)
-print(f"Unique TFs: {len(tfs)}")
-print(f"TF names (first 10): {sorted(tfs)[:10]}")
+def remap_per_tf_url(tf, assembly="hg38", flavour="nr"):
+    """flavour ∈ {'nr', 'all'}. NR is non-redundant (clustered) — usually what you want."""
+    return f"{ROOT}/{assembly}/MACS2/TF/{tf}/remap2022_{tf}_{flavour}_macs2_{assembly}_v1_0.bed.gz"
+
+# Download CTCF non-redundant peaks (~22 MB)
+url = remap_per_tf_url("CTCF", "hg38", "nr")
+print("URL:", url)
+buf = requests.get(url, timeout=120).content
+df = pd.read_csv(io.BytesIO(gzip.decompress(buf)), sep="\t", header=None,
+                 names=["chrom", "start", "end", "name", "score", "strand",
+                        "thickStart", "thickEnd", "itemRgb"])
+print(f"CTCF non-redundant peaks: {len(df):,}")
+print(df.head(3).to_string(index=False))
 ```
 
 ## Core API
 
-### Query 1: Region Overlap
-
-Find all TF ChIP-seq peaks overlapping a specified genomic window. Returns peak records including TF name, cell type, coordinates, and score.
+### Module 1: Download a Per-TF BED
 
 ```python
-import requests, time, pandas as pd
+import requests, gzip, io, pandas as pd
 
-REMAP_API = "https://remap2022.univ-amu.fr/api/v1"
+ROOT = "https://remap.univ-amu.fr/storage/remap2022"
 
-def query_region(chrom, start, end, assembly="hg38", timeout=30):
-    """Return all ReMap peaks overlapping [chrom:start-end]."""
-    r = requests.get(f"{REMAP_API}/peaks/overlap/", params={
-        "chr": chrom, "start": start, "end": end, "assembly": assembly
-    }, timeout=timeout)
+def fetch_remap_bed(tf, assembly="hg38", flavour="nr"):
+    """Stream-download a ReMap BED into a pandas DataFrame.
+    flavour='nr' for non-redundant (clustered, small), 'all' for full per-experiment."""
+    url = f"{ROOT}/{assembly}/MACS2/TF/{tf}/remap2022_{tf}_{flavour}_macs2_{assembly}_v1_0.bed.gz"
+    r = requests.get(url, timeout=300)
     r.raise_for_status()
-    return r.json()
+    df = pd.read_csv(io.BytesIO(gzip.decompress(r.content)),
+                     sep="\t", header=None, low_memory=False,
+                     names=["chrom", "start", "end", "name", "score", "strand",
+                            "thickStart", "thickEnd", "itemRgb"])
+    return df
 
-# Query 100 kb window on chr17 around TP53
-peaks = query_region("chr17", 7_670_000, 7_690_000, assembly="hg38")
-print(f"Total peaks: {len(peaks)}")
-
-# Parse name field: format is "TF:experiment_id:cell_type"
-rows = []
-for p in peaks:
-    parts = p.get("name", "::").split(":")
-    tf   = parts[0] if len(parts) > 0 else ""
-    exp  = parts[1] if len(parts) > 1 else ""
-    cell = parts[2] if len(parts) > 2 else ""
-    rows.append({
-        "chr": p.get("chr", p.get("chrom", "")),
-        "start": p.get("start", 0),
-        "end": p.get("end", 0),
-        "tf_name": tf,
-        "experiment_id": exp,
-        "cell_type": cell,
-        "score": p.get("score", 0),
-    })
-
-df = pd.DataFrame(rows)
-print(f"\nUnique TFs: {df['tf_name'].nunique()}")
-print(f"Top TFs by peak count:\n{df['tf_name'].value_counts().head(10).to_string()}")
+ctcf = fetch_remap_bed("CTCF", "hg38", "nr")
+print(f"CTCF NR peaks: {len(ctcf):,}; chroms covered: {ctcf['chrom'].nunique()}")
 ```
 
-```python
-# Fallback: if API is unavailable, use a locally downloaded BED file
-# Download from: https://remap2022.univ-amu.fr/download_page
-# e.g., remap2022_all_macs2_hg38_v1_0.bed.gz
+### Module 2: Parse the `name` Field
 
+The `name` column encodes the TF and the cell types contributing to each peak — but the format **differs by flavour**:
+
+| Flavour | `name` encoding | Example |
+|---------|------------------|---------|
+| Per-TF NR | `TF:cell1,cell2,...` (colon + comma list) | `CTCF:HeLa-S3,K562,GM12878` |
+| Per-TF "all" / bulk "all" | `EXPERIMENT.TF.CELL_TYPE` (dots) | `GSE91099.CTCF.HeLa-S3` |
+| Bulk NR | `TF:CELL_TYPE` (one cell type) | `CTCF:HeLa-S3` |
+| CRM (cis-regulatory module) | comma-separated TF list; peak count in `score` | `CTCF,RAD21,SMC1A` |
+
+```python
+def parse_nr_name(name):
+    """Per-TF NR encoding: 'TF:cell1,cell2,...' → (tf, [cells])."""
+    if ":" not in name:
+        return name, []
+    tf, cells = name.split(":", 1)
+    return tf, [c for c in cells.split(",") if c]
+
+# Distribution of cell types in CTCF NR
+from collections import Counter
+cells = Counter()
+for nm in ctcf["name"].head(5000):
+    _, cs = parse_nr_name(nm)
+    cells.update(cs)
+print("Top cell types contributing to CTCF NR peaks:")
+for c, n in cells.most_common(8):
+    print(f"  {c}: {n}")
+```
+
+### Module 3: Intersect with a Region
+
+```python
 import pandas as pd
 
-def query_region_from_bed(bed_file, chrom, start, end):
-    """Filter a ReMap BED file for overlapping peaks."""
-    cols = ["chr", "start", "end", "name", "score", "strand",
-            "thick_start", "thick_end", "color"]
-    df = pd.read_csv(bed_file, sep="\t", header=None, names=cols,
-                     compression="infer")
-    mask = (df["chr"] == chrom) & (df["end"] > start) & (df["start"] < end)
-    return df[mask].reset_index(drop=True)
+def peaks_in_region(bed_df, chrom, start, end):
+    """Return rows of bed_df overlapping the half-open interval [start, end)."""
+    sel = ((bed_df["chrom"] == chrom)
+           & (bed_df["start"] < end)
+           & (bed_df["end"] > start))
+    return bed_df.loc[sel].copy()
 
-# Usage (requires downloaded BED):
-# df = query_region_from_bed("remap2022_all_macs2_hg38_v1_0.bed.gz",
-#                             "chr17", 7_670_000, 7_690_000)
+# CTCF peaks within ±20 kb of the MYC promoter (hg38: chr8:127,735,434)
+myc_peaks = peaks_in_region(ctcf, "chr8", 127_715_434, 127_755_434)
+print(f"CTCF NR peaks near MYC: {len(myc_peaks)}")
+print(myc_peaks[["chrom", "start", "end", "score"]].head().to_string(index=False))
 ```
 
-### Query 2: Gene-Centric Query
-
-Retrieve all TF ChIP-seq peaks near a gene's TSS, providing a promoter-proximal regulatory landscape for the gene.
+### Module 4: Intersect with a Gene (via Ensembl coordinates)
 
 ```python
-import requests, time, pandas as pd
+import requests, gzip, io, pandas as pd
+ROOT = "https://remap.univ-amu.fr/storage/remap2022"
 
-REMAP_API = "https://remap2022.univ-amu.fr/api/v1"
-
-def query_gene_peaks(gene_name, assembly="hg38", timeout=30):
-    """Return all ReMap peaks near a gene TSS."""
-    r = requests.get(f"{REMAP_API}/peaks/gene/", params={
-        "gene": gene_name, "assembly": assembly
-    }, timeout=timeout)
+def gene_coordinates(gene_symbol, assembly="GRCh38", flank=10_000):
+    """Resolve a gene to genomic coordinates via Ensembl REST."""
+    r = requests.get(f"https://rest.ensembl.org/lookup/symbol/homo_sapiens/{gene_symbol}",
+                     headers={"Accept": "application/json"}, timeout=30)
     r.raise_for_status()
-    return r.json()
+    g = r.json()
+    chrom = "chr" + str(g["seq_region_name"])
+    return chrom, max(0, g["start"] - flank), g["end"] + flank
 
-peaks = query_gene_peaks("MYC", assembly="hg38")
-print(f"Peaks near MYC TSS: {len(peaks)}")
+def tf_peaks_at_gene(tf, gene_symbol, flank=10_000, assembly="hg38"):
+    chrom, start, end = gene_coordinates(gene_symbol, flank=flank)
+    url = f"{ROOT}/{assembly}/MACS2/TF/{tf}/remap2022_{tf}_nr_macs2_{assembly}_v1_0.bed.gz"
+    df = pd.read_csv(io.BytesIO(gzip.decompress(requests.get(url, timeout=300).content)),
+                     sep="\t", header=None, low_memory=False,
+                     names=["chrom","start","end","name","score","strand",
+                            "thickStart","thickEnd","itemRgb"])
+    return df[(df["chrom"] == chrom) & (df["start"] < end) & (df["end"] > start)]
 
-rows = []
-for p in peaks:
-    parts = p.get("name", "::").split(":")
-    rows.append({
-        "tf_name": parts[0] if parts else "",
-        "cell_type": parts[2] if len(parts) > 2 else "",
-        "chr": p.get("chr", p.get("chrom", "")),
-        "start": p.get("start", 0),
-        "end": p.get("end", 0),
-        "score": p.get("score", 0),
-        "biotype": p.get("biotype", ""),
-    })
-
-df = pd.DataFrame(rows)
-print(f"\nTFs near MYC TSS ({df['tf_name'].nunique()} unique):")
-print(df["tf_name"].value_counts().head(10).to_string())
-print(f"\nCell types represented: {df['cell_type'].nunique()}")
+myc_tp53 = tf_peaks_at_gene("TP53", "MYC", flank=20_000)
+print(f"TP53 NR peaks ± 20 kb of MYC: {len(myc_tp53)}")
+print(myc_tp53.head(3).to_string(index=False))
 ```
 
-### Query 3: TF Browser
-
-List all TFs available in ReMap for a given genome assembly, with peak and experiment counts.
+### Module 5: Cell-Type Filter
 
 ```python
-import requests, time, pandas as pd
+def filter_by_cell(bed_df, cell_pattern):
+    """Keep per-TF-NR peaks whose name field includes a cell-type matching cell_pattern."""
+    def has_cell(name):
+        if ":" not in name:
+            return False
+        _, cells = name.split(":", 1)
+        return any(cell_pattern.lower() in c.lower() for c in cells.split(","))
+    return bed_df[bed_df["name"].apply(has_cell)].copy()
 
-REMAP_API = "https://remap2022.univ-amu.fr/api/v1"
-
-def list_tfs(assembly="hg38", timeout=30):
-    """Return all TFs in ReMap for the given assembly with statistics."""
-    r = requests.get(f"{REMAP_API}/tfbs/list/", params={"assembly": assembly}, timeout=timeout)
-    r.raise_for_status()
-    return r.json()
-
-def get_database_stats(assembly="hg38", timeout=30):
-    """Return overall database statistics for the assembly."""
-    r = requests.get(f"{REMAP_API}/stats/", params={"assembly": assembly}, timeout=timeout)
-    r.raise_for_status()
-    return r.json()
-
-# Database overview
-try:
-    stats = get_database_stats("hg38")
-    print(f"ReMap 2022 hg38 statistics:")
-    for k, v in stats.items():
-        print(f"  {k}: {v}")
-except Exception as e:
-    print(f"Stats endpoint unavailable: {e}")
-    print("ReMap 2022 hg38: 165M peaks, 1,210 TFs, 8,113 datasets (from publication)")
-
-# TF list
-try:
-    tfs = list_tfs("hg38")
-    df_tfs = pd.DataFrame(tfs)
-    print(f"\nTFs available (hg38): {len(df_tfs)}")
-    if "peak_count" in df_tfs.columns:
-        top = df_tfs.nlargest(10, "peak_count")[["name", "peak_count", "dataset_count"]]
-        print("Top 10 TFs by peak count:")
-        print(top.to_string(index=False))
-except Exception as e:
-    print(f"TF list endpoint unavailable: {e}")
-    print("Use TF name queries directly (Query 4) or download TF-specific BED files.")
+k562_ctcf = filter_by_cell(ctcf, "K562")
+print(f"CTCF NR peaks present in K562: {len(k562_ctcf):,}")
 ```
 
-### Query 4: TF-Specific Peak Query
-
-Retrieve all peaks for a named TF in a given assembly, optionally filtered by cell type.
+### Module 6: TF Co-Occupancy at a Region
 
 ```python
-import requests, time, pandas as pd
+import requests, gzip, io, pandas as pd
+ROOT = "https://remap.univ-amu.fr/storage/remap2022"
 
-REMAP_API = "https://remap2022.univ-amu.fr/api/v1"
+def has_peak(tf, chrom, start, end, assembly="hg38"):
+    """True if the per-TF NR BED has any peak overlapping the region."""
+    url = f"{ROOT}/{assembly}/MACS2/TF/{tf}/remap2022_{tf}_nr_macs2_{assembly}_v1_0.bed.gz"
+    r = requests.get(url, timeout=300)
+    if r.status_code != 200:
+        return False
+    df = pd.read_csv(io.BytesIO(gzip.decompress(r.content)),
+                     sep="\t", header=None, low_memory=False,
+                     names=["chrom","start","end","name","score","strand",
+                            "thickStart","thickEnd","itemRgb"])
+    return ((df["chrom"] == chrom) & (df["start"] < end) & (df["end"] > start)).any()
 
-def query_tf_peaks(tf_name, assembly="hg38", timeout=30):
-    """Return all ChIP-seq peaks for a TF across all cell types."""
-    r = requests.get(f"{REMAP_API}/tfbs/name/", params={
-        "name": tf_name, "assembly": assembly
-    }, timeout=timeout)
-    r.raise_for_status()
-    return r.json()
-
-peaks = query_tf_peaks("CTCF", assembly="hg38")
-print(f"CTCF peaks (all cell types): {len(peaks)}")
-
-# Parse and summarize
-rows = []
-for p in peaks:
-    parts = p.get("name", "::").split(":")
-    rows.append({
-        "tf_name": parts[0] if parts else "",
-        "cell_type": parts[2] if len(parts) > 2 else "",
-        "chr":   p.get("chr",   p.get("chrom", "")),
-        "start": p.get("start", 0),
-        "end":   p.get("end",   0),
-        "score": p.get("score", 0),
-        "biotype": p.get("biotype", ""),
-    })
-
-df = pd.DataFrame(rows)
-print(f"Cell types: {df['cell_type'].nunique()}")
-print(f"Chromosomes: {df['chr'].nunique()}")
-print(f"Peak width stats (bp):")
-df["width"] = df["end"] - df["start"]
-print(f"  Median: {df['width'].median():.0f}  Mean: {df['width'].mean():.0f}  "
-      f"Min: {df['width'].min()}  Max: {df['width'].max()}")
-```
-
-### Query 5: Biotype Filter and Regulatory Annotation
-
-Filter peaks by regulatory biotype annotation to identify binding at promoters, enhancers, or intergenic regions.
-
-```python
-import requests, pandas as pd, matplotlib.pyplot as plt
-
-REMAP_API = "https://remap2022.univ-amu.fr/api/v1"
-
-def get_biotypes(assembly="hg38", timeout=30):
-    """List all regulatory biotype categories available."""
-    r = requests.get(f"{REMAP_API}/biotypes/", params={"assembly": assembly}, timeout=timeout)
-    r.raise_for_status()
-    return r.json()
-
-def query_tf_by_biotype(tf_name, biotype, assembly="hg38", timeout=30):
-    """Retrieve TF peaks filtered by regulatory biotype."""
-    r = requests.get(f"{REMAP_API}/peaks/biotype/", params={
-        "name": tf_name, "biotype": biotype, "assembly": assembly
-    }, timeout=timeout)
-    r.raise_for_status()
-    return r.json()
-
-# List available biotypes
-try:
-    biotypes = get_biotypes("hg38")
-    print(f"Available biotypes: {biotypes}")
-except Exception:
-    biotypes = ["promoter", "enhancer", "exon", "intron", "intergenic", "UTR"]
-    print(f"Using known biotypes: {biotypes}")
-
-# Query CTCF peaks and plot biotype distribution
-peaks = query_tf_peaks("CTCF", assembly="hg38")  # from Query 4 function above
-
-def query_tf_peaks(tf_name, assembly="hg38", timeout=30):
-    r = requests.get(f"https://remap2022.univ-amu.fr/api/v1/tfbs/name/",
-                     params={"name": tf_name, "assembly": assembly}, timeout=timeout)
-    r.raise_for_status()
-    return r.json()
-
-peaks = query_tf_peaks("CTCF")
-rows = [{"biotype": p.get("biotype", "unknown"),
-         "cell_type": p.get("name", "::").split(":")[2] if len(p.get("name","").split(":")) > 2 else ""}
-        for p in peaks]
-df = pd.DataFrame(rows)
-
-biotype_counts = df["biotype"].value_counts()
-biotype_counts = biotype_counts[biotype_counts > 0]
-print(f"\nCTCF peak biotype distribution:")
-print(biotype_counts.to_string())
-
-# Stacked bar chart across top 5 cell types
-top_cells = df["cell_type"].value_counts().head(5).index.tolist()
-pivot = (df[df["cell_type"].isin(top_cells)]
-         .groupby(["cell_type", "biotype"])
-         .size()
-         .unstack(fill_value=0))
-
-fig, ax = plt.subplots(figsize=(9, 5))
-pivot.plot(kind="bar", stacked=True, ax=ax, colormap="tab10", edgecolor="white")
-ax.set_xlabel("Cell Type")
-ax.set_ylabel("Peak Count")
-ax.set_title("CTCF ChIP-seq Peak Biotype Distribution by Cell Type (ReMap 2022, hg38)")
-ax.legend(title="Biotype", bbox_to_anchor=(1.01, 1), loc="upper left", fontsize=8)
-plt.tight_layout()
-plt.savefig("CTCF_biotype_distribution.png", dpi=150, bbox_inches="tight")
-print("Saved CTCF_biotype_distribution.png")
+# MYC promoter region
+hits = {tf: has_peak(tf, "chr8", 127_735_000, 127_736_000)
+        for tf in ["CTCF", "TP53", "MYC", "RAD21"]}
+print(hits)
 ```
 
 ## Key Concepts
 
-### Peak Name Field Format
-
-The `name` field in every ReMap peak record encodes three pieces of information as a colon-separated string:
+### File Layout
 
 ```
-TF_NAME:EXPERIMENT_ID:CELL_TYPE
+https://remap.univ-amu.fr/storage/remap2022/{assembly}/MACS2/
+├── remap2022_nr_macs2_{assembly}_v1_0.bed.gz     # bulk NR atlas (≈1.5 GB hg38)
+├── remap2022_crm_macs2_{assembly}_v1_0.bed.gz    # cis-regulatory modules (≈200 MB)
+└── TF/
+    └── {TF}/
+        ├── remap2022_{TF}_nr_macs2_{assembly}_v1_0.bed.gz     # per-TF NR (small)
+        └── remap2022_{TF}_all_macs2_{assembly}_v1_0.bed.gz    # per-TF all experiments
 ```
 
-For example: `CTCF:GSE30263.SRX028592:GM12878`
+Supported assemblies: `hg38` (human), `hg19`, `mm10` (mouse), `dm6` (Drosophila), `ara` (Arabidopsis).
 
-Always parse with `.split(":")` and guard against missing parts. Some records may have fewer than three components if metadata is incomplete.
+### BED Columns
 
-### Assemblies
+Standard 9-column BED (header omitted in the gzipped file):
 
-| Assembly code | Organism | Notes |
-|---------------|----------|-------|
-| `hg38` | Homo sapiens (GRCh38) | Primary human assembly in ReMap 2022 |
-| `hg19` | Homo sapiens (GRCh37) | Legacy human assembly; fewer datasets |
-| `mm10` | Mus musculus | Primary mouse assembly |
-| `dm6` | Drosophila melanogaster | Smaller dataset collection |
-| `tair10` | Arabidopsis thaliana | Plant TF dataset |
+| Column | Meaning |
+|--------|---------|
+| `chrom`, `start`, `end` | Half-open genomic interval (0-based) |
+| `name` | TF + cell-type provenance (encoding differs by flavour — see Module 2) |
+| `score` | UCSC `score` field (0–1000). For CRM rows it carries the count of TFs at the module. |
+| `strand` | `.` (TF binding has no strand) |
+| `thickStart`, `thickEnd` | UCSC display fields; equal `start`/`end` for ReMap |
+| `itemRgb` | Display colour |
 
-### BED File Download (API Fallback)
+### NR vs "All"
 
-When the REST API is unavailable or for offline bulk analysis, ReMap provides pre-built BED files at `https://remap2022.univ-amu.fr/download_page`. Key files:
-
-- `remap2022_all_macs2_hg38_v1_0.bed.gz` — all peaks, hg38 (large, ~5 GB)
-- `remap2022_{TF}_macs2_hg38_v1_0.bed.gz` — per-TF peak files
-- `remap2022_crm_macs2_hg38_v1_0.bed.gz` — cis-regulatory modules (merged peaks)
-
-```python
-import pandas as pd
-
-def load_remap_bed(bed_path, chrom=None, start=None, end=None):
-    """
-    Load a ReMap BED file with optional region filter.
-    Columns: chr, start, end, name (TF:exp:cell), score, strand,
-             thick_start, thick_end, itemRgb
-    """
-    cols = ["chr", "start", "end", "name", "score", "strand",
-            "thick_start", "thick_end", "itemRgb"]
-    df = pd.read_csv(bed_path, sep="\t", header=None, names=cols,
-                     compression="infer", low_memory=False)
-    if chrom:
-        df = df[df["chr"] == chrom]
-    if start is not None and end is not None:
-        df = df[(df["end"] > start) & (df["start"] < end)]
-    # Parse name field
-    parts = df["name"].str.split(":", expand=True)
-    df["tf_name"]       = parts[0]
-    df["experiment_id"] = parts[1] if 1 in parts.columns else ""
-    df["cell_type"]     = parts[2] if 2 in parts.columns else ""
-    return df.reset_index(drop=True)
-
-# Usage example (offline):
-# df = load_remap_bed("remap2022_CTCF_macs2_hg38_v1_0.bed.gz",
-#                     chrom="chr17", start=7_670_000, end=7_690_000)
-# print(df.head())
-```
+- **NR ("non-redundant")** — peaks summit-clustered across all contributing experiments for that TF. Smaller, faster, sufficient for "which regions does this TF bind?" questions.
+- **"All"** — every peak from every experiment. Use when you need experiment-level provenance (e.g. counting peaks per replicate) or per-cell-type peak coordinates without clustering.
 
 ## Common Workflows
 
-### Workflow 1: TF Co-occupancy Analysis at a Locus
-
-**Goal**: Identify all TFs with ChIP-seq evidence at a genomic locus and rank by peak count, then export a co-occupancy matrix.
+### Workflow 1: TF Binding Around a Gene
 
 ```python
-import requests, time, pandas as pd, matplotlib.pyplot as plt
+import requests, gzip, io, pandas as pd
 
-REMAP_API = "https://remap2022.univ-amu.fr/api/v1"
+ROOT = "https://remap.univ-amu.fr/storage/remap2022"
 
-def query_region(chrom, start, end, assembly="hg38", timeout=30):
-    r = requests.get(f"{REMAP_API}/peaks/overlap/", params={
-        "chr": chrom, "start": start, "end": end, "assembly": assembly
-    }, timeout=timeout)
+def gene_coords(symbol, flank=20_000):
+    r = requests.get(f"https://rest.ensembl.org/lookup/symbol/homo_sapiens/{symbol}",
+                     headers={"Accept": "application/json"}, timeout=30)
     r.raise_for_status()
-    return r.json()
+    g = r.json()
+    return "chr" + str(g["seq_region_name"]), g["start"] - flank, g["end"] + flank
 
-def parse_peaks(peaks):
-    rows = []
-    for p in peaks:
-        parts = p.get("name", "::").split(":")
-        rows.append({
-            "tf_name":  parts[0] if len(parts) > 0 else "unknown",
-            "cell_type": parts[2] if len(parts) > 2 else "unknown",
-            "chr":   p.get("chr",   p.get("chrom", "")),
-            "start": p.get("start", 0),
-            "end":   p.get("end",   0),
-            "score": p.get("score", 0),
-        })
-    return pd.DataFrame(rows)
+def remap_bed(tf, assembly="hg38", flavour="nr"):
+    url = f"{ROOT}/{assembly}/MACS2/TF/{tf}/remap2022_{tf}_{flavour}_macs2_{assembly}_v1_0.bed.gz"
+    r = requests.get(url, timeout=300); r.raise_for_status()
+    return pd.read_csv(io.BytesIO(gzip.decompress(r.content)),
+                       sep="\t", header=None, low_memory=False,
+                       names=["chrom","start","end","name","score","strand",
+                              "thickStart","thickEnd","itemRgb"])
 
-# BRCA1 promoter region (GRCh38)
-peaks = query_region("chr17", 43_044_000, 43_050_000, assembly="hg38")
-df = parse_peaks(peaks)
-print(f"Peaks at BRCA1 promoter: {len(df)}")
+def tf_peaks_near_gene(tf, gene, flank=20_000):
+    df = remap_bed(tf)
+    chrom, lo, hi = gene_coords(gene, flank=flank)
+    return df[(df["chrom"] == chrom) & (df["start"] < hi) & (df["end"] > lo)]
 
-# TF occupancy summary
-tf_summary = (df.groupby("tf_name")
-                .agg(peak_count=("tf_name", "count"),
-                     cell_types=("cell_type", "nunique"),
-                     mean_score=("score", "mean"))
-                .sort_values("peak_count", ascending=False))
-print(f"\nTop TFs at BRCA1 promoter:")
-print(tf_summary.head(15).to_string())
-tf_summary.to_csv("BRCA1_promoter_TF_occupancy.csv")
-
-# Horizontal bar chart
-top = tf_summary.head(20)
-fig, ax = plt.subplots(figsize=(8, 6))
-ax.barh(top.index[::-1], top["peak_count"][::-1], color="#1f77b4", edgecolor="white")
-ax.set_xlabel("Number of ChIP-seq Peaks")
-ax.set_title("TF Co-occupancy at BRCA1 Promoter (ReMap 2022, hg38)")
-plt.tight_layout()
-plt.savefig("BRCA1_promoter_TF_cooccupancy.png", dpi=150, bbox_inches="tight")
-print("Saved BRCA1_promoter_TF_cooccupancy.png")
+panel = ["CTCF", "TP53", "MYC", "RAD21"]
+counts = {tf: len(tf_peaks_near_gene(tf, "CDKN1A", flank=20_000)) for tf in panel}
+print("Peaks ± 20 kb of CDKN1A:")
+for tf, n in sorted(counts.items(), key=lambda kv: -kv[1]):
+    print(f"  {tf:6s}: {n}")
 ```
 
-### Workflow 2: Gene Regulatory Profile — TSS-Proximal TF Binding Atlas
-
-**Goal**: For a list of genes, retrieve their promoter-proximal TF binding profiles and compare the TF repertoires across genes.
+### Workflow 2: Cell-Type Restricted TF Occupancy Matrix
 
 ```python
-import requests, time, pandas as pd
+import requests, gzip, io, pandas as pd
+ROOT = "https://remap.univ-amu.fr/storage/remap2022"
 
-REMAP_API = "https://remap2022.univ-amu.fr/api/v1"
+def per_tf_nr(tf, assembly="hg38"):
+    url = f"{ROOT}/{assembly}/MACS2/TF/{tf}/remap2022_{tf}_nr_macs2_{assembly}_v1_0.bed.gz"
+    r = requests.get(url, timeout=300); r.raise_for_status()
+    return pd.read_csv(io.BytesIO(gzip.decompress(r.content)),
+                       sep="\t", header=None, low_memory=False,
+                       names=["chrom","start","end","name","score","strand",
+                              "thickStart","thickEnd","itemRgb"])
 
-def query_gene_peaks(gene_name, assembly="hg38", timeout=30):
-    try:
-        r = requests.get(f"{REMAP_API}/peaks/gene/", params={
-            "gene": gene_name, "assembly": assembly
-        }, timeout=timeout)
-        r.raise_for_status()
-        return r.json()
-    except Exception as e:
-        print(f"  Warning: {gene_name} failed — {e}")
-        return []
+def has_cell(name, cell):
+    if ":" not in name: return False
+    _, cs = name.split(":", 1)
+    return any(cell.lower() in c.lower() for c in cs.split(","))
 
-genes_of_interest = ["MYC", "TP53", "BRCA1", "EGFR", "CDK4"]
-gene_tf_profiles = {}
+# Build a matrix: TFs × cell types, value = K562/HeLa peak counts in a region
+panel = ["CTCF", "TP53", "RAD21"]
+cells = ["K562", "HeLa", "GM12878"]
+region = ("chr8", 127_700_000, 127_800_000)  # MYC locus
+matrix = pd.DataFrame(0, index=panel, columns=cells, dtype=int)
 
-for gene in genes_of_interest:
-    peaks = query_gene_peaks(gene, assembly="hg38")
-    if peaks:
-        tfs = set()
-        for p in peaks:
-            parts = p.get("name", "").split(":")
-            if parts:
-                tfs.add(parts[0])
-        gene_tf_profiles[gene] = tfs
-        print(f"{gene}: {len(peaks)} peaks, {len(tfs)} unique TFs")
-    time.sleep(0.5)
+for tf in panel:
+    df = per_tf_nr(tf)
+    in_region = df[(df["chrom"] == region[0])
+                   & (df["start"] < region[2])
+                   & (df["end"] > region[1])]
+    for cell in cells:
+        matrix.loc[tf, cell] = in_region["name"].apply(lambda n: has_cell(n, cell)).sum()
 
-# Build binary TF presence matrix
-all_tfs = sorted(set().union(*gene_tf_profiles.values()))
-matrix = pd.DataFrame(
-    {gene: [1 if tf in gene_tf_profiles.get(gene, set()) else 0 for tf in all_tfs]
-     for gene in genes_of_interest},
-    index=all_tfs
-)
-print(f"\nTF × Gene matrix: {matrix.shape}")
-print(f"TFs shared by all genes: {(matrix.sum(axis=1) == len(genes_of_interest)).sum()}")
-matrix.to_csv("gene_TF_binding_atlas.csv")
-print("Saved gene_TF_binding_atlas.csv")
-```
-
-### Workflow 3: Download and Analyze TF Peak BED File
-
-**Goal**: Download a TF-specific ReMap BED file and analyze its genomic distribution with pandas.
-
-```python
-import requests, gzip, io, pandas as pd, time
-
-# ReMap provides per-TF BED files. For large-scale offline analysis:
-REMAP_DOWNLOAD_BASE = "https://remap2022.univ-amu.fr/storage/remap2022/hg38/MACS2"
-
-def download_tf_bed(tf_name, assembly="hg38", save_path=None):
-    """
-    Attempt to download TF-specific BED file from ReMap.
-    Falls back to API region query if download unavailable.
-    """
-    filename = f"remap2022_{tf_name}_macs2_{assembly}_v1_0.bed.gz"
-    url = f"{REMAP_DOWNLOAD_BASE}/{filename}"
-    print(f"Attempting download: {url}")
-    r = requests.get(url, stream=True, timeout=60)
-    if r.status_code == 200:
-        if save_path:
-            with open(save_path, "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            print(f"Saved: {save_path}")
-            return save_path
-        else:
-            # Read directly into DataFrame
-            content = b"".join(r.iter_content(chunk_size=8192))
-            cols = ["chr", "start", "end", "name", "score", "strand",
-                    "thick_start", "thick_end", "itemRgb"]
-            with gzip.open(io.BytesIO(content), "rt") as gz:
-                df = pd.read_csv(gz, sep="\t", header=None, names=cols)
-            return df
-    else:
-        print(f"Download returned {r.status_code}; use API query as fallback")
-        return None
-
-# Analyze a downloaded BED file
-def analyze_remap_bed(df):
-    """Compute summary statistics for a ReMap peak DataFrame."""
-    parts = df["name"].str.split(":", expand=True)
-    df = df.copy()
-    df["tf_name"]   = parts[0]
-    df["cell_type"] = parts[2] if 2 in parts.columns else "unknown"
-    df["width"] = df["end"] - df["start"]
-
-    print(f"Total peaks: {len(df):,}")
-    print(f"Unique TFs: {df['tf_name'].nunique()}")
-    print(f"Unique cell types: {df['cell_type'].nunique()}")
-    print(f"\nPeak width (bp): median={df['width'].median():.0f}  "
-          f"mean={df['width'].mean():.0f}  range=[{df['width'].min()}, {df['width'].max()}]")
-    print(f"\nChromosome distribution:")
-    chr_counts = df["chr"].value_counts().head(5)
-    print(chr_counts.to_string())
-    return df
-
-# Example usage (requires BED download or substitute with API results):
-# df_raw = download_tf_bed("CTCF", save_path="CTCF_hg38.bed.gz")
-# if df_raw is not None:
-#     df_analyzed = analyze_remap_bed(df_raw)
+print("TF NR peaks at MYC locus by cell type:")
+print(matrix.to_string())
 ```
 
 ## Key Parameters
 
-| Parameter | Endpoint | Default | Range / Options | Effect |
-|-----------|----------|---------|-----------------|--------|
-| `chr` | `/peaks/overlap/` | — | `chr1`–`chrX`, `chrY`, `chrM` | Chromosome for region query (include `chr` prefix) |
-| `start` | `/peaks/overlap/` | — | Integer genomic coordinate | Region start (0-based) |
-| `end` | `/peaks/overlap/` | — | Integer genomic coordinate | Region end (exclusive) |
-| `assembly` | All endpoints | — | `hg38`, `hg19`, `mm10`, `dm6`, `tair10` | Genome assembly for coordinates and peak lookup |
-| `gene` | `/peaks/gene/` | — | HGNC gene symbol (e.g., `TP53`, `MYC`) | Queries peaks near the gene's annotated TSS |
-| `name` | `/tfbs/name/` | — | TF name as in ReMap (e.g., `CTCF`, `SP1`) | TF name is case-sensitive; match ReMap TF naming |
-| `biotype` | `/peaks/biotype/` | — | `promoter`, `enhancer`, `exon`, `intron`, `intergenic`, `UTR` | Filters peaks by Ensembl regulatory biotype |
-| `timeout` | All requests | 30 | Integer seconds | Increase to 60–120 for large gene/TF queries |
+| Parameter | Where | Default | Range / Options | Effect |
+|-----------|-------|---------|-----------------|--------|
+| `assembly` | BED URL | `hg38` | `hg38`, `hg19`, `mm10`, `dm6`, `ara` | Genome build |
+| `flavour` | BED URL | `nr` | `nr`, `all` | Non-redundant (small) vs full per-experiment (large) |
+| `tf` | BED URL | required | TF symbol (case-sensitive, matches ReMap naming) | Selects per-TF file |
+| `flank` (in workflows) | client-side | `10_000` | non-negative int (bp) | Padding added around gene coordinates |
+| `chrom` / `start` / `end` | client-side | required | half-open BED interval, 0-based | Query window |
 
 ## Best Practices
 
-1. **Parse the `name` field defensively**: The `TF:experiment:cell_type` format may have fewer than three components for some records. Always guard with `parts[n] if len(parts) > n else ""`.
-
-2. **Use BED downloads for genome-wide analyses**: Querying large genomic regions or all peaks for a TF via the REST API can time out. For whole-genome or per-chromosome scans, download the per-TF or per-assembly BED files from the ReMap download page and filter locally with pandas or bedtools.
-
-3. **Cross-reference with JASPAR for sequence evidence**: ReMap peaks show where TF binding was detected by ChIP-seq (positional evidence); JASPAR PWMs show what sequence the TF prefers (motif evidence). For robust regulatory annotation, require both: a ReMap peak in the region AND a JASPAR motif hit within the peak.
-
-4. **Use `time.sleep(0.5)` in batch loops**: The ReMap API serves a research community; polite request pacing prevents throttling.
-
-5. **Validate assembly coordinates**: ReMap 2022 hg38 peaks use 0-based half-open BED coordinates (`[start, end)`). When comparing with VCF or 1-based GFF coordinates, add 1 to `start`.
+1. **Prefer the per-TF NR BED**: tens of MB, fast to download, sufficient for "where does TF X bind?" questions. Only fall back to "all" when you need experiment-level provenance.
+2. **Cache downloads on disk** — files don't change between releases (`remap2022_..._v1_0.bed.gz`); avoid re-downloading on every call. A simple `if Path(cache).exists(): use cache else: download` wrapper is enough.
+3. **Use `pybedtools` for large-scale intersections** — pandas works for one or two regions, but for VCFs / whole-genome panels, push to `pybedtools.BedTool(...).intersect(...)`.
+4. **Match assembly to your query coordinates** — coordinates from hg19 pipelines must use the `hg19` BED; ReMap does not auto-liftover.
+5. **`name` encoding differs across flavours** — see the table in Module 2. Build a small parser per flavour rather than a one-size-fits-all regex.
+6. **The REST API is currently dead** — every `/api/v1/*` URL redirects to a port-802 backend that refuses TCP. Do not depend on it; use BED downloads.
 
 ## Common Recipes
 
-### Recipe: Find TFs Binding at a GWAS SNP
-
-When to use: Prioritize functional candidates from a GWAS hit by identifying which TFs bind at the SNP location.
+### Recipe: List Cell Types in a Per-TF NR
 
 ```python
-import requests
+from collections import Counter
 
-REMAP_API = "https://remap2022.univ-amu.fr/api/v1"
+def cells_in(bed_df):
+    cnt = Counter()
+    for n in bed_df["name"]:
+        if ":" in n:
+            cnt.update(n.split(":", 1)[1].split(","))
+    return cnt
 
-def tfs_at_snp(chrom, pos, window=500, assembly="hg38"):
-    """Find TFs with ChIP-seq peaks overlapping a SNP position ± window bp."""
-    r = requests.get(f"{REMAP_API}/peaks/overlap/", params={
-        "chr": chrom, "start": pos - window, "end": pos + window,
-        "assembly": assembly
-    }, timeout=30)
-    r.raise_for_status()
-    peaks = r.json()
-    tfs = {}
-    for p in peaks:
-        parts = p.get("name", "::").split(":")
-        tf = parts[0] if parts else "unknown"
-        tfs[tf] = tfs.get(tf, 0) + 1
-    return dict(sorted(tfs.items(), key=lambda x: -x[1]))
-
-# Example: rs2736100 (TERT locus, chr5:1,286,401)
-snp_tfs = tfs_at_snp("chr5", 1_286_401, window=500, assembly="hg38")
-print(f"TFs at TERT GWAS SNP (±500 bp): {len(snp_tfs)}")
-for tf, count in list(snp_tfs.items())[:10]:
-    print(f"  {tf:<20s} {count:3d} peaks")
+# `ctcf` from Module 1
+top = cells_in(ctcf).most_common(10)
+for c, n in top:
+    print(f"  {c}: {n}")
 ```
 
-### Recipe: Compare TF Binding Profiles of Two Genes
-
-When to use: Check whether two co-regulated genes share the same upstream TF binding landscape.
+### Recipe: Cache Downloads on Disk
 
 ```python
-import requests, time
+from pathlib import Path
+import requests, gzip, io, pandas as pd
 
-REMAP_API = "https://remap2022.univ-amu.fr/api/v1"
+ROOT = "https://remap.univ-amu.fr/storage/remap2022"
+CACHE = Path("./remap_cache"); CACHE.mkdir(exist_ok=True)
 
-def get_gene_tfs(gene, assembly="hg38"):
-    try:
-        r = requests.get(f"{REMAP_API}/peaks/gene/", params={"gene": gene, "assembly": assembly}, timeout=30)
-        r.raise_for_status()
-        peaks = r.json()
-        return set(p.get("name", "").split(":")[0] for p in peaks if p.get("name", ""))
-    except Exception as e:
-        print(f"Warning: {gene} → {e}")
-        return set()
+def cached_remap(tf, assembly="hg38", flavour="nr"):
+    fname = f"remap2022_{tf}_{flavour}_macs2_{assembly}_v1_0.bed.gz"
+    path = CACHE / fname
+    if not path.exists():
+        url = f"{ROOT}/{assembly}/MACS2/TF/{tf}/{fname}"
+        r = requests.get(url, timeout=300); r.raise_for_status()
+        path.write_bytes(r.content)
+    with gzip.open(path, "rb") as fh:
+        return pd.read_csv(fh, sep="\t", header=None, low_memory=False,
+                           names=["chrom","start","end","name","score","strand",
+                                  "thickStart","thickEnd","itemRgb"])
 
-gene_a, gene_b = "MYC", "MYCN"
-tfs_a = get_gene_tfs(gene_a)
-time.sleep(0.5)
-tfs_b = get_gene_tfs(gene_b)
-
-shared = tfs_a & tfs_b
-only_a = tfs_a - tfs_b
-only_b = tfs_b - tfs_a
-
-print(f"{gene_a} TFs: {len(tfs_a)}  |  {gene_b} TFs: {len(tfs_b)}")
-print(f"Shared: {len(shared)}  |  {gene_a}-only: {len(only_a)}  |  {gene_b}-only: {len(only_b)}")
-print(f"\nShared TFs (first 15): {sorted(shared)[:15]}")
-print(f"\n{gene_a}-only (first 10): {sorted(only_a)[:10]}")
+ctcf_cached = cached_remap("CTCF")
+print(f"CTCF NR (cached path): {len(ctcf_cached):,} peaks")
 ```
 
-### Recipe: Export Region Peaks as BED
+### Recipe: TFs at a Single Position via Bulk NR (Heavy)
 
-When to use: Export ReMap query results to BED format for downstream bedtools intersection or IGV visualization.
+When you need every TF that touches a small region, downloading per-TF BEDs one at a time is slow. The 1.5 GB bulk NR carries one row per (TF, cell) pair and is faster for many-TF queries — assuming you can hold or stream it.
 
 ```python
-import requests, pandas as pd
-
-REMAP_API = "https://remap2022.univ-amu.fr/api/v1"
-
-def export_region_as_bed(chrom, start, end, outfile, assembly="hg38"):
-    """Query ReMap region and save as 6-column BED file."""
-    r = requests.get(f"{REMAP_API}/peaks/overlap/", params={
-        "chr": chrom, "start": start, "end": end, "assembly": assembly
-    }, timeout=30)
-    r.raise_for_status()
-    peaks = r.json()
-    rows = [{
-        "chr":   p.get("chr",   p.get("chrom", "")),
-        "start": p.get("start", 0),
-        "end":   p.get("end",   0),
-        "name":  p.get("name",  "."),
-        "score": p.get("score", 0),
-        "strand": p.get("strand", "."),
-    } for p in peaks]
-    df = pd.DataFrame(rows)
-    df = df.sort_values(["chr", "start"])
-    df.to_csv(outfile, sep="\t", header=False, index=False)
-    print(f"Saved {len(df)} peaks to {outfile}")
-    return df
-
-export_region_as_bed("chr17", 7_670_000, 7_690_000, "TP53_locus_remap.bed")
+# Sketch — bulk NR is ~1.5 GB; recommended only with disk cache + tabix/pybedtools.
+BULK_NR = "https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/remap2022_nr_macs2_hg38_v1_0.bed.gz"
+# Skipped end-to-end execution here to avoid a 1.5 GB download in the example.
+# In practice: download once, build a tabix index with `tabix -p bed`, then query intervals.
 ```
 
 ## Troubleshooting
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| `404 Not Found` from API | Endpoint path changed or unavailable | Check `https://remap2022.univ-amu.fr/api/` for current endpoint list; fall back to BED download |
-| Empty JSON list `[]` from region query | No peaks in region, or assembly mismatch | Verify coordinates are on the correct assembly; try a wider window (±10 kb) |
-| Gene query returns empty | Gene symbol not recognized by ReMap | Try Ensembl gene symbol; some aliases are not mapped — verify with HGNC |
-| `requests.exceptions.Timeout` | Large region or slow server | Increase `timeout=60`; for regions >1 Mb use BED file download instead |
-| `name` field has only one component | Incomplete metadata in ReMap for that experiment | Guard with `parts[n] if len(parts) > n else "unknown"` |
-| BED download 404 | Per-TF files use exact ReMap TF naming | Check TF name case and spelling at `https://remap2022.univ-amu.fr/download_page` |
-| Duplicate peaks for same TF | Multiple experiments per TF in a cell type | Group by `tf_name` and count unique experiments; deduplicate peaks with bedtools merge |
+| `ConnectionRefusedError` on `/api/v1/*` | REST API backend (port 802) is down | Use BED downloads (this skill's primary path). Track ReMap's announcements for restoration. |
+| HTTP 404 on a per-TF URL | TF name case mismatch, or TF not present in that assembly | Check ReMap's "download" web page for the canonical TF symbol; some TFs are mouse-only |
+| `name`-field parser yields empty cell lists | You're parsing the wrong flavour | Per-TF NR uses `TF:cell,cell,...`; per-TF "all" uses `EXPERIMENT.TF.CELL`; see Module 2 table |
+| `MemoryError` reading bulk NR | 1.5 GB uncompressed; doesn't fit easily into RAM | Stream-read with `pandas.read_csv(chunksize=...)` or build a tabix index and query intervals |
+| Wrong-build coordinates | hg19 query against hg38 BED (or vice versa) | Re-fetch the BED with the matching `assembly=` |
+| `pybedtools` ImportError | `bedtools` binary not on PATH | `conda install -c bioconda bedtools` or skip pybedtools (pandas-only path works) |
+| Slow per-TF download in a loop | Re-downloading every iteration | Use the "Cache Downloads on Disk" recipe |
 
 ## Related Skills
 
-- `jaspar-database` — TF binding motif matrices (PWMs/PFMs); use alongside ReMap peak evidence for sequence-level validation
-- `encode-database` — ENCODE regulatory tracks including TF ChIP-seq, DNase-seq, and ATAC-seq; partially overlaps with ReMap
-- `homer-motif-analysis` — de novo motif discovery in ChIP-seq peak sets from ReMap or MACS3
-- `macs3-peak-calling` — call peaks from raw ChIP-seq BAM files; ReMap provides pre-called peaks from the same approach
-- `regulomedb-database` — regulatory variant scoring that integrates TF binding evidence similar to ReMap
+- `jaspar-database` — PWM motifs for the same TFs (binding-site sequence vs experimental peaks)
+- `encode-database` — Raw ENCODE experiment metadata and per-experiment peak files (ReMap is the harmonised superset)
+- `ensembl-database` — Gene coordinate / transcript lookups for region-around-gene queries
+- `ucsc-genome-browser` — Visualise BED tracks alongside the genome browser
+- `regulomedb-database` — Regulatory variant scoring; ReMap peaks underlie some of its TF evidence
 
 ## References
 
-- [ReMap 2022 API documentation](https://remap2022.univ-amu.fr/api/) — REST API endpoint reference and interactive explorer
-- [Hammal et al., Nucleic Acids Research 2022](https://doi.org/10.1093/nar/gkab996) — ReMap 2022 paper describing the 2022 release (165M peaks, 1,210 TFs)
-- [ReMap portal and download page](https://remap2022.univ-amu.fr/) — web browser, download page for BED files and cis-regulatory modules
-- [Chèneby et al., Nucleic Acids Research 2020](https://doi.org/10.1093/nar/gkz945) — ReMap 2020 paper describing the reprocessing pipeline and quality control methodology
+- [ReMap 2022 — downloads](https://remap.univ-amu.fr/download_page) — Per-TF and bulk NR / CRM BED files
+- [ReMap atlas paper (NAR 2022)](https://doi.org/10.1093/nar/gkab996) — Hammal F et al., *Nucleic Acids Research* 50(D1): D316–D325
+- [ReMap 2020 paper (NAR 2020)](https://doi.org/10.1093/nar/gkz945) — Chèneby J et al., *Nucleic Acids Research* 48(D1): D180–D188
+- [ReMap home](https://remap.univ-amu.fr/)
