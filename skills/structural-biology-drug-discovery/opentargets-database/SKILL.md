@@ -151,7 +151,7 @@ query Associations($ensgId: String!, $size: Int!) {
       rows {
         disease { id name therapeuticAreas { name } }
         score
-        datatypeScores { componentId score }
+        datatypeScores { id score }
       }
     }
   }
@@ -164,7 +164,7 @@ print(f"{target['approvedSymbol']}: {assoc['count']} associated diseases")
 
 rows = []
 for r in assoc["rows"]:
-    scores = {d["componentId"]: d["score"] for d in r.get("datatypeScores", [])}
+    scores = {d["id"]: d["score"] for d in r.get("datatypeScores", [])}
     rows.append({
         "disease": r["disease"]["name"],
         "disease_id": r["disease"]["id"],
@@ -201,7 +201,7 @@ query DiseaseTargets($efoId: String!, $size: Int!) {
       rows {
         target { id approvedSymbol biotype }
         score
-        datatypeScores { componentId score }
+        datatypeScores { id score }
       }
     }
   }
@@ -236,14 +236,12 @@ query = """
 query KnownDrugs($ensgId: String!) {
   target(ensemblId: $ensgId) {
     approvedSymbol
-    knownDrugs {
+    drugAndClinicalCandidates {
       count
       rows {
-        drug { id name drugType maximumClinicalTrialPhase isApproved }
-        mechanismOfAction
-        disease { name }
-        phase
-        status
+        maxClinicalStage
+        drug { id name drugType maximumClinicalStage mechanismsOfAction { rows { mechanismOfAction } } }
+        diseases { disease { id name } }
       }
     }
   }
@@ -251,19 +249,22 @@ query KnownDrugs($ensgId: String!) {
 """
 data = ot_query(query, {"ensgId": "ENSG00000146648"})  # EGFR
 target = data["target"]
-drugs_data = target["knownDrugs"]
+drugs_data = target["drugAndClinicalCandidates"]
 print(f"{target['approvedSymbol']}: {drugs_data['count']} drug-indication pairs")
 
 rows = []
 for r in drugs_data["rows"]:
     drug = r["drug"]
+    moa = drug.get("mechanismsOfAction") or {}
+    moa_first = (moa.get("rows") or [{}])[0].get("mechanismOfAction")
+    first_disease = (r.get("diseases") or [{}])[0].get("disease") or {}
     rows.append({
         "drug": drug["name"],
         "type": drug["drugType"],
-        "phase": r["phase"],
-        "approved": drug["isApproved"],
-        "indication": r["disease"]["name"] if r.get("disease") else "n/a",
-        "mechanism": r["mechanismOfAction"],
+        "maxClinicalStage": r["maxClinicalStage"],
+        "approved": drug["maximumClinicalStage"] == "PHASE_4",
+        "indication": first_disease.get("name", "n/a"),
+        "mechanism": moa_first,
     })
 
 df = pd.DataFrame(rows).drop_duplicates(subset=["drug", "indication"])
@@ -297,7 +298,7 @@ query Evidence($ensgId: String!, $efoId: String!) {
       rows {
         datasourceId
         score
-        variantId
+        variantRsId
         studyId
         publicationYear
         clinicalSignificances
@@ -335,7 +336,7 @@ query Safety($ensgId: String!) {
       event
       effects { direction dosing }
       biosamples { tissueLabel cellLabel }
-      datasources { name pmid }
+      datasource
     }
   }
 }
@@ -345,8 +346,11 @@ target = data["target"]
 print(f"Safety liabilities for {target['approvedSymbol']}:")
 for s in target.get("safetyLiabilities", [])[:5]:
     print(f"  Event: {s['event']}")
-    for ds in s.get("datasources", []):
-        print(f"    Source: {ds['name']}, PMID: {ds.get('pmid', 'n/a')}")
+    # 2025 schema: `datasource` is a scalar literature-citation string,
+    # not the legacy `datasources[{name, pmid}]` list of objects
+    print(f"    Source: {s.get('datasource', 'n/a')}")
+    for eff in s.get("effects", []) or []:
+        print(f"    Effect: direction={eff.get('direction')} dosing={eff.get('dosing')}")
 ```
 
 ## Key Concepts
@@ -390,7 +394,7 @@ def get_top_targets(efo_id, n=50):
           rows{
             target{id approvedSymbol biotype}
             score
-            datatypeScores{componentId score}
+            datatypeScores { id score }
           }
         }
       }
@@ -400,7 +404,7 @@ def get_top_targets(efo_id, n=50):
     rows = []
     for row in disease["associatedTargets"]["rows"]:
         t = row["target"]
-        scores = {d["componentId"]: round(d["score"], 3) for d in row.get("datatypeScores", [])}
+        scores = {d["id"]: round(d["score"], 3) for d in row.get("datatypeScores", [])}
         rows.append({
             "target": t["approvedSymbol"],
             "ensembl_id": t["id"],
@@ -418,7 +422,8 @@ print("Disease candidates:", candidates)
 disease_name, df = get_top_targets("EFO_0003060", n=50)
 df.to_csv("target_prioritization.csv", index=False)
 print(f"\nTop targets for {disease_name}:")
-print(df[["target", "overall_score", "genetic_association", "known_drug"]].head(10).to_string(index=False))
+cols = [c for c in ["target", "overall_score", "genetic_association", "known_drug", "literature", "rna_expression", "somatic_mutation"] if c in df.columns]
+print(df[cols].head(10).to_string(index=False))
 ```
 
 ### Workflow 2: Drug-Target-Disease Triangle
@@ -439,12 +444,12 @@ query = """
 query($ensgId:String!){
   target(ensemblId:$ensgId){
     approvedSymbol
-    knownDrugs{
+    drugAndClinicalCandidates{
       count
       rows{
-        drug{id name drugType maximumClinicalTrialPhase isApproved}
-        disease{id name}
-        mechanismOfAction phase status
+        maxClinicalStage
+        drug{id name drugType maximumClinicalStage mechanismsOfAction { rows { mechanismOfAction } } }
+        diseases { disease { id name } }
       }
     }
   }
@@ -458,16 +463,19 @@ targets = {
 all_rows = []
 for sym, ensg in targets.items():
     data = ot_query(query, {"ensgId": ensg})
-    for row in data["target"]["knownDrugs"]["rows"]:
+    for row in data["target"]["drugAndClinicalCandidates"]["rows"]:
         drug = row["drug"]
+        moa = drug.get("mechanismsOfAction") or {}
+        moa_first = (moa.get("rows") or [{}])[0].get("mechanismOfAction")
+        first_disease = (row.get("diseases") or [{}])[0].get("disease") or {}
         all_rows.append({
             "target": sym,
             "drug": drug["name"],
             "drug_type": drug["drugType"],
-            "phase": row["phase"],
-            "approved": drug["isApproved"],
-            "indication": row["disease"]["name"] if row.get("disease") else "n/a",
-            "mechanism": row["mechanismOfAction"],
+            "maxClinicalStage": row["maxClinicalStage"],
+            "approved": drug["maximumClinicalStage"] == "PHASE_4",
+            "indication": first_disease.get("name", "n/a"),
+            "mechanism": moa_first,
         })
 
 df = pd.DataFrame(all_rows)
@@ -557,19 +565,18 @@ query = """
 query($efoId: String!) {
   disease(efoId: $efoId) {
     name
-    knownDrugs { count rows {
-      drug { name isApproved maximumClinicalTrialPhase }
-      target { approvedSymbol }
-      mechanismOfAction
+    drugAndClinicalCandidates { count rows {
+      maxClinicalStage
+      drug { name maximumClinicalStage drugType }
     }}
   }
 }"""
 r = requests.post(OT_URL, json={"query": query, "variables": {"efoId": "EFO_0000305"}})
 data = r.json()["data"]["disease"]
-approved = [row for row in data["knownDrugs"]["rows"] if row["drug"]["isApproved"]]
+approved = [row for row in data["drugAndClinicalCandidates"]["rows"] if row["drug"]["maximumClinicalStage"] == "PHASE_4"]
 print(f"Approved drugs for {data['name']}: {len(approved)}")
 for row in approved[:5]:
-    print(f"  {row['drug']['name']} → {row['target']['approvedSymbol']}: {row['mechanismOfAction']}")
+    print(f"  {row['drug']['name']} ({row['drug']['drugType']})  maxStage={row['maxClinicalStage']}")
 ```
 
 ## Troubleshooting
@@ -581,7 +588,7 @@ for row in approved[:5]:
 | Target not found | Gene symbol vs Ensembl ID mismatch | Use `search` query first to resolve Ensembl ID |
 | Slow query for large result set | `page.size` too large | Cap at 500 rows; paginate with multiple requests |
 | Missing tractability data | Target not assessed | Not all targets have tractability; check `tractability` field is non-null |
-| `knownDrugs` empty | No drug-target evidence in ChEMBL | Use `chembl-database-bioactivity` for preclinical compound activity |
+| `drugAndClinicalCandidates` empty | No drug-target evidence in ChEMBL | Use `chembl-database-bioactivity` for preclinical compound activity |
 
 ## Related Skills
 
