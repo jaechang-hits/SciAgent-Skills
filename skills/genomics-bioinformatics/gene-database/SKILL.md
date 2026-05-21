@@ -17,7 +17,7 @@ NCBI Gene is the authoritative curated database for gene-centric information, co
 - Retrieving curated gene summaries and function descriptions programmatically
 - Pulling RefSeq mRNA (NM_) and protein (NP_) accessions associated with a gene
 - Querying GO functional annotations (Biological Process, Molecular Function, Cellular Component)
-- Cross-species gene queries using the same Gene ID space
+- Finding orthologs across species via the NCBI Datasets v2 orthologs endpoint (legacy E-utilities `gene_gene_homolog` retired with HomoloGene in 2019)
 - For expression profiles across conditions use `geo-database`; for variant annotations use `clinvar-database` or `ensembl-database`
 
 ## Prerequisites
@@ -205,32 +205,40 @@ for term in go_terms[:10]:
     print(f"  {term}")
 ```
 
-### Query 6: Cross-Species Gene Query
+### Query 6: Cross-Species Orthologs (NCBI Datasets v2)
 
-Find orthologs across species using NCBI Gene IDs.
+Find orthologs across species. Note: the legacy E-utilities link `gene_gene_homolog` was retired with HomoloGene in 2019 — the modern path is the **NCBI Datasets v2 REST API**, which exposes a dedicated orthologs endpoint.
 
 ```python
 import requests, time
 
-EMAIL = "your@email.com"
-BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+DATASETS_BASE = "https://api.ncbi.nlm.nih.gov/datasets/v2"
 
-def find_ortholog(human_gene_id, target_organism):
-    """Find ortholog Gene ID in target species via NCBI Gene homologs."""
-    r = requests.get(f"{BASE}/elink.fcgi",
-                     params={"dbfrom": "gene", "db": "gene",
-                             "id": human_gene_id, "linkname": "gene_gene_homolog",
-                             "retmode": "json", "email": EMAIL})
+def get_orthologs(gene_id, taxon_filter=None):
+    """Return ortholog Gene reports for a given NCBI Gene ID.
+    taxon_filter: optional tax_id (int) or list of tax_ids to narrow species."""
+    params = {}
+    if taxon_filter is not None:
+        # tax_ids: human=9606, mouse=10090, rat=10116, zebrafish=7955, fly=7227
+        ids = taxon_filter if isinstance(taxon_filter, (list, tuple)) else [taxon_filter]
+        params["taxon_filter"] = [str(t) for t in ids]
+    r = requests.get(f"{DATASETS_BASE}/gene/id/{gene_id}/orthologs",
+                     params=params, timeout=30)
     r.raise_for_status()
-    linksets = r.json().get("linksets", [])
-    if not linksets:
-        return []
-    homolog_ids = [str(l["id"]) for l in linksets[0].get("linksetdbs", [{}])[0].get("links", [])]
-    return homolog_ids[:10]
+    return r.json().get("reports", [])
 
-# Human TP53 (7157) homologs
-homolog_ids = find_ortholog("7157", "Mus musculus")
-print(f"Homolog Gene IDs for TP53: {homolog_ids}")
+# Mouse ortholog of human TP53 (Gene ID 7157)
+reports = get_orthologs("7157", taxon_filter=10090)
+for rep in reports[:5]:
+    g = rep.get("gene", {})
+    print(f"  {g.get('symbol'):8s} (tax {g.get('tax_id')}, gene_id {g.get('gene_id')}): "
+          f"{g.get('description', '')[:60]}")
+# Expect:  Trp53    (tax 10090, gene_id 22059): transformation related protein 53
+
+time.sleep(0.34)
+# All orthologs (every species in the orthology group)
+all_orthologs = get_orthologs("7157")
+print(f"\nTotal TP53 orthologs across species: {len(all_orthologs)}")
 ```
 
 ## Key Concepts
@@ -432,6 +440,7 @@ print(f"Sample IDs: {result['idlist']}")
 | `HTTP 429` rate limit | Too many requests | Add `time.sleep(0.35)` between calls; use NCBI API key |
 | ESummary missing `uids` key | All IDs invalid/absent | Check `id` values are valid integers, not empty strings |
 | XML parse error | Malformed XML for rare genes | Wrap ET.fromstring in try/except; retry with `rettype=text` |
+| Empty ortholog list from ELink | Legacy `linkname=gene_gene_homolog` retired with HomoloGene in 2019 | Use NCBI Datasets v2 `/gene/id/{gene_id}/orthologs` instead (Query 6) |
 
 ## Related Skills
 
@@ -446,3 +455,4 @@ print(f"Sample IDs: {result['idlist']}")
 - [E-utilities documentation](https://www.ncbi.nlm.nih.gov/books/NBK25499/) — Complete API reference for ESearch, ESummary, EFetch
 - [NCBI Gene field tags](https://www.ncbi.nlm.nih.gov/books/NBK3840/) — Field tag reference for constructing Entrez queries
 - [NCBI API Key registration](https://www.ncbi.nlm.nih.gov/account/) — Free registration for 10 req/s rate limit
+- [NCBI Datasets v2 REST API](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/reference-docs/rest-api/) — Modern endpoint for orthologs, gene metadata, and taxonomy (replaces retired HomoloGene)

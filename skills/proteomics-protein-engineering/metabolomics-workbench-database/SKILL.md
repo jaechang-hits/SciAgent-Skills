@@ -1,32 +1,39 @@
 ---
 name: "metabolomics-workbench-database"
-description: "Query Metabolomics Workbench REST API (4,200+ NIH studies) for metabolite ID, study discovery, RefMet standardization, m/z precursor searches, MetStat filtering, gene/protein annotations. Use hmdb-database for local XML; pubchem-compound-search for compounds."
-license: "Unknown"
+description: "Query Metabolomics Workbench REST API (4,200+ NIH studies) for metabolite ID, study discovery, RefMet standardization, m/z precursor searches, and gene/protein annotations. Quirks: compound input_item rejects `name` (use pubchem_cid/kegg_id/inchi_key/etc.); free-text → compound is a two-step refmet/match→refmet/name flow; moverz endpoint returns TSV text, not JSON. Use hmdb-database for local XML; pubchem-compound-search for general compound lookup."
+license: "CC-BY-4.0"
 ---
 
 # Metabolomics Workbench Database — REST API Access
 
 ## Overview
 
-Query the Metabolomics Workbench (MW) REST API to access 4,200+ metabolomics studies hosted at UCSD under NIH Common Fund sponsorship. The API provides six query contexts: compound/metabolite lookups, study metadata and experimental data retrieval, RefMet standardized nomenclature, MetStat study filtering by species/disease/analysis type, m/z precursor ion searches for compound identification, and gene/protein annotation from the Metabolomics Gene/Protein (MGP) database.
+The Metabolomics Workbench (MW) REST API at `https://www.metabolomicsworkbench.org/rest/` exposes 4,200+ metabolomics studies hosted at UCSD under NIH Common Fund sponsorship. URL pattern is `/{context}/{input_item}/{input_value}/{output_item}/{format}`. Contexts include `compound`, `refmet`, `moverz`, `study`, `analysis`, `metabolite`, `gene`, `protein`. Notable quirks discovered live:
+
+- `compound/name/{x}` is **rejected** — `name` is not an allowed input_item. Use `pubchem_cid`, `kegg_id`, `inchi_key`, `hmdb_id`, `regno`, `lm_id`, `formula`, `smiles`, or `abbrev`. For free-text input, go through `refmet/match/{x}` first.
+- `refmet/name/{x}/all` requires the **exact** RefMet name (e.g. `Glucose`, not `D-glucose`); use `refmet/match/{x}` for fuzzy normalisation first.
+- `moverz/{REFMET|LIPIDS|MB}/{mz}/{ion}/{tol}/txt` returns **TSV text** (no JSON variant).
+- The `metstat/filter/...` endpoint shown in older examples returns `[]` — replace with `study/{context}/{value}/summary` (or `/metabolites`) + client-side filtering.
+
+No authentication required.
 
 ## When to Use
 
-- Searching for metabolite structures, identifiers, or chemical properties by PubChem CID, KEGG ID, InChI key, or formula
-- Discovering metabolomics studies by species, disease, analysis type, or polarity
-- Standardizing metabolite names to RefMet nomenclature for cross-study comparison
-- Identifying unknown compounds from mass spectrometry m/z values with adduct type matching
-- Retrieving experimental metabolomics data (concentrations, abundances) from published studies
-- Querying gene or protein annotations linked to metabolomics pathways
-- Downloading study data in mwTab format for local analysis
-- For local metabolite database parsing (220K+ entries, NMR/MS spectra) use `hmdb-database` instead
-- For live compound property searches (110M+ compounds) use `pubchem-compound-search` instead
+- Searching metabolite records by PubChem CID, KEGG ID, InChIKey, HMDB ID, formula, or SMILES
+- Discovering studies by species, disease, last_name, institute, analysis_type, or polarity
+- Standardising metabolite names to RefMet nomenclature for cross-study integration
+- Identifying unknown compounds from MS m/z values with adduct-aware matching (`moverz`)
+- Retrieving experimental metabolite tables (analyses, abundances) from published studies
+- Querying gene/protein annotations linked to metabolomics pathways
+- Downloading raw mwTab files for local analysis
+- For local 220K-metabolite XML parsing with NMR/MS spectra use `hmdb-database` instead
+- For live 110M-compound property lookups use `pubchem-compound-search` instead
 
 ## Prerequisites
 
 - **Python packages**: `requests`, `pandas`
-- **No API key required**: MW REST API is publicly accessible without authentication
-- **Rate limits**: MW does not enforce strict rate limits for reasonable use. For bulk queries (100+), add 0.5-1s delays between requests
+- **No API key required**: publicly accessible
+- **Rate limits**: MW does not enforce strict limits; add `time.sleep(0.3)` between bulk requests
 - **Base URL**: `https://www.metabolomicsworkbench.org/rest`
 
 ```bash
@@ -37,484 +44,430 @@ pip install requests pandas
 
 ```python
 import requests
-import time
 
 BASE = "https://www.metabolomicsworkbench.org/rest"
 
-def mw_query(context, input_item, input_value, output_item="all", fmt="json"):
-    """Query Metabolomics Workbench REST API.
+# Two-step free-text → compound (the API rejects compound/name/...)
+def lookup_by_name(name):
+    # 1) Normalise to RefMet name
+    r = requests.get(f"{BASE}/refmet/match/{name}", timeout=30)
+    r.raise_for_status()
+    refmet = r.json()
+    if not refmet.get("refmet_name"):
+        return None
+    # 2) Pull full compound record by RefMet name (or by pubchem_cid)
+    r2 = requests.get(f"{BASE}/refmet/name/{refmet['refmet_name']}/all", timeout=30)
+    rec = r2.json() if r2.json() else {}
+    return rec if isinstance(rec, dict) else None
 
-    URL pattern: /context/input_item/input_value/output_item/output_format
-    """
-    url = f"{BASE}/{context}/{input_item}/{input_value}/{output_item}/{fmt}"
-    resp = requests.get(url, timeout=30)
-    resp.raise_for_status()
-    return resp.json() if fmt == "json" else resp.text
-
-# Example: look up glucose by name
-result = mw_query("compound", "name", "glucose")
-print(result)
-# {'regno': '...', 'formula': 'C6H12O6', 'exactmass': '180.063388...', ...}
+c = lookup_by_name("glucose")
+print(f"{c['name']}: formula={c['formula']}, PubChem CID={c['pubchem_cid']}, "
+      f"InChIKey={c['inchi_key']}")
+# Glucose: formula=C6H12O6, PubChem CID=5793, InChIKey=WQZGKKKJIJFFOK-GASJEMHNSA-N
 ```
 
 ## Core API
 
 ### Module 1: Compound Queries
 
-Search metabolite records by various identifiers. Returns chemical properties, structure info, and cross-references.
+`compound/{input_item}/{input_value}/all/json` — `input_item` must be one of `regno`, `formula`, `inchi_key`, `lm_id`, `pubchem_cid`, `hmdb_id`, `kegg_id`, `smiles`, `abbrev`. The legacy `name` input is rejected by the server.
 
 ```python
-# Search by PubChem CID
-compound = mw_query("compound", "pubchem_cid", "5793")
-print(compound.get("name"), compound.get("formula"))
-# Glucose C6H12O6
+import requests
 
-# Search by KEGG compound ID
-compound = mw_query("compound", "kegg_id", "C00031")
-print(compound.get("name"), compound.get("exactmass"))
-# D-Glucose 180.06338810
+BASE = "https://www.metabolomicsworkbench.org/rest"
 
-# Search by InChI key
-compound = mw_query("compound", "inchi_key", "WQZGKKKJIJFFOK-GASJEMHNSA-N")
+# By PubChem CID
+r = requests.get(f"{BASE}/compound/pubchem_cid/5793/all/json", timeout=30)
+glucose = r.json()
+print(f"PubChem 5793 -> {glucose['name']}, formula={glucose['formula']}, "
+      f"HMDB={glucose.get('hmdb_id')}, KEGG={glucose.get('kegg_id')}")
 
-# Search by molecular formula
-matches = mw_query("compound", "formula", "C6H12O6")
-# Returns all compounds with this formula
+# By KEGG ID
+r = requests.get(f"{BASE}/compound/kegg_id/C00031/all/json", timeout=30)
+print("KEGG C00031 ->", r.json()["name"])
 
-# Search by registry number (MW internal ID)
-compound = mw_query("compound", "regno", "11")
-# Available input_items: regno, formula, name, pubchem_cid, kegg_id, inchi_key, lm_id, hmdb_id, bmrb_id
+# By InChIKey
+r = requests.get(f"{BASE}/compound/inchi_key/WQZGKKKJIJFFOK-GASJEMHNSA-N/all/json", timeout=30)
+print("InChIKey -> regno:", r.json()["regno"])
 ```
 
-### Module 2: Study Access
-
-Retrieve study metadata, experimental factors, and data from deposited metabolomics studies.
-
 ```python
-# Get study summary by study ID
-study = mw_query("study", "study_id", "ST000001", "summary")
-print(study.get("study_title"), study.get("institute"))
-
-# Get study metadata (species, analysis type, etc.)
-study_meta = mw_query("study", "study_id", "ST000001")
-print(study_meta.get("species"), study_meta.get("analysis_type"))
-
-# Get study factors (experimental conditions)
-factors = mw_query("study", "study_id", "ST000001", "factors")
-# Returns factor names and levels for the study
-
-# Get study data (metabolite measurements)
-data = mw_query("study", "study_id", "ST000001", "data")
-# Returns concentration/abundance values per sample
-
-# Get analysis details
-analysis = mw_query("study", "study_id", "ST000001", "analysis")
-print(analysis.get("analysis_type"), analysis.get("instrument_name"))
-
-# Download mwTab file (tab-delimited study format)
-mwtab_text = mw_query("study", "study_id", "ST000001", "mwtab", fmt="txt")
-# Returns full mwTab formatted text
+# Compound by formula returns a paged dict (multiple matches)
+import requests
+BASE = "https://www.metabolomicsworkbench.org/rest"
+r = requests.get(f"{BASE}/compound/formula/C6H12O6/all/json", timeout=30)
+matches = r.json()
+print(f"Compounds with formula C6H12O6: {len(matches)}")
+for k in list(matches)[:3]:
+    print(f"  regno={matches[k]['regno']}  name={matches[k]['name']}")
 ```
 
-### Module 3: RefMet Nomenclature
+### Module 2: Study Discovery
 
-Standardize metabolite names using RefMet (Reference Metabolomics) classification. RefMet provides a hierarchical nomenclature: super_class > main_class > sub_class.
+`study/{input_item}/{input_value}/{output}` — `input_item` includes `study_id`, `study_title`, `last_name`, `institute`, `analysis_id`, `metabolite_id`, `kegg_id`, `refmet_name`. `output` includes `summary`, `metabolites`, `factors`, `data`, `available_studies`, `species`, `disease`. `summary` for `study_id` returns a dict (keyed by accession when multiple); for `last_name`/`institute` it returns a list.
 
 ```python
-# Standardize a metabolite name to RefMet
-refmet = mw_query("refmet", "name", "Palmitic acid")
-print(refmet.get("refmet_name"), refmet.get("super_class"))
-# Palmitic acid Fatty Acyls
+import requests, pandas as pd
 
-# Get all metabolites in a main_class
-fatty_acids = mw_query("refmet", "main_class", "Fatty acids")
-print(f"Found {len(fatty_acids) if isinstance(fatty_acids, list) else 1} entries")
+BASE = "https://www.metabolomicsworkbench.org/rest"
 
-# Get all metabolites in a sub_class
-lg_fa = mw_query("refmet", "sub_class", "Long-chain fatty acids")
-
-# Search by exact mass (with tolerance)
-# Use match="name" for name matching
-refmet_match = mw_query("refmet", "match", "Palmitic acid")
-print(refmet_match.get("formula"), refmet_match.get("exactmass"))
-# C16H32O2 256.24023
+# Single-study summary — `study/study_id/{id}/summary` returns a flat dict
+# (keys: study_id, study_title, species, institute, analysis_type, ...)
+r = requests.get(f"{BASE}/study/study_id/ST000001/summary", timeout=30)
+s = r.json()
+print(f"{s['study_id']}: {s['study_title'][:60]}")
+print(f"  Species : {s.get('species')}  Institute: {s.get('institute')}")
+print(f"  Submit  : {s.get('submission_date')}")
 ```
 
-### Module 4: MetStat Filtering
-
-Filter studies using semicolon-delimited filter strings. MetStat queries enable discovery of studies by analysis type, polarity, species, and disease.
-
 ```python
-# MetStat filter format: "analysis_type:value;polarity:value;species:value;disease:value"
-# Each field is optional; separate multiple filters with semicolons
-
-# Find all LC-MS studies in human
-results = mw_query("metstat", "filter", "analysis_type:LC-MS;species:Human")
-print(f"Found {len(results) if isinstance(results, list) else 1} studies")
-
-# Filter by disease
-diabetes_studies = mw_query("metstat", "filter", "disease:Diabetes;species:Human")
-
-# Filter by polarity
-pos_studies = mw_query("metstat", "filter", "analysis_type:LC-MS;polarity:positive")
-
-# Combined multi-field filter
-filtered = mw_query("metstat", "filter",
-    "analysis_type:LC-MS;polarity:positive;species:Human;disease:Cancer")
-
-# Available filter fields and common values:
-# analysis_type: LC-MS, GC-MS, CE-MS, NMR
-# polarity: positive, negative
-# species: Human, Mouse, Rat, etc.
-# disease: Cancer, Diabetes, Obesity, etc.
+# Studies that detected a metabolite — `study/refmet_name/{x}/summary` returns
+# a thin index of (refmet_name, kegg_id, study_id) rows. Chain study_id → full summary
+# to get title and species.
+import requests, pandas as pd
+BASE = "https://www.metabolomicsworkbench.org/rest"
+r = requests.get(f"{BASE}/study/refmet_name/Glucose/summary", timeout=60)
+d = r.json()
+rows = list(d.values()) if isinstance(d, dict) else d
+print(f"Studies referencing 'Glucose': {len(rows)}")
+print(pd.DataFrame(rows).head(5).to_string(index=False))
+# refmet_name kegg_id  study_id
+#     Glucose  C00031  ST000001
+#     Glucose  C00031  ST000002
+#     ...
 ```
 
-### Module 5: m/z Search (Moverz)
+### Module 3: RefMet Standardisation
 
-Search for metabolites by precursor ion m/z value. Essential for compound identification from mass spectrometry data.
+`refmet/match/{user_text}` is a fuzzy normaliser — returns the standard RefMet record (no `pubchem_cid`/`kegg_id` though). `refmet/name/{exact_refmet_name}/all` returns the full record including IDs. Use them as a two-step pipeline.
 
 ```python
-# Search by m/z with adduct type and tolerance
-# Format: moverz/mz_value/tolerance/ion_type/...
-mz_results = mw_query("moverz", "mz", "180.063/0.005/M+H")
-# Returns candidate compounds matching the m/z within tolerance
+import requests
 
-# Negative mode search
-mz_neg = mw_query("moverz", "mz", "179.056/0.005/M-H")
+BASE = "https://www.metabolomicsworkbench.org/rest"
 
-# Sodium adduct search
-mz_na = mw_query("moverz", "mz", "203.053/0.01/M+Na")
+def normalise_to_refmet(user_text):
+    r = requests.get(f"{BASE}/refmet/match/{user_text}", timeout=30)
+    r.raise_for_status()
+    m = r.json()
+    if not m or not m.get("refmet_name"):
+        return None
+    return m["refmet_name"]
 
-# Search with wider tolerance for low-resolution instruments
-mz_wide = mw_query("moverz", "mz", "180.063/0.5/M+H")
-print("Candidates:", mz_results)
-# Returns: compound name, formula, exact mass, delta (mass error)
+def refmet_full(refmet_name):
+    r = requests.get(f"{BASE}/refmet/name/{refmet_name}/all", timeout=30)
+    r.raise_for_status()
+    rec = r.json()
+    return rec if isinstance(rec, dict) and rec else None
+
+name = normalise_to_refmet("alpha-D-glucose")  # -> 'Glucose'
+print(f"Normalised: {name}")
+rec = refmet_full(name)
+print(f"  PubChem CID : {rec['pubchem_cid']}")
+print(f"  InChIKey    : {rec['inchi_key']}")
+print(f"  Super class : {rec['super_class']} / {rec['main_class']} / {rec['sub_class']}")
 ```
 
-### Module 6: Gene Information
+### Module 4: Study Filtering (replaces broken `metstat`)
 
-Query gene annotations from the Metabolomics Gene/Protein (MGP) database.
+The older `metstat/filter/...` endpoint returns `[]`. Use the study context endpoints with client-side filtering instead.
 
 ```python
-# Search by gene symbol
-gene = mw_query("gene", "gene_symbol", "HMGCR")
-print(gene.get("gene_name"), gene.get("taxonomy"))
-# 3-hydroxy-3-methylglutaryl-CoA reductase Homo sapiens
+import requests, pandas as pd
 
-# Search by gene ID
-gene_by_id = mw_query("gene", "gene_id", "3156")
-print(gene_by_id.get("gene_symbol"))
+BASE = "https://www.metabolomicsworkbench.org/rest"
 
-# Search by taxonomy
-human_genes = mw_query("gene", "taxonomy", "Homo sapiens")
+def study_ids_for_metabolite(refmet_name):
+    """Return the study_id list that report a given RefMet name."""
+    r = requests.get(f"{BASE}/study/refmet_name/{refmet_name}/summary", timeout=60)
+    r.raise_for_status()
+    d = r.json()
+    rows = list(d.values()) if isinstance(d, dict) else d
+    return sorted({row["study_id"] for row in rows if row.get("study_id")})
+
+def study_summary(study_id):
+    """Pull full summary (title, species, institute, dates) for one study_id.
+    Response is a flat dict with keys study_id/study_title/species/institute/..."""
+    return requests.get(f"{BASE}/study/study_id/{study_id}/summary", timeout=30).json()
+
+# Find glucose studies, then enrich the first few
+ids = study_ids_for_metabolite("Glucose")
+print(f"Studies referencing 'Glucose': {len(ids)}")
+rows = [study_summary(sid) for sid in ids[:5]]
+df = pd.DataFrame(rows)
+print(df[["study_id", "study_title", "species"]].head().to_string(index=False))
 ```
 
-### Module 7: Protein Data
+### Module 5: m/z Precursor Search (`moverz`)
 
-Retrieve protein sequence and annotation data from the MGP database.
+`moverz/{REFMET|LIPIDS|MB}/{mz}/{ion}/{tolerance}/txt` returns **tab-separated text** (not JSON). The first DB selector (`REFMET`, `LIPIDS`, or `MB`) is required — `mz` as the first segment is rejected.
 
 ```python
-# Search by UniProt ID
-protein = mw_query("protein", "uniprot_id", "P04035")
-print(protein.get("protein_name"), protein.get("gene_symbol"))
+import requests, io, pandas as pd
 
-# Search by gene symbol for protein info
-protein_by_gene = mw_query("protein", "gene_symbol", "HMGCR")
-print(protein_by_gene.get("sequence")[:50] if protein_by_gene.get("sequence") else "No seq")
+BASE = "https://www.metabolomicsworkbench.org/rest"
 
-# Search by MGP ID
-protein_mgp = mw_query("protein", "mgp_id", "MGP000001")
+def moverz_search(db, mz, ion, tolerance=0.005):
+    """Search precursor m/z in REFMET / LIPIDS / MB and return a DataFrame.
+    Response is TSV text — no JSON variant."""
+    assert db in {"REFMET", "LIPIDS", "MB"}
+    r = requests.get(f"{BASE}/moverz/{db}/{mz}/{ion}/{tolerance}/txt", timeout=30)
+    r.raise_for_status()
+    return pd.read_csv(io.StringIO(r.text), sep="\t")
+
+df = moverz_search("REFMET", 180.063, "M+H", 0.005)
+print(f"Candidates at m/z 180.063 [M+H]+ (REFMET): {len(df)}")
+print(df.head(5).to_string(index=False))
+```
+
+```python
+# Same query against the LIPIDS database
+import requests, io, pandas as pd
+BASE = "https://www.metabolomicsworkbench.org/rest"
+r = requests.get(f"{BASE}/moverz/LIPIDS/760.585/M+H/0.01/txt", timeout=30)
+df_lipids = pd.read_csv(io.StringIO(r.text), sep="\t")
+print(f"Lipid candidates at m/z 760.585: {len(df_lipids)}")
+print(df_lipids.head(3).to_string(index=False))
+```
+
+### Module 6: Genes and Proteins
+
+```python
+import requests
+
+BASE = "https://www.metabolomicsworkbench.org/rest"
+
+r = requests.get(f"{BASE}/gene/gene_symbol/HMGCR/all", timeout=30)
+g = r.json()
+print(f"{g['gene_symbol']} -> MGP: {g.get('mgp_id')}  ({g.get('gene_name', '')[:60]})")
+
+# Protein by UniProt accession
+r2 = requests.get(f"{BASE}/protein/uniprot_id/P04035/all", timeout=30)
+p = r2.json()
+print(f"UniProt P04035: {p.get('protein_name', '')[:60]}  organism={p.get('organism')}")
 ```
 
 ## Key Concepts
 
-### API URL Structure
+### Allowed `input_item` Values per Context
 
-All MW REST API endpoints follow the same pattern:
+| Context | Valid input_item | Notes |
+|---------|------------------|-------|
+| `compound` | `regno`, `formula`, `inchi_key`, `lm_id`, `pubchem_cid`, `hmdb_id`, `kegg_id`, `smiles`, `abbrev` | `name` is **rejected** — go via `refmet/match` first |
+| `refmet` | `match`, `name`, `formula`, `exactmass`, `inchi_key`, `pubchem_cid`, `regno` | `match` is fuzzy; `name` requires the canonical RefMet name |
+| `study` | `study_id`, `study_title`, `last_name`, `institute`, `analysis_id`, `metabolite_id`, `kegg_id`, `refmet_name` | `summary` for `study_id` is a dict keyed by accession; for `last_name`/`institute` it's a list |
+| `moverz` | (path) `REFMET` / `LIPIDS` / `MB` | First segment is the DB, not `mz` |
+| `gene` | `gene_id`, `gene_symbol`, `gene_name`, `mgp_id` | Returns a dict |
+| `protein` | `mgp_id`, `gene_id`, `uniprot_id`, `gene_symbol` | Returns a dict |
 
-```
-https://www.metabolomicsworkbench.org/rest/{context}/{input_item}/{input_value}/{output_item}/{format}
-```
+### Output Type Conventions
 
-| Component | Description | Example Values |
-|-----------|-------------|----------------|
-| `context` | Query domain | `compound`, `study`, `refmet`, `metstat`, `moverz`, `gene`, `protein` |
-| `input_item` | Search field | `name`, `pubchem_cid`, `study_id`, `mz`, `gene_symbol` |
-| `input_value` | Search term | `glucose`, `5793`, `ST000001` |
-| `output_item` | Data to return | `all`, `summary`, `factors`, `data`, `analysis`, `mwtab` |
-| `format` | Response format | `json`, `txt` |
+- `output=summary` returns a **dict** when the input identifier is unique (e.g. `study_id`), a **list** when it isn't (e.g. `last_name`).
+- Appending `/json` to `study/.../summary` flips the response to TSV. Omit the format suffix — JSON is the default.
+- `moverz` only emits `/txt` (TSV); there is no JSON variant.
 
-### RefMet Classification Hierarchy
+### `refmet/match` vs `refmet/name`
 
-RefMet standardizes metabolite naming with three classification levels:
-
-| Super Class | Main Class (examples) | Sub Class (examples) |
-|-------------|----------------------|---------------------|
-| Fatty Acyls | Fatty acids, Eicosanoids | Short/Medium/Long/Very long-chain FA |
-| Glycerolipids | Monoradylglycerols, Diradylglycerols | Monoacylglycerols, Diacylglycerols |
-| Glycerophospholipids | Glycerophosphocholines, -ethanolamines | Lysophosphatidylcholines |
-| Sphingolipids | Sphingoid bases, Ceramides | Ceramide phosphocholines |
-| Steroids | Cholesterol esters, Bile acids | C18/C19/C21 steroids |
-| Prenol Lipids | Isoprenoids, Quinones | Ubiquinones, Terpenes |
-| Organic acids | Amino acids, Carboxylic acids | Alpha amino acids |
-| Nucleosides | Purine nucleosides, Pyrimidine | Adenosine, Cytidine |
-| Carbohydrates | Monosaccharides, Disaccharides | Hexoses, Pentoses |
-
-### Ion Adduct Types (Moverz)
-
-Common adduct types for m/z searches (mass spectrometry):
-
-| Adduct | Mode | Mass Shift | Use When |
-|--------|------|-----------|----------|
-| M+H | Positive | +1.0073 | Default positive mode |
-| M+Na | Positive | +22.9892 | Sodium adducts (common in ESI) |
-| M+K | Positive | +38.9632 | Potassium adducts |
-| M+NH4 | Positive | +18.0338 | Ammonium adducts (lipids) |
-| M-H | Negative | -1.0073 | Default negative mode |
-| M-H-H2O | Negative | -19.0178 | Dehydrated anions |
-| M+Cl | Negative | +34.9689 | Chloride adducts |
-| M+FA-H | Negative | +44.9982 | Formate adducts (LC-MS) |
-| M+2H | Positive | +1.0073 (z=2) | Doubly charged ions |
-| M-2H | Negative | -1.0073 (z=2) | Doubly charged negative |
-
-### MetStat Filter Syntax
-
-MetStat uses semicolon-delimited key:value pairs. All fields are optional:
-
-```
-analysis_type:{value};polarity:{value};species:{value};disease:{value}
-```
-
-- Omit any field to leave it unfiltered
-- Values are case-sensitive (use exact values: `Human` not `human`)
-- Combine as many fields as needed
+- `refmet/match/{user_text}` — fuzzy. Always returns a single dict with `refmet_name`, `formula`, `exactmass`, classification. Does **not** include `pubchem_cid`/`inchi_key`.
+- `refmet/name/{exact_refmet_name}/all` — requires the canonical RefMet name. Returns the full record including IDs. Returns an empty list if the name isn't canonical.
 
 ## Common Workflows
 
-### Workflow 1: Metabolite Identification Pipeline
-
-Standardize a metabolite name, find related studies, and retrieve experimental data.
+### Workflow 1: Free-Text → Full Compound Record
 
 ```python
-import pandas as pd
+import requests, pandas as pd
 
-# Step 1: Standardize name via RefMet
-refmet = mw_query("refmet", "name", "Palmitic acid")
-std_name = refmet.get("refmet_name", "Palmitic acid")
-formula = refmet.get("formula")
-print(f"Standardized: {std_name}, Formula: {formula}")
+BASE = "https://www.metabolomicsworkbench.org/rest"
 
-# Step 2: Search compound database for cross-references
-compound = mw_query("compound", "name", std_name)
-print(f"PubChem CID: {compound.get('pubchem_cid')}, "
-      f"KEGG: {compound.get('kegg_id')}, HMDB: {compound.get('hmdb_id')}")
+def resolve_to_compound(user_text):
+    # 1) Normalise via refmet/match
+    rm = requests.get(f"{BASE}/refmet/match/{user_text}", timeout=30).json()
+    if not rm.get("refmet_name"):
+        return None
+    name = rm["refmet_name"]
+    # 2) Fetch full RefMet record (includes pubchem_cid / inchi_key)
+    full = requests.get(f"{BASE}/refmet/name/{name}/all", timeout=30).json()
+    if not isinstance(full, dict) or not full:
+        return None
+    # 3) Optionally pull the matching compound record via PubChem CID
+    cid = full.get("pubchem_cid")
+    compound = None
+    if cid:
+        compound = requests.get(f"{BASE}/compound/pubchem_cid/{cid}/all/json",
+                                timeout=30).json()
+    return {
+        "input": user_text,
+        "refmet_name": name,
+        "formula": full.get("formula"),
+        "pubchem_cid": cid,
+        "hmdb_id": compound.get("hmdb_id") if compound else None,
+        "kegg_id": compound.get("kegg_id") if compound else None,
+        "inchi_key": full.get("inchi_key"),
+    }
 
-# Step 3: Find studies containing this metabolite via MetStat
-studies = mw_query("metstat", "filter", "species:Human")
-# Filter client-side for studies with the metabolite of interest
-if isinstance(studies, list):
-    print(f"Found {len(studies)} human metabolomics studies")
-
-# Step 4: Get data from a specific study
-study_data = mw_query("study", "study_id", "ST000001", "data")
-if isinstance(study_data, list):
-    df = pd.DataFrame(study_data)
-    print(f"Data shape: {df.shape}")
-    print(df.head())
+queries = ["glucose", "alpha-D-glucose", "L-tyrosine", "cholesterol"]
+df = pd.DataFrame([resolve_to_compound(q) for q in queries])
+print(df.to_string(index=False))
+df.to_csv("name_resolution.csv", index=False)
 ```
 
-### Workflow 2: MS Compound Identification
+### Workflow 2: Annotate MS Hit List
 
-Identify unknown compounds from mass spectrometry m/z values.
+**Goal**: Take a list of measured m/z values and assign RefMet candidate compounds.
 
 ```python
-# Step 1: Search positive mode m/z
-target_mz = "256.240"
-tolerance = "0.01"
-candidates_pos = mw_query("moverz", "mz", f"{target_mz}/{tolerance}/M+H")
+import requests, io, pandas as pd, time
 
-# Step 2: Also check sodium adduct
-candidates_na = mw_query("moverz", "mz", f"{target_mz}/{tolerance}/M+Na")
-time.sleep(0.5)
+BASE = "https://www.metabolomicsworkbench.org/rest"
 
-# Step 3: For each candidate, get full compound info
-if isinstance(candidates_pos, list):
-    for candidate in candidates_pos[:5]:  # Top 5 candidates
-        name = candidate.get("name", "Unknown")
-        delta = candidate.get("delta", "N/A")
-        print(f"Candidate: {name}, Mass error: {delta}")
+def annotate_peaks(mz_values, ion="M+H", tolerance=0.005):
+    out = []
+    for mz in mz_values:
+        r = requests.get(f"{BASE}/moverz/REFMET/{mz}/{ion}/{tolerance}/txt", timeout=30)
+        if r.status_code != 200 or not r.text.strip():
+            time.sleep(0.3); continue
+        df = pd.read_csv(io.StringIO(r.text), sep="\t")
+        for _, row in df.iterrows():
+            out.append({
+                "query_mz": mz,
+                "matched_mz": row["Matched m/z"],
+                "delta": row["Delta"],
+                "name": row["Name"],
+                "formula": row["Formula"],
+                "ion": row["Ion"],
+                "main_class": row.get("Main class"),
+            })
+        time.sleep(0.3)
+    return pd.DataFrame(out)
 
-        # Get detailed compound info
-        detail = mw_query("compound", "name", name)
-        print(f"  Formula: {detail.get('formula')}, "
-              f"KEGG: {detail.get('kegg_id')}")
-        time.sleep(0.5)
-
-# Step 4: Standardize top candidate via RefMet
-if candidates_pos:
-    top_name = candidates_pos[0].get("name", "")
-    refmet = mw_query("refmet", "name", top_name)
-    print(f"RefMet class: {refmet.get('super_class')} > "
-          f"{refmet.get('main_class')} > {refmet.get('sub_class')}")
+peaks = [180.063, 166.086, 90.055]   # glucose, phenylalanine, alanine
+df_ann = annotate_peaks(peaks)
+print(df_ann.head(10).to_string(index=False))
+df_ann.to_csv("ms_annotations.csv", index=False)
 ```
 
-### Workflow 3: Disease Metabolomics Exploration
-
-Discover metabolomics studies for a disease and extract experimental data.
+### Workflow 3: Find Studies Detecting a Metabolite
 
 ```python
-import pandas as pd
+import requests, pandas as pd
 
-# Step 1: Filter studies by disease and analysis type
-diabetes_lc = mw_query("metstat", "filter",
-    "disease:Diabetes;analysis_type:LC-MS;species:Human")
-print(f"Found {len(diabetes_lc) if isinstance(diabetes_lc, list) else 1} studies")
+BASE = "https://www.metabolomicsworkbench.org/rest"
 
-# Step 2: Get study details for top results
-if isinstance(diabetes_lc, list):
-    for study_entry in diabetes_lc[:3]:
-        sid = study_entry.get("study_id", "")
-        if sid:
-            summary = mw_query("study", "study_id", sid, "summary")
-            print(f"\n{sid}: {summary.get('study_title', 'N/A')}")
-            print(f"  Institute: {summary.get('institute', 'N/A')}")
-            time.sleep(0.5)
+def studies_with(refmet_name, enrich_n=20):
+    """Return a DataFrame: study_id rows that report the metabolite, enriched with
+    title + species for the first `enrich_n` IDs (via study/study_id/.../summary)."""
+    r = requests.get(f"{BASE}/study/refmet_name/{refmet_name}/summary", timeout=60)
+    r.raise_for_status()
+    d = r.json()
+    rows = list(d.values()) if isinstance(d, dict) else d
+    ids = sorted({row["study_id"] for row in rows if row.get("study_id")})
+    enriched = []
+    for sid in ids[:enrich_n]:
+        enriched.append(requests.get(
+            f"{BASE}/study/study_id/{sid}/summary", timeout=30).json())
+    return pd.DataFrame(enriched)
 
-# Step 3: Get experimental factors and data from one study
-target_study = "ST000001"
-factors = mw_query("study", "study_id", target_study, "factors")
-print(f"\nFactors for {target_study}:", factors)
-
-data = mw_query("study", "study_id", target_study, "data")
-if isinstance(data, list):
-    df = pd.DataFrame(data)
-    print(f"Dataset: {df.shape[0]} rows x {df.shape[1]} columns")
-    print(df.describe())
+df = studies_with("Glucose", enrich_n=20)
+print(f"Glucose-detecting studies (first 20 enriched): {len(df)}")
+print(df.groupby("species").size().sort_values(ascending=False).head(8))
 ```
 
 ## Key Parameters
 
-| Function/Endpoint | Parameter | Description | Example Values |
-|-------------------|-----------|-------------|----------------|
-| `compound` | `input_item` | Search field | `name`, `pubchem_cid`, `kegg_id`, `formula`, `inchi_key`, `hmdb_id`, `lm_id`, `bmrb_id`, `regno` |
-| `study` | `output_item` | Data to retrieve | `summary`, `factors`, `data`, `analysis`, `mwtab`, `all` |
-| `refmet` | `input_item` | Classification level | `name`, `main_class`, `sub_class`, `super_class`, `match` |
-| `metstat` | filter string | Semicolon-delimited | `analysis_type:LC-MS;species:Human;disease:Cancer` |
-| `moverz` | `mz` value | m/z / tolerance / adduct | `180.063/0.005/M+H` |
-| `gene` | `input_item` | Gene search field | `gene_symbol`, `gene_id`, `taxonomy` |
-| `protein` | `input_item` | Protein search field | `uniprot_id`, `gene_symbol`, `mgp_id` |
-| All | `fmt` | Response format | `json` (default), `txt` |
+| Parameter | Endpoint | Default | Range / Options | Effect |
+|-----------|----------|---------|-----------------|--------|
+| `context` | path | required | `compound`, `refmet`, `moverz`, `study`, `analysis`, `metabolite`, `gene`, `protein` | API context selector |
+| `input_item` | path | required | depends on context (see "Allowed `input_item` Values per Context") | Identifier type |
+| `input_value` | path | required | string | The actual identifier or value |
+| `output_item` | path | `all` | `all`, `summary`, `metabolites`, `factors`, `data`, etc. | What aspect to return |
+| `format` | path | (varies) | `json`, `txt` | `moverz` only emits `txt`; do NOT append `/json` to `study/.../summary` |
+| `mz` / `ion` / `tolerance` | `moverz` path | required | float / `M+H`, `M-H`, `M+Na`, `M+K`, etc. / float | Mass tolerance in Da |
 
 ## Best Practices
 
-1. **Use RefMet for standardization**: Always standardize metabolite names through RefMet before cross-study comparisons. Different studies may use synonyms for the same compound
-2. **Add delays for bulk queries**: Insert `time.sleep(0.5)` between requests when querying >100 endpoints to avoid overloading the server
-3. **Check response types**: The API may return a dict (single result) or list (multiple results). Always handle both: `results if isinstance(results, list) else [results]`
-4. **Use specific output_items**: Request `summary`, `factors`, or `data` individually rather than `all` to reduce response size and parse time
-5. **Validate m/z tolerance**: Use tight tolerance (0.005 Da) for high-resolution instruments (Orbitrap, TOF) and wider tolerance (0.5 Da) for low-resolution instruments
-6. **MetStat values are case-sensitive**: Use exact values (`Human` not `human`, `LC-MS` not `lc-ms`). Check available values via the MW web interface if unsure
-7. **Cache compound lookups**: Compound data changes infrequently. Cache results locally to avoid redundant API calls during iterative analysis
+1. **Use `refmet/match` first for free-text input.** `compound/name/...` is rejected by the server (`name` is not an allowed `input_item`).
+2. **`moverz` is TSV-only.** Parse with `pd.read_csv(io.StringIO(r.text), sep="\t")` — never call `.json()` on the response.
+3. **Don't append `/json` to `study/.../summary`.** The default is JSON; the suffix flips the response to TSV.
+4. **`refmet/name/{x}/all` needs the canonical RefMet name.** If you have user text, run it through `refmet/match` first.
+5. **Compound results paged by formula come keyed `'1','2',...`** — iterate `dict.values()` or pass to `pd.DataFrame.from_dict(orient="index")`.
+6. **Always `time.sleep(0.3)` in batch loops** — no rate limit is published but the server is shared.
 
 ## Common Recipes
 
-### Recipe: Batch Metabolite Standardization via RefMet
+### Recipe: Cross-Database ID Mapping (PubChem ↔ KEGG ↔ HMDB)
 
 ```python
-metabolite_names = ["palmitic acid", "oleic acid", "stearic acid",
-                    "linoleic acid", "arachidonic acid"]
-standardized = []
-for name in metabolite_names:
-    result = mw_query("refmet", "name", name)
-    standardized.append({
-        "original": name,
-        "refmet_name": result.get("refmet_name", name),
-        "super_class": result.get("super_class", ""),
-        "main_class": result.get("main_class", ""),
-        "formula": result.get("formula", "")
-    })
-    time.sleep(0.5)
-df_std = pd.DataFrame(standardized)
-print(df_std.to_string(index=False))
+import requests, pandas as pd
+
+BASE = "https://www.metabolomicsworkbench.org/rest"
+
+def cross_refs(refmet_name):
+    rm = requests.get(f"{BASE}/refmet/name/{refmet_name}/all", timeout=30).json()
+    if not isinstance(rm, dict) or not rm:
+        return None
+    cid = rm.get("pubchem_cid")
+    if not cid:
+        return {"refmet": refmet_name, "pubchem_cid": None}
+    c = requests.get(f"{BASE}/compound/pubchem_cid/{cid}/all/json", timeout=30).json()
+    return {"refmet": refmet_name,
+            "pubchem_cid": cid,
+            "kegg_id": c.get("kegg_id"),
+            "hmdb_id": c.get("hmdb_id"),
+            "inchi_key": rm.get("inchi_key")}
+
+df = pd.DataFrame([cross_refs(n) for n in ["Glucose", "L-Tyrosine", "Cholesterol"]])
+print(df.to_string(index=False))
 ```
 
-### Recipe: Cross-Database ID Mapping
+### Recipe: Pull a Study's Metabolite Table
 
 ```python
-# Map a compound across PubChem, KEGG, HMDB
-compound = mw_query("compound", "name", "L-Alanine")
-id_map = {
-    "MW_regno": compound.get("regno"),
-    "PubChem_CID": compound.get("pubchem_cid"),
-    "KEGG_ID": compound.get("kegg_id"),
-    "HMDB_ID": compound.get("hmdb_id"),
-    "LipidMaps_ID": compound.get("lm_id"),
-    "Formula": compound.get("formula"),
-    "Exact_Mass": compound.get("exactmass")
-}
-for db, val in id_map.items():
-    print(f"  {db}: {val}")
+import requests, pandas as pd
+
+BASE = "https://www.metabolomicsworkbench.org/rest"
+r = requests.get(f"{BASE}/study/study_id/ST000001/metabolites", timeout=60)
+r.raise_for_status()
+rows = list(r.json().values())
+df = pd.DataFrame(rows)
+print(f"ST000001 metabolites: {len(df)}")
+print(df[["analysis_id", "analysis_summary", "metabolite_name", "refmet_name"]].head(5).to_string(index=False))
 ```
 
-### Recipe: Export Study Data to DataFrame
+### Recipe: Gene → Metabolomics Pathways
 
 ```python
-import pandas as pd
+import requests
 
-study_id = "ST000001"
-# Get study data and convert to DataFrame
-raw_data = mw_query("study", "study_id", study_id, "data")
-if isinstance(raw_data, list):
-    df = pd.DataFrame(raw_data)
-elif isinstance(raw_data, dict):
-    df = pd.DataFrame([raw_data])
-else:
-    df = pd.DataFrame()
-
-# Get study metadata for context
-meta = mw_query("study", "study_id", study_id, "summary")
-print(f"Study: {meta.get('study_title', study_id)}")
-print(f"Species: {meta.get('species')}, Analysis: {meta.get('analysis_type')}")
-print(f"Data shape: {df.shape}")
-print(df.head())
-# Export to CSV
-df.to_csv(f"{study_id}_data.csv", index=False)
+BASE = "https://www.metabolomicsworkbench.org/rest"
+g = requests.get(f"{BASE}/gene/gene_symbol/HMGCR/all", timeout=30).json()
+print({k: g.get(k) for k in ["gene_symbol", "gene_id", "mgp_id",
+                              "gene_name", "gene_synonyms"]})
 ```
 
 ## Troubleshooting
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| Empty JSON response `{}` | Invalid input_item or input_value | Verify the context/input_item combination is valid (see Key Parameters table). Check spelling and case |
-| `ConnectionError` or timeout | MW server temporarily unavailable | Retry after 30s. MW occasionally has maintenance windows. Add `timeout=30` to requests |
-| MetStat returns no results | Case-sensitive filter values | Use exact case: `Human` not `human`, `LC-MS` not `lc-ms`. Check available values on MW website |
-| m/z search returns too many hits | Tolerance too wide | Reduce tolerance from 0.5 to 0.01 or 0.005 Da for high-resolution instruments |
-| m/z search returns no hits | Wrong adduct type or too-tight tolerance | Try alternative adducts (M+H, M+Na, M-H). Widen tolerance. Verify the m/z value is correct |
-| `JSONDecodeError` on response | Endpoint returns text, not JSON | Some endpoints (e.g., `mwtab` output) return plain text. Use `fmt="txt"` instead of `"json"` |
-| Study data missing columns | Study uses different data format | Check `analysis` output first to understand the study's data structure. Not all studies have uniform column names |
-| RefMet name not found | Metabolite not in RefMet database | Try alternative names or synonyms. RefMet covers ~120K standardized names but some rare metabolites may be absent |
-
-## Bundled Resources
-
-This entry is self-contained. The original `references/api_reference.md` (494 lines) covering all 7 API contexts (Compound, Study, RefMet, MetStat, Moverz, Gene, Protein) has been fully consolidated inline:
-- **Compound endpoint**: input_items and output fields consolidated into Core API Module 1 + Key Parameters table
-- **Study endpoint**: output_items (summary, factors, data, analysis, mwtab) consolidated into Core API Module 2
-- **RefMet endpoint**: classification hierarchy consolidated into Core API Module 3 + Key Concepts RefMet table
-- **MetStat endpoint**: filter syntax consolidated into Core API Module 4 + Key Concepts MetStat section
-- **Moverz endpoint**: adduct types consolidated into Core API Module 5 + Key Concepts Ion Adduct table
-- **Gene/Protein endpoints**: consolidated into Core API Modules 6 and 7
-- Omitted: raw curl examples (replaced with Python helper function), HTML output format examples (rarely used programmatically)
+| `"This input item (name) is not allowed..."` | `compound/name/...` is rejected | Use one of the allowed `input_item` values (`pubchem_cid`, `kegg_id`, `inchi_key`, `hmdb_id`, etc.); for free text, go through `refmet/match/{x}` first |
+| `JSONDecodeError` on `moverz` response | `moverz` returns TSV text, not JSON | Parse with `pd.read_csv(io.StringIO(r.text), sep="\t")` |
+| Empty list from `refmet/name/{x}/all` | Need the canonical RefMet name (case-sensitive) | Normalise via `refmet/match/{user_text}` first, then plug `refmet_name` into `refmet/name/.../all` |
+| `metstat/filter/...` returns `[]` | Endpoint syntax is non-functional | Use `study/{refmet_name|last_name|institute|...}/{value}/summary` and filter client-side |
+| `study/.../summary` returns TSV instead of JSON | The `/json` suffix flips to TSV | Drop the trailing `/json` — JSON is the default |
+| Compound query by formula returns a dict, not a list | Server pages multiple matches as `{'1': {...}, '2': {...}}` | Iterate `dict.values()` (or `pd.DataFrame.from_dict(d, orient='index')`) |
+| `refmet/match` response lacks `pubchem_cid` | `match` returns the lightweight record | Use `refmet/name/{refmet_name}/all` for the full record |
 
 ## Related Skills
 
-- **hmdb-database** -- local XML parsing for 220K+ metabolites with NMR/MS spectral data; use when MW does not have the metabolite or you need spectral peak lists
-- **pubchem-compound-search** -- broader compound property lookups (110M+ compounds) via PubChemPy; use for general chemistry queries beyond metabolomics
-- **matchms-spectral-matching** -- spectral similarity scoring for metabolite identification from MS/MS data; complementary to MW m/z searches
-- **pyopenms-mass-spectrometry** -- full LC-MS/MS data processing pipeline; use for raw spectra processing before querying MW for identification
-- **kegg-database** -- pathway and compound queries; use KEGG IDs from MW compound lookups for pathway context
+- `hmdb-database` — Local HMDB XML (220K metabolites, NMR/MS spectra, disease links) for offline queries
+- `pubchem-compound-search` — General compound property lookups (110M+ compounds) via PubChemPy
+- `kegg-database` — Pathway and orthology data complementary to MW's study/metabolite hits
+- `chembl-database-bioactivity` — Bioactivity data for the same compounds
 
 ## References
 
-- Metabolomics Workbench REST API: https://www.metabolomicsworkbench.org/tools/MWRestAPIv1.0.pdf
-- MW REST Interactive URL Creator: https://www.metabolomicsworkbench.org/databases/metabolites/mw-rest.php
-- Sud et al. "Metabolomics Workbench: An international repository for metabolomics data" Nucleic Acids Research (2016) https://doi.org/10.1093/nar/gkv1042
-- RefMet nomenclature: https://www.metabolomicsworkbench.org/databases/refmet/index.php
+- [Metabolomics Workbench home](https://www.metabolomicsworkbench.org/)
+- [REST API documentation (PDF)](https://www.metabolomicsworkbench.org/tools/MWRestAPIv1.0.pdf)
+- [RefMet nomenclature](https://www.metabolomicsworkbench.org/databases/refmet/index.php)
+- Sud M et al. "Metabolomics Workbench: An international repository for metabolomics data and metadata." *Nucleic Acids Research* 44(D1): D463–D470 (2016). https://doi.org/10.1093/nar/gkv1042

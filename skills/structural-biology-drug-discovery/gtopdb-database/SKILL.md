@@ -1,33 +1,32 @@
 ---
 name: "gtopdb-database"
-description: "Query IUPHAR/BPS Guide to Pharmacology (GtoPdb) REST API for receptor-ligand interactions and affinity (pKi/pIC50/pEC50). Get ligand classes (drugs, biologics, natural products), target families (GPCRs, ion channels, nuclear receptors, kinases), selectivity profiles."
+description: "Query IUPHAR/BPS Guide to Pharmacology (GtoPdb) for receptor-ligand interactions, target/ligand metadata, families, and approved drugs. Affinities (pKi/pIC50/pKd), action (Agonist/Antagonist/etc.), species, structures (SMILES/InChI). No auth. Always resolve targets via geneSymbol/accession; most metadata lives in sub-resources (/databaseLinks, /structure, /synonyms)."
 license: "ODbL-1.0"
 ---
 
-# GtoPdb Database
+# Guide to Pharmacology (GtoPdb) Database
 
 ## Overview
 
-The Guide to Pharmacology (GtoPdb), maintained by IUPHAR/BPS, is the curated reference database for pharmacological targets and their ligands. It covers 3,000+ targets (GPCRs, ion channels, nuclear receptors, catalytic receptors, transporters, and enzymes) with 12,000+ ligands and 90,000+ interaction records annotated with quantitative affinity values (Ki, IC50, EC50, Kd). Access is via a free REST API at `https://www.guidetopharmacology.org/services/` — no authentication required.
+The IUPHAR/BPS Guide to Pharmacology (GtoPdb) catalogues drug targets, ligands, and quantitative interactions across receptor pharmacology. The web services REST API at `https://www.guidetopharmacology.org/services/` returns JSON for targets, ligands, interactions, and family hierarchies. Base records are intentionally lean — gene symbols, UniProt accessions, ChEMBL IDs, SMILES/InChI all live in sub-resources (`/targets/{id}/databaseLinks`, `/targets/{id}/synonyms`, `/ligands/{id}/structure`, `/ligands/{id}/databaseLinks`). No authentication required.
 
 ## When to Use
 
-- Retrieving curated receptor-ligand interaction data with quantitative affinity (pKi, pIC50, pEC50) for GPCR, ion channel, or kinase targets
-- Finding all approved drugs, clinical candidates, or research ligands that act on a specific receptor family
-- Getting the pharmacological target classification for a receptor (family, type, HGNC symbol, UniProt ID)
-- Building selectivity profiles for a ligand across all annotated targets in GtoPdb
-- Identifying receptor families (GPCR subfamilies, ion channel families) and browsing their member targets
-- Retrieving quantitative agonist/antagonist/allosteric modulator affinity data for lead optimization
-- Comparing endogenous ligand potency with drug affinity at the same receptor
-- For large-scale ADMET/bioactivity data use `chembl-database-bioactivity`; GtoPdb is the authoritative source for receptor pharmacology annotation
-- For structural data (binding poses, crystal structures) use `pdb-database`; GtoPdb provides affinity numbers, not 3D structures
+- Looking up the affinity (pKi/pIC50/pKd) of a ligand at a specific target
+- Listing all annotated ligands for a receptor (e.g., μ-opioid receptor / OPRM1)
+- Finding the approval status of a ligand (`approved=true`) and its cross-references (PubChem CID, ChEMBL ID, DrugBank ID)
+- Retrieving the IUPHAR family hierarchy (867 families) for receptor classification
+- Pulling structure descriptors (SMILES, InChI, InChIKey) for chemoinformatics
+- Mapping HGNC symbol → UniProt → GtoPdb target ID for cross-database integration
+- Use `chembl-database-bioactivity` for larger bioactivity datasets (2.4M+ compounds); GtoPdb is curated, smaller, with more annotation depth
+- Use `dailymed-database` for FDA-approved drug labelling; GtoPdb is for pharmacology, not regulatory text
 
 ## Prerequisites
 
 - **Python packages**: `requests`, `pandas`, `matplotlib`
-- **Data requirements**: GtoPdb target IDs, ligand IDs, or receptor family names as starting points; HGNC gene symbols or UniProt IDs accepted for target lookup
-- **Environment**: internet connection; no API key required
-- **Rate limits**: ~50 requests/minute; no hard enforcement but use `time.sleep(0.2)` in batch loops for polite access
+- **Data requirements**: HGNC symbols, UniProt accessions, GtoPdb target/ligand IDs, or drug INNs
+- **Environment**: internet connection; no API key
+- **Rate limits**: no published limits; use `time.sleep(0.2)` between requests in batch loops
 
 ```bash
 pip install requests pandas matplotlib
@@ -38,760 +37,421 @@ pip install requests pandas matplotlib
 ```python
 import requests
 
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
+BASE = "https://www.guidetopharmacology.org/services"
 
-def gtopdb_get(endpoint: str, params: dict = None) -> list | dict:
-    """GET request to GtoPdb API; raise on HTTP errors."""
-    r = requests.get(f"{GTOPDB_API}/{endpoint}", params=params, timeout=20)
-    r.raise_for_status()
-    return r.json()
-
-# Find the beta-2 adrenoceptor target
-targets = gtopdb_get("targets", params={"name": "beta-2 adrenoceptor"})
-if targets:
-    t = targets[0]
-    tid = t["targetId"]
-    print(f"Target: {t['name']} (GtoPdb ID: {tid})")
-    print(f"Family: {t.get('familyIds', [])}")
-
-# Get its approved drug interactions
-interactions = gtopdb_get(f"targets/{tid}/interactions")
-approved = [i for i in interactions if i.get("ligandType") == "Approved"]
-print(f"Approved drugs acting on beta-2 AR: {len(approved)}")
-for ia in approved[:3]:
-    affinity = ia.get("affinityParameter", ""), ia.get("affinity", "")
-    print(f"  {ia['ligandName']:25s}  {affinity[0]}={affinity[1]}")
+# Resolve HGNC symbol → GtoPdb target. geneSymbol= and accession= give an
+# exact match. (name= matches across all fields and silently returns the
+# wrong target — never use it for canonical lookups.)
+r = requests.get(f"{BASE}/targets", params={"geneSymbol": "OPRM1"}, timeout=30)
+targets = r.json()
+print(f"OPRM1 hits: {len(targets)}")  # 1
+t = targets[0]
+print(f"targetId={t['targetId']}  name='{t['name']}'  type={t['type']}  family={t['familyIds']}")
+# targetId=319  name='μ receptor'  type=GPCR  family=[50]
 ```
 
 ## Core API
 
-### Query 1: Target Search and Details
-
-Search targets by name, HGNC symbol, UniProt accession, or target family type. Returns target metadata including GtoPdb target ID, gene symbol, family assignment, and species.
-
-```python
-import requests, pandas as pd
-
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
-
-def search_targets(name: str = None, hgnc_symbol: str = None,
-                   target_type: str = None) -> pd.DataFrame:
-    """Search GtoPdb targets.
-
-    Args:
-        name: Partial target name (case-insensitive substring match)
-        hgnc_symbol: Exact HGNC gene symbol (e.g., 'ADRB2')
-        target_type: One of 'GPCR', 'Ion channel', 'Nuclear receptor',
-                     'Catalytic receptor', 'Transporter', 'Enzyme', 'Other'
-    """
-    params = {}
-    if name:
-        params["name"] = name
-    if hgnc_symbol:
-        params["geneSymbol"] = hgnc_symbol
-    if target_type:
-        params["type"] = target_type
-    r = requests.get(f"{GTOPDB_API}/targets", params=params, timeout=20)
-    r.raise_for_status()
-    targets = r.json()
-    if not targets:
-        return pd.DataFrame()
-    rows = []
-    for t in targets:
-        rows.append({
-            "target_id": t.get("targetId"),
-            "name": t.get("name"),
-            "type": t.get("type"),
-            "hgnc_symbol": t.get("hgncSymbol"),
-            "uniprot_id": t.get("uniprotId"),
-            "species": t.get("species", "Human"),
-        })
-    return pd.DataFrame(rows)
-
-# Search for dopamine receptors
-df = search_targets(name="dopamine receptor")
-print(f"Found {len(df)} dopamine receptor targets:")
-print(df[["target_id", "name", "type", "hgnc_symbol"]].to_string(index=False))
-```
-
-```python
-# Get full details for a specific target
-def get_target_details(target_id: int) -> dict:
-    """Retrieve full target record by GtoPdb target ID."""
-    r = requests.get(f"{GTOPDB_API}/targets/{target_id}", timeout=15)
-    r.raise_for_status()
-    return r.json()
-
-# Mu-opioid receptor (OPRM1)
-target = get_target_details(319)
-print(f"Target: {target['name']}")
-print(f"Type: {target.get('type')}")
-print(f"HGNC symbol: {target.get('hgncSymbol')}")
-print(f"UniProt: {target.get('uniprotId')}")
-print(f"Family IDs: {target.get('familyIds', [])}")
-print(f"Synonyms: {', '.join(target.get('synonyms', [])[:4])}")
-```
-
-### Query 2: Target Interactions — Ligand Affinity Data
-
-Retrieve all ligand-target interactions for a given target, including quantitative affinity values, ligand type classification, and experimental context.
-
-```python
-import requests, pandas as pd
-
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
-
-def get_target_interactions(target_id: int,
-                            species: str = "Human") -> pd.DataFrame:
-    """Get all interactions for a target with affinity data.
-
-    Returns a DataFrame with ligand name, type, affinity parameters, and action type.
-    """
-    r = requests.get(f"{GTOPDB_API}/targets/{target_id}/interactions",
-                     params={"species": species}, timeout=20)
-    r.raise_for_status()
-    interactions = r.json()
-    rows = []
-    for ia in interactions:
-        rows.append({
-            "ligand_id": ia.get("ligandId"),
-            "ligand_name": ia.get("ligandName"),
-            "ligand_type": ia.get("ligandType"),
-            "action": ia.get("action"),               # agonist, antagonist, etc.
-            "action_comment": ia.get("actionComment"),
-            "affinity_param": ia.get("affinityParameter"),  # pKi, pIC50, pEC50
-            "affinity": ia.get("affinity"),           # numeric value
-            "affinity_high": ia.get("affinityHigh"),
-            "affinity_low": ia.get("affinityLow"),
-            "endogenous": ia.get("endogenous", False),
-            "primary_target": ia.get("primaryTarget", False),
-            "assay_type": ia.get("assayType"),
-            "pubmed_id": ia.get("refs", [{}])[0].get("pmid") if ia.get("refs") else None,
-        })
-    return pd.DataFrame(rows)
-
-# Serotonin 2A receptor (5-HT2A, target_id=11)
-df = get_target_interactions(11)
-print(f"5-HT2A receptor interactions: {len(df)} total")
-print(f"\nAction type breakdown:")
-print(df["action"].value_counts().head(8))
-print(f"\nLigand type breakdown:")
-print(df["ligand_type"].value_counts().head(6))
-
-# Show top antagonists by affinity
-antagonists = df[df["action"] == "Antagonist"].dropna(subset=["affinity"])
-antagonists = antagonists.sort_values("affinity", ascending=False)
-print(f"\nTop 5-HT2A antagonists (by pKi/pIC50):")
-print(antagonists[["ligand_name", "ligand_type", "affinity_param", "affinity"]].head(8).to_string(index=False))
-```
-
-### Query 3: Ligand Search and Details
-
-Search for ligands by name, approved drug status, or ligand type. Retrieve full ligand records including structure IDs (InChIKey, SMILES), clinical status, and cross-references.
-
-```python
-import requests, pandas as pd
-
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
-
-def search_ligands(name: str = None, approved_drug: bool = None,
-                   ligand_type: str = None) -> pd.DataFrame:
-    """Search GtoPdb ligands.
-
-    Args:
-        name: Ligand name substring (case-insensitive)
-        approved_drug: If True, filter to approved drugs only
-        ligand_type: One of 'Approved', 'Labelled', 'Peptide', 'Antibody',
-                     'Endogenous', 'Inorganic', 'Metabolite', 'Natural product',
-                     'Synthetic organic'
-    """
-    params = {}
-    if name:
-        params["name"] = name
-    if approved_drug is not None:
-        params["approvedDrug"] = str(approved_drug).lower()
-    if ligand_type:
-        params["type"] = ligand_type
-    r = requests.get(f"{GTOPDB_API}/ligands", params=params, timeout=20)
-    r.raise_for_status()
-    ligands = r.json()
-    rows = []
-    for lig in ligands:
-        rows.append({
-            "ligand_id": lig.get("ligandId"),
-            "name": lig.get("name"),
-            "type": lig.get("type"),
-            "approved": lig.get("approvedDrug", False),
-            "inchikey": lig.get("inchikey"),
-            "smiles": lig.get("smiles", "")[:60] if lig.get("smiles") else "",
-            "pubchem_cid": lig.get("pubchemCid"),
-            "chembl_id": lig.get("chemblId"),
-        })
-    return pd.DataFrame(rows)
-
-# Search for beta-blocker drugs
-df = search_ligands(name="propranolol")
-print(df[["ligand_id", "name", "type", "approved", "inchikey", "chembl_id"]].to_string(index=False))
-```
-
-```python
-# Get full details for a specific ligand
-def get_ligand_details(ligand_id: int) -> dict:
-    """Retrieve full ligand record by GtoPdb ligand ID."""
-    r = requests.get(f"{GTOPDB_API}/ligands/{ligand_id}", timeout=15)
-    r.raise_for_status()
-    return r.json()
-
-# Morphine (ligand_id=1627)
-lig = get_ligand_details(1627)
-print(f"Name: {lig['name']}")
-print(f"Type: {lig.get('type')}")
-print(f"Approved drug: {lig.get('approvedDrug')}")
-print(f"InChIKey: {lig.get('inchikey')}")
-print(f"SMILES: {lig.get('smiles', 'N/A')[:80]}")
-print(f"ChEMBL ID: {lig.get('chemblId')}")
-print(f"PubChem CID: {lig.get('pubchemCid')}")
-```
-
-### Query 4: Ligand Interactions — Target Selectivity Profile
-
-Given a ligand, retrieve all targets it acts on with affinity values. Use this to build a selectivity profile or identify off-target effects.
-
-```python
-import requests, pandas as pd
-
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
-
-def get_ligand_interactions(ligand_id: int,
-                            species: str = "Human") -> pd.DataFrame:
-    """Get all target interactions for a ligand.
-
-    Returns a DataFrame with target name, type, action, and affinity.
-    """
-    r = requests.get(f"{GTOPDB_API}/ligands/{ligand_id}/interactions",
-                     params={"species": species}, timeout=20)
-    r.raise_for_status()
-    interactions = r.json()
-    rows = []
-    for ia in interactions:
-        rows.append({
-            "target_id": ia.get("targetId"),
-            "target_name": ia.get("targetName"),
-            "target_type": ia.get("targetType"),
-            "action": ia.get("action"),
-            "affinity_param": ia.get("affinityParameter"),
-            "affinity": ia.get("affinity"),
-            "endogenous": ia.get("endogenous", False),
-            "primary_target": ia.get("primaryTarget", False),
-        })
-    return pd.DataFrame(rows)
-
-# Clozapine selectivity profile (ligand_id=31 in GtoPdb)
-df = get_ligand_interactions(31)
-print(f"Clozapine interactions: {len(df)} targets")
-# Filter to records with affinity data
-has_affinity = df.dropna(subset=["affinity"]).sort_values("affinity", ascending=False)
-print(f"\nTargets with quantitative affinity (n={len(has_affinity)}):")
-print(has_affinity[["target_name", "target_type", "action",
-                     "affinity_param", "affinity"]].head(10).to_string(index=False))
-```
-
-### Query 5: Browse Target Families
-
-Retrieve the receptor family hierarchy: superfamilies → families → individual targets. Use this to enumerate all GPCRs, ion channels, or nuclear receptors.
-
-```python
-import requests, pandas as pd
-
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
-
-def get_families(family_id: int = None) -> list:
-    """Get all families or a specific family by ID."""
-    endpoint = f"families/{family_id}" if family_id else "families"
-    r = requests.get(f"{GTOPDB_API}/{endpoint}", timeout=20)
-    r.raise_for_status()
-    data = r.json()
-    return data if isinstance(data, list) else [data]
-
-def get_family_targets(family_id: int) -> pd.DataFrame:
-    """Get all targets in a given receptor family."""
-    r = requests.get(f"{GTOPDB_API}/targets",
-                     params={"familyId": family_id}, timeout=20)
-    r.raise_for_status()
-    targets = r.json()
-    rows = [{"target_id": t.get("targetId"), "name": t.get("name"),
-             "type": t.get("type"), "hgnc_symbol": t.get("hgncSymbol"),
-             "uniprot_id": t.get("uniprotId")} for t in targets]
-    return pd.DataFrame(rows)
-
-# Browse top-level families
-families = get_families()
-print(f"Total GtoPdb families: {len(families)}")
-for fam in families[:8]:
-    print(f"  [{fam['familyId']}] {fam['name']}")
-
-# Get all targets in a specific GPCR subfamily
-# Family ID 694 = Adenosine receptors
-adenosine_targets = get_family_targets(694)
-print(f"\nAdenosine receptor targets: {len(adenosine_targets)}")
-print(adenosine_targets[["target_id", "name", "hgnc_symbol"]].to_string(index=False))
-```
-
-### Query 6: Global Interaction Search
-
-Search all interactions by affinity type, action, or ligand type to extract a curated dataset for pharmacological analysis.
-
-```python
-import requests, pandas as pd, time
-
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
-
-def search_interactions(action: str = None,
-                        target_type: str = None,
-                        affinity_param: str = None,
-                        species: str = "Human") -> pd.DataFrame:
-    """Search all GtoPdb interactions with optional filters.
-
-    Args:
-        action: 'Agonist', 'Antagonist', 'Inhibitor', 'Allosteric modulator', etc.
-        target_type: 'GPCR', 'Ion channel', 'Nuclear receptor', etc.
-        affinity_param: 'pKi', 'pIC50', 'pEC50', 'pKd'
-        species: 'Human' (default), 'Mouse', 'Rat'
-    """
-    params = {"species": species}
-    if action:
-        params["action"] = action
-    if target_type:
-        params["targetType"] = target_type
-    if affinity_param:
-        params["affinityParameter"] = affinity_param
-
-    r = requests.get(f"{GTOPDB_API}/interactions", params=params, timeout=60)
-    r.raise_for_status()
-    interactions = r.json()
-
-    rows = []
-    for ia in interactions:
-        rows.append({
-            "target_id": ia.get("targetId"),
-            "target_name": ia.get("targetName"),
-            "target_type": ia.get("targetType"),
-            "ligand_id": ia.get("ligandId"),
-            "ligand_name": ia.get("ligandName"),
-            "ligand_type": ia.get("ligandType"),
-            "action": ia.get("action"),
-            "affinity_param": ia.get("affinityParameter"),
-            "affinity": ia.get("affinity"),
-            "endogenous": ia.get("endogenous", False),
-            "approved_drug": ia.get("approvedDrug", False),
-        })
-    return pd.DataFrame(rows)
-
-# Get all GPCR antagonist interactions with pKi values
-df = search_interactions(action="Antagonist", target_type="GPCR", affinity_param="pKi")
-print(f"GPCR antagonists with pKi data: {len(df)} interactions")
-df_clean = df.dropna(subset=["affinity"])
-print(f"With numeric affinity: {len(df_clean)}")
-print(f"\npKi distribution:")
-print(df_clean["affinity"].describe().round(2))
-print(f"\nTop 5 by pKi:")
-print(df_clean.nlargest(5, "affinity")[["ligand_name", "target_name", "affinity"]].to_string(index=False))
-```
-
-## Key Concepts
-
-### GtoPdb Pharmacological Hierarchy
-
-GtoPdb organizes targets into a two-level hierarchy: **target types** (GPCR, Ion channel, Nuclear receptor, Catalytic receptor, Transporter, Enzyme, Other protein) → **families** (e.g., GPCR > Aminergic receptors > Adrenoceptors > beta-Adrenoceptors) → **individual targets** (e.g., beta-2 adrenoceptor). The `familyId` parameter lets you enumerate all members of a receptor family efficiently.
-
-### Affinity Parameters
-
-| Parameter | Definition | Typical range | Notes |
-|-----------|-----------|--------------|-------|
-| `pKi` | -log₁₀(Ki) equilibrium dissociation constant | 4–12 | Direct binding; higher = tighter |
-| `pIC50` | -log₁₀(IC50) half-maximal inhibitory concentration | 4–12 | Functional inhibition |
-| `pEC50` | -log₁₀(EC50) half-maximal effective concentration | 4–12 | Functional activation |
-| `pKd` | -log₁₀(Kd) dissociation constant | 4–12 | Equilibrium binding (often from SPR/ITC) |
-| `%` | Percent effect at fixed concentration | 0–100 | Qualitative; no affinity constant |
-
-A pKi of 9 = Ki of 1 nM (high affinity); pKi of 6 = Ki of 1 µM (moderate). GtoPdb requires at least two independent measurements to include a value.
-
-### Ligand Type Classifications
-
-| Type | Description |
-|------|-------------|
-| `Approved` | Regulatory-approved drug (FDA, EMA) |
-| `Synthetic organic` | Research tool compound |
-| `Natural product` | Plant/animal/microbial origin |
-| `Endogenous` | Endogenous ligand (neurotransmitter, hormone) |
-| `Peptide` | Peptide/peptidomimetic |
-| `Antibody` | Therapeutic antibody |
-| `Inorganic` | Metal ions, inorganic compounds |
-| `Metabolite` | Metabolic product |
-
-## Common Workflows
-
-### Workflow 1: Build a Target Pharmacology Table for a Receptor
-
-**Goal**: Retrieve all interactions for a GPCR, separate by action type, and export a structured table with quantitative affinities for SAR analysis.
-
-```python
-import requests, pandas as pd
-
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
-
-def get_pharmacology_table(target_id: int, species: str = "Human") -> pd.DataFrame:
-    """Full pharmacology table for a target: agonists, antagonists, allosteric modulators."""
-    r = requests.get(f"{GTOPDB_API}/targets/{target_id}/interactions",
-                     params={"species": species}, timeout=30)
-    r.raise_for_status()
-    rows = []
-    for ia in r.json():
-        rows.append({
-            "ligand_id": ia.get("ligandId"),
-            "ligand_name": ia.get("ligandName"),
-            "ligand_type": ia.get("ligandType"),
-            "action": ia.get("action"),
-            "action_comment": ia.get("actionComment"),
-            "affinity_param": ia.get("affinityParameter"),
-            "affinity": ia.get("affinity"),
-            "affinity_high": ia.get("affinityHigh"),
-            "affinity_low": ia.get("affinityLow"),
-            "endogenous": ia.get("endogenous", False),
-            "approved": ia.get("approvedDrug", False),
-            "pubmed_id": ia.get("refs", [{}])[0].get("pmid") if ia.get("refs") else None,
-        })
-    df = pd.DataFrame(rows)
-    if df.empty:
-        return df
-    df["affinity"] = pd.to_numeric(df["affinity"], errors="coerce")
-    return df
-
-# Adenosine A2A receptor (target_id=3)
-df = get_pharmacology_table(3)
-print(f"Adenosine A2A receptor — {len(df)} total interactions")
-
-# Pivot by action type
-for action in ["Agonist", "Antagonist", "Allosteric modulator"]:
-    subset = df[df["action"] == action].dropna(subset=["affinity"])
-    subset = subset.sort_values("affinity", ascending=False)
-    print(f"\n{action}s with affinity data (n={len(subset)}):")
-    cols = ["ligand_name", "ligand_type", "affinity_param", "affinity", "approved"]
-    print(subset[cols].head(5).to_string(index=False))
-
-df.to_csv("A2A_pharmacology.csv", index=False)
-print(f"\nSaved A2A_pharmacology.csv ({len(df)} interactions)")
-```
-
-### Workflow 2: Multi-Target Selectivity Heatmap
-
-**Goal**: For a set of ligands, query their affinity across a receptor panel and visualize as a heatmap.
-
-```python
-import requests, time
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
-
-def get_ligand_selectivity(ligand_id: int, species: str = "Human") -> dict:
-    """Return {target_name: affinity} for a ligand (best affinity per target)."""
-    r = requests.get(f"{GTOPDB_API}/ligands/{ligand_id}/interactions",
-                     params={"species": species}, timeout=20)
-    r.raise_for_status()
-    targets = {}
-    for ia in r.json():
-        name = ia.get("targetName", "")
-        aff = ia.get("affinity")
-        if name and aff is not None:
-            try:
-                val = float(aff)
-                if name not in targets or val > targets[name]:
-                    targets[name] = val
-            except (ValueError, TypeError):
-                pass
-    return targets
-
-# Typical antipsychotics: clozapine, haloperidol, olanzapine
-# Use small sample GtoPdb ligand IDs for illustration
-ligands = {
-    "clozapine":   31,   # GtoPdb ligand ID
-    "haloperidol": 78,
-    "olanzapine":  4,
-}
-
-all_data = {}
-for name, lid in ligands.items():
-    all_data[name] = get_ligand_selectivity(lid)
-    time.sleep(0.2)
-
-# Build matrix: rows=ligands, columns=shared targets
-all_targets = sorted(set().union(*all_data.values()))
-matrix = pd.DataFrame(index=ligands.keys(), columns=all_targets, dtype=float)
-for lig, targets in all_data.items():
-    for tgt, aff in targets.items():
-        matrix.loc[lig, tgt] = aff
-
-# Keep only targets with data for at least 2 ligands
-matrix = matrix.dropna(axis=1, thresh=2)
-print(f"Selectivity matrix: {matrix.shape[0]} ligands × {matrix.shape[1]} targets")
-
-# Plot heatmap
-fig, ax = plt.subplots(figsize=(max(10, matrix.shape[1] * 0.5), 4))
-im = ax.imshow(matrix.values.astype(float), aspect="auto", cmap="YlOrRd", vmin=5, vmax=10)
-ax.set_xticks(range(matrix.shape[1]))
-ax.set_xticklabels(matrix.columns, rotation=45, ha="right", fontsize=7)
-ax.set_yticks(range(matrix.shape[0]))
-ax.set_yticklabels(matrix.index)
-plt.colorbar(im, ax=ax, label="pAffinity (pKi / pIC50 / pEC50)")
-ax.set_title("GtoPdb Antipsychotic Selectivity Profile")
-plt.tight_layout()
-plt.savefig("antipsychotic_selectivity.png", dpi=150, bbox_inches="tight")
-print("Saved antipsychotic_selectivity.png")
-```
-
-### Workflow 3: Approved Drug Target Coverage for a Family
-
-**Goal**: Enumerate all members of a receptor family, count approved drugs per target, and rank by drug coverage.
-
-```python
-import requests, time, pandas as pd
-
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
-
-def approved_drug_coverage(family_id: int, species: str = "Human") -> pd.DataFrame:
-    """Return approved drug counts and ligands for each target in a receptor family.
-
-    Args:
-        family_id: GtoPdb family ID (e.g., 694 for Adenosine receptors)
-        species: 'Human', 'Mouse', 'Rat'
-    """
-    # Get all targets in the family
-    r = requests.get(f"{GTOPDB_API}/targets",
-                     params={"familyId": family_id}, timeout=20)
-    r.raise_for_status()
-    targets = r.json()
-
-    rows = []
-    for t in targets:
-        tid = t["targetId"]
-        time.sleep(0.2)
-        r2 = requests.get(f"{GTOPDB_API}/targets/{tid}/interactions",
-                          params={"species": species}, timeout=20)
-        if not r2.ok:
-            continue
-        interactions = r2.json()
-        approved = [ia for ia in interactions if ia.get("approvedDrug")]
-        drug_names = list({ia["ligandName"] for ia in approved})[:5]
-        rows.append({
-            "target_id": tid,
-            "target_name": t.get("name"),
-            "hgnc_symbol": t.get("hgncSymbol"),
-            "n_interactions": len(interactions),
-            "n_approved_drugs": len(approved),
-            "approved_drugs": ", ".join(drug_names),
-        })
-
-    df = pd.DataFrame(rows).sort_values("n_approved_drugs", ascending=False)
-    return df
-
-# Opioid receptor family (family_id varies; search for it)
-r = requests.get(f"{GTOPDB_API}/families", timeout=15)
-families = r.json()
-opioid = next((f for f in families if "opioid" in f.get("name", "").lower()), None)
-if opioid:
-    print(f"Opioid family: {opioid['name']} (ID={opioid['familyId']})")
-    df = approved_drug_coverage(opioid["familyId"])
-    print(df[["target_name", "n_approved_drugs", "approved_drugs"]].to_string(index=False))
-    df.to_csv("opioid_approved_drugs.csv", index=False)
-    print(f"\nSaved opioid_approved_drugs.csv")
-```
-
-## Key Parameters
-
-| Parameter | Function/Endpoint | Default | Range / Options | Effect |
-|-----------|-------------------|---------|-----------------|--------|
-| `name` | `GET /targets`, `GET /ligands` | — | Partial string (case-insensitive) | Substring match on target or ligand name |
-| `type` | `GET /targets` | — | `'GPCR'`, `'Ion channel'`, `'Nuclear receptor'`, `'Catalytic receptor'`, `'Transporter'`, `'Enzyme'`, `'Other'` | Filter targets by receptor class |
-| `familyId` | `GET /targets` | — | Integer family ID | Return all targets belonging to a receptor family |
-| `geneSymbol` | `GET /targets` | — | HGNC symbol string (e.g., `'ADRB2'`) | Exact match on HGNC gene symbol |
-| `species` | `GET /targets/{id}/interactions`, `GET /ligands/{id}/interactions` | `'Human'` | `'Human'`, `'Mouse'`, `'Rat'` | Filter interactions to a specific species |
-| `approvedDrug` | `GET /ligands` | — | `'true'`, `'false'` | Filter ligands to FDA/EMA approved drugs |
-| `action` | `GET /interactions` | — | `'Agonist'`, `'Antagonist'`, `'Inhibitor'`, `'Allosteric modulator'`, `'Activator'`, `'Blocker'`, `'Opener'` | Filter by pharmacological action type |
-| `affinityParameter` | `GET /interactions` | — | `'pKi'`, `'pIC50'`, `'pEC50'`, `'pKd'` | Return only interactions with this affinity type |
-| `targetType` | `GET /interactions` | — | Same as `type` for targets | Filter interactions by target class |
-
-## Best Practices
-
-1. **Resolve target IDs before batch queries**: GtoPdb uses integer target IDs. Always start with a `GET /targets?name=...` search to get the correct `targetId` rather than hard-coding IDs across analyses, as family assignments and IDs can change between database releases.
-
-2. **Filter interactions by species for quantitative analyses**: The same target may have interactions from multiple species. For drug discovery (human pharmacology), always pass `species=Human`. Cross-species data is useful for selectivity validation but should be flagged separately.
-
-3. **Use `dropna(subset=["affinity"])` before ranking**: Many interaction records have qualitative action annotations (e.g., "Agonist" without a Ki value). Always filter to records with numeric affinity before computing potency rankings.
-
-4. **Check `endogenous` flag to separate endogenous ligands from drugs**: Endogenous peptides, neurotransmitters, and lipids will appear in interaction tables. Use `df[~df["endogenous"]]` to focus on drug/tool compound interactions in SAR analyses.
-
-5. **Cross-reference with ChEMBL via `chembl_id`**: Ligand records include `chemblId`. Use this to enrich GtoPdb affinity data with larger bioactivity datasets from ChEMBL using `chembl-database-bioactivity`.
-
-   ```python
-   lig = get_ligand_details(ligand_id)
-   chembl_id = lig.get("chemblId")  # e.g., 'CHEMBL192'
-   # Then query ChEMBL for full bioactivity profile
-   ```
-
-## Common Recipes
-
-### Recipe: Get All Approved Drugs for a Target by HGNC Symbol
-
-When to use: Quick lookup of marketed drugs targeting a specific receptor given only the gene name.
+### Query 1: Resolve a Target (HGNC symbol or UniProt accession)
 
 ```python
 import requests
 
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
+BASE = "https://www.guidetopharmacology.org/services"
 
-def approved_drugs_for_gene(hgnc_symbol: str, species: str = "Human") -> list[dict]:
-    """Return approved drugs for a target identified by HGNC gene symbol."""
-    # Step 1: find the target
-    r = requests.get(f"{GTOPDB_API}/targets",
-                     params={"geneSymbol": hgnc_symbol}, timeout=15)
+def find_target(*, geneSymbol=None, accession=None):
+    """Exact-match target lookup. Pass ONE of geneSymbol or accession."""
+    if geneSymbol:
+        params = {"geneSymbol": geneSymbol}
+    elif accession:
+        params = {"accession": accession}
+    else:
+        raise ValueError("provide geneSymbol or accession")
+    r = requests.get(f"{BASE}/targets", params=params, timeout=30)
     r.raise_for_status()
-    targets = r.json()
-    human_targets = [t for t in targets if t.get("species", "Human") == "Human"]
-    if not human_targets:
-        print(f"No human target found for {hgnc_symbol}")
-        return []
+    hits = r.json()
+    if not hits:
+        return None
+    return hits[0]
 
-    target_id = human_targets[0]["targetId"]
-    target_name = human_targets[0]["name"]
-
-    # Step 2: get interactions
-    r2 = requests.get(f"{GTOPDB_API}/targets/{target_id}/interactions",
-                      params={"species": species}, timeout=20)
-    r2.raise_for_status()
-
-    approved = [
-        {"ligand_name": ia["ligandName"], "action": ia.get("action"),
-         "affinity_param": ia.get("affinityParameter"), "affinity": ia.get("affinity")}
-        for ia in r2.json() if ia.get("approvedDrug")
-    ]
-    print(f"{target_name} (ID={target_id}): {len(approved)} approved drugs")
-    return approved
-
-drugs = approved_drugs_for_gene("DRD2")  # Dopamine D2 receptor
-for d in drugs[:6]:
-    aff = f"{d['affinity_param']}={d['affinity']}" if d['affinity'] else "no affinity"
-    print(f"  {d['ligand_name']:20s}  {d['action']:15s}  {aff}")
+print(find_target(geneSymbol="OPRM1"))   # targetId 319 (μ receptor)
+print(find_target(accession="P35372"))   # same — UniProt P35372 is OPRM1
 ```
 
-### Recipe: Compare Endogenous vs Drug Affinity at a Receptor
+```python
+# Base record has only IDs and family pointers — no gene symbol, UniProt, or
+# synonym text. Read sub-resources to get those.
+import requests
+BASE = "https://www.guidetopharmacology.org/services"
+print(requests.get(f"{BASE}/targets/319", timeout=30).json().keys())
+# dict_keys(['targetId','name','type','familyIds','subunitIds','complexIds'])
+```
 
-When to use: Assess how drug potency compares to the endogenous agonist at a given receptor.
+### Query 2: Target Cross-References and Synonyms
 
 ```python
 import requests, pandas as pd
 
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
+BASE = "https://www.guidetopharmacology.org/services"
 
-def compare_endogenous_vs_drugs(target_id: int, species: str = "Human") -> pd.DataFrame:
-    """Compare endogenous ligand affinities to approved drug affinities."""
-    r = requests.get(f"{GTOPDB_API}/targets/{target_id}/interactions",
-                     params={"species": species}, timeout=20)
+def target_xrefs(target_id):
+    """Cross-database accessions: UniProt, HGNC, ChEMBL Target, Ensembl, etc."""
+    r = requests.get(f"{BASE}/targets/{target_id}/databaseLinks", timeout=30)
+    r.raise_for_status()
+    return pd.DataFrame(r.json())
+
+def target_synonyms(target_id):
+    r = requests.get(f"{BASE}/targets/{target_id}/synonyms", timeout=30)
+    r.raise_for_status()
+    return [s.get("name") for s in r.json()]
+
+df_links = target_xrefs(319)
+print(df_links[["database", "accession", "species"]].head(8).to_string(index=False))
+# database          accession    species
+# ChEMBL Target     CHEMBL233    Human
+# UniProtKB         P35372       Human
+# HGNC              8156         Human
+# ...
+print("Synonyms:", target_synonyms(319))
+```
+
+### Query 3: Target Interactions and Affinities
+
+```python
+import requests, pandas as pd
+
+BASE = "https://www.guidetopharmacology.org/services"
+
+def target_interactions(target_id):
+    """All ligand-target interaction records for a target.
+    Each row carries ligandId, ligandName, type (Agonist/Antagonist/etc.),
+    action, affinity (string), affinityParameter (pKi/pIC50/...), refs."""
+    r = requests.get(f"{BASE}/targets/{target_id}/interactions", timeout=60)
     r.raise_for_status()
     rows = []
-    for ia in r.json():
-        aff = ia.get("affinity")
-        if aff is None:
-            continue
-        try:
-            rows.append({
-                "ligand": ia["ligandName"],
-                "category": "Endogenous" if ia.get("endogenous") else
-                            ("Approved drug" if ia.get("approvedDrug") else "Research compound"),
-                "action": ia.get("action"),
-                "affinity_param": ia.get("affinityParameter"),
-                "affinity": float(aff),
-            })
-        except (ValueError, TypeError):
-            pass
-    df = pd.DataFrame(rows)
-    if df.empty:
-        return df
-    return df.sort_values(["category", "affinity"], ascending=[True, False])
+    for i in r.json():
+        rows.append({
+            "ligandId": i.get("ligandId"),
+            "ligandName": i.get("ligandName"),
+            "type": i.get("type"),                     # Agonist/Antagonist/Allosteric modulator/...
+            "action": i.get("action"),
+            "affinity": i.get("affinity"),             # string, may include "-" (range) or "~"
+            "affinityParameter": i.get("affinityParameter"),  # pKi, pIC50, pKd, pEC50, pA2, pKB
+            "species": i.get("targetSpecies"),
+            "primary": i.get("primaryTarget"),
+            "endogenous": i.get("endogenous"),
+        })
+    return pd.DataFrame(rows)
 
-# Beta-2 adrenoceptor (target_id=24)
-df = compare_endogenous_vs_drugs(24)
-print("Beta-2 adrenoceptor — Endogenous vs approved drug affinities:")
-for cat, group in df.groupby("category"):
-    print(f"\n{cat} (n={len(group)}):")
-    print(group[["ligand", "action", "affinity_param", "affinity"]].head(5).to_string(index=False))
+df_ints = target_interactions(319)  # μ receptor
+print(f"OPRM1 interactions: {len(df_ints)}")
+# Top pKi values (cast safely — affinity is a string; some are ranges like "8.5-9.0")
+df_ints["pki"] = pd.to_numeric(df_ints["affinity"], errors="coerce")
+print(df_ints[df_ints["affinityParameter"] == "pKi"]
+      .sort_values("pki", ascending=False)
+      .head(8)[["ligandName", "type", "pki"]].to_string(index=False))
 ```
 
-### Recipe: Export All GPCR-Approved Drug Interactions to CSV
+### Query 4: Ligand Lookup and Structure
 
-When to use: Build a comprehensive dataset of all approved GPCR drugs with quantitative affinity for pharmacological analysis.
+```python
+import requests
+
+BASE = "https://www.guidetopharmacology.org/services"
+
+def ligand(ligand_id):
+    """Base ligand record. Keys: ligandId, name, type, approved, approvalSource,
+    abbreviation, inn, whoEssential, withdrawn, antibacterial, immuno, malaria,
+    labelled, radioactive, activeDrugIds, prodrugIds, subunitIds, complexIds."""
+    r = requests.get(f"{BASE}/ligands/{ligand_id}", timeout=30)
+    r.raise_for_status()
+    return r.json()
+
+def ligand_structure(ligand_id):
+    """Structure descriptors: smiles, inchi, inchiKey, iupacName."""
+    r = requests.get(f"{BASE}/ligands/{ligand_id}/structure", timeout=30)
+    r.raise_for_status()
+    return r.json()
+
+l = ligand(1627)            # morphine
+s = ligand_structure(1627)
+print(f"{l['name']:12s} approved={l['approved']}  type={l['type']}  inn={l.get('inn')}")
+print(f"  SMILES   : {s['smiles']}")
+print(f"  InChIKey : {s['inchiKey']}")
+```
+
+```python
+# Ligand cross-references: PubChem CID, ChEMBL, DrugBank, CAS, ChEBI, BindingDB
+import requests
+BASE = "https://www.guidetopharmacology.org/services"
+
+def ligand_xrefs(ligand_id):
+    r = requests.get(f"{BASE}/ligands/{ligand_id}/databaseLinks", timeout=30)
+    r.raise_for_status()
+    return r.json()
+
+xrefs = ligand_xrefs(1627)
+for x in xrefs[:10]:
+    print(f"  {x['database']:25s}  {x['accession']}")
+```
+
+### Query 5: Family Hierarchy
 
 ```python
 import requests, pandas as pd
 
-GTOPDB_API = "https://www.guidetopharmacology.org/services"
+BASE = "https://www.guidetopharmacology.org/services"
 
-# Get all interactions filtered to GPCR targets and approved drugs
-r = requests.get(f"{GTOPDB_API}/interactions",
-                 params={"targetType": "GPCR", "species": "Human"}, timeout=60)
-r.raise_for_status()
-interactions = r.json()
+# Correct endpoint is /targets/families (NOT /families, which is 404)
+def list_families():
+    r = requests.get(f"{BASE}/targets/families", timeout=30)
+    r.raise_for_status()
+    return pd.DataFrame(r.json())
 
-rows = []
-for ia in interactions:
-    if not ia.get("approvedDrug"):
-        continue
-    rows.append({
-        "target_id": ia.get("targetId"),
-        "target_name": ia.get("targetName"),
-        "ligand_id": ia.get("ligandId"),
-        "ligand_name": ia.get("ligandName"),
-        "action": ia.get("action"),
-        "affinity_param": ia.get("affinityParameter"),
-        "affinity": ia.get("affinity"),
-        "endogenous": ia.get("endogenous", False),
-    })
+df_fams = list_families()
+print(f"Total families: {len(df_fams)}")  # ~867
+print(df_fams[df_fams["name"].str.contains("opioid", case=False, na=False)]
+      [["familyId", "name"]].to_string(index=False))
+```
 
-df = pd.DataFrame(rows)
-df_clean = df.dropna(subset=["affinity"])
-df_clean["affinity"] = pd.to_numeric(df_clean["affinity"], errors="coerce")
-df_clean = df_clean.dropna(subset=["affinity"]).sort_values("affinity", ascending=False)
+### Query 6: Approved Drugs (Server-Side Alias)
 
-df_clean.to_csv("gpcr_approved_drugs.csv", index=False)
-print(f"GPCR approved drug interactions: {len(df_clean)} with affinity data")
-print(f"Unique targets: {df_clean['target_id'].nunique()}")
-print(f"Unique drugs: {df_clean['ligand_name'].nunique()}")
-print(df_clean.head(5)[["target_name", "ligand_name", "action", "affinity_param", "affinity"]].to_string(index=False))
+```python
+import requests, pandas as pd
+
+BASE = "https://www.guidetopharmacology.org/services"
+
+# Special: `type=Approved` is a server-side alias that returns all `approved=true`
+# ligands. The `approved=true` query param is silently ignored — use type=.
+def approved_ligands():
+    r = requests.get(f"{BASE}/ligands", params={"type": "Approved"}, timeout=60)
+    r.raise_for_status()
+    return pd.DataFrame(r.json())
+
+df = approved_ligands()
+print(f"Approved ligands in GtoPdb: {len(df)}")  # ~2,197
+print(df[df["name"].str.contains("morphine|fentanyl|naloxone", case=False, na=False)]
+      [["ligandId", "name", "approvalSource"]].head(8).to_string(index=False))
+```
+
+## Key Concepts
+
+### Base Records vs Sub-Resources
+
+GtoPdb deliberately keeps base records lean. To get the data you usually want, you must call a sub-resource:
+
+| Want | Endpoint |
+|------|----------|
+| Gene symbol / UniProt / HGNC / ChEMBL Target | `/targets/{id}/databaseLinks` |
+| Target synonyms | `/targets/{id}/synonyms` |
+| Species annotation | `/targets/{id}/databaseLinks` (each row has `species`) |
+| Interactions / affinities for a target | `/targets/{id}/interactions` |
+| SMILES / InChI / InChIKey | `/ligands/{id}/structure` |
+| PubChem CID / ChEMBL / DrugBank / CAS / ChEBI | `/ligands/{id}/databaseLinks` |
+| Ligand pharmacology summary | `/ligands/{id}/pharmacology` (long text fields) |
+
+### `geneSymbol=` and `accession=` are Exact-Match
+
+The `name=` filter searches across all target fields — it returns false positives (e.g. `name=beta-2` matches PLC β2 and GABA_A β2 alongside β2-adrenoceptor). Always prefer `geneSymbol=HGNC` or `accession=UniProt` for canonical lookups.
+
+### Filters That Are Silently Ignored
+
+- On `/interactions`: `targetId`, `ligandId`, `targetType`, `ligandType` are accepted but **silently ignored** — the endpoint returns ~280k rows for any filter. Use `/targets/{id}/interactions` or `/ligands/{id}/interactions` instead.
+- On `/ligands`: `approved=true` is silently ignored. Use `type=Approved` (server alias) to filter.
+
+### Affinity Parameters
+
+`affinityParameter` is one of `pKi`, `pKd`, `pIC50`, `pEC50`, `pA2`, `pKB`. The `affinity` field is a **string** — it can be a number (`"9.4"`), a range (`"8.5-9.0"`), or qualified (`"~7.5"`, `">8"`). Always cast via `pd.to_numeric(..., errors="coerce")`.
+
+## Common Workflows
+
+### Workflow 1: Build a Target Ligand Profile
+
+**Goal**: For a target (by HGNC), retrieve all approved drugs with affinity ≥ pKi 7.
+
+```python
+import requests, pandas as pd
+
+BASE = "https://www.guidetopharmacology.org/services"
+
+def target_profile(gene_symbol, min_pki=7.0):
+    t = requests.get(f"{BASE}/targets",
+                     params={"geneSymbol": gene_symbol}, timeout=30).json()
+    if not t:
+        return None
+    tid = t[0]["targetId"]
+    ints = requests.get(f"{BASE}/targets/{tid}/interactions", timeout=60).json()
+    rows = []
+    for i in ints:
+        # Skip rows without numeric pKi
+        if i.get("affinityParameter") != "pKi":
+            continue
+        try:
+            pki = float(i.get("affinity"))
+        except (TypeError, ValueError):
+            continue
+        if pki < min_pki:
+            continue
+        # Check approval via the ligand base record
+        lig = requests.get(f"{BASE}/ligands/{i['ligandId']}", timeout=30).json()
+        rows.append({
+            "ligand": i["ligandName"],
+            "ligandId": i["ligandId"],
+            "type": i.get("type"),
+            "pki": pki,
+            "approved": lig.get("approved"),
+            "withdrawn": lig.get("withdrawn"),
+        })
+    return pd.DataFrame(rows).sort_values("pki", ascending=False)
+
+df = target_profile("OPRM1", min_pki=8.0)
+print(df.head(10).to_string(index=False))
+df.to_csv("OPRM1_profile.csv", index=False)
+```
+
+### Workflow 2: Ligand → Targets
+
+**Goal**: List the off-targets of a ligand with their affinities.
+
+```python
+import requests, pandas as pd
+
+BASE = "https://www.guidetopharmacology.org/services"
+
+def ligand_targets(ligand_id):
+    r = requests.get(f"{BASE}/ligands/{ligand_id}/interactions", timeout=60)
+    r.raise_for_status()
+    rows = []
+    for i in r.json():
+        rows.append({
+            "targetId": i.get("targetId"),
+            "targetName": i.get("targetName"),
+            "type": i.get("type"),
+            "affinity": pd.to_numeric(i.get("affinity"), errors="coerce"),
+            "affinityParameter": i.get("affinityParameter"),
+            "species": i.get("targetSpecies"),
+            "primary": i.get("primaryTarget"),
+        })
+    return pd.DataFrame(rows).sort_values("affinity", ascending=False)
+
+df = ligand_targets(1627)  # morphine
+print(f"Morphine interactions across all targets: {len(df)}")
+print(df.head(8).to_string(index=False))
+```
+
+## Key Parameters
+
+| Parameter | Endpoint | Default | Range / Options | Effect |
+|-----------|----------|---------|-----------------|--------|
+| `geneSymbol` | `/targets` | — | HGNC symbol | **Exact-match** target lookup |
+| `accession` | `/targets` | — | UniProt accession | **Exact-match** target lookup |
+| `name` | `/targets`, `/ligands` | — | any string | Fuzzy — matches across all fields; can return wrong record |
+| `type` | `/ligands` | — | `Synthetic organic`, `Peptide`, `Natural product`, `Metabolite`, `Antibody`, `Nucleic acid`, `Inorganic`, `Approved` (alias) | Filter ligand list by type or approval |
+| (path) `{targetId}` | `/targets/{id}/{rel}` | required | integer | Target sub-resource lookup (databaseLinks/synonyms/interactions/…) |
+| (path) `{ligandId}` | `/ligands/{id}/{rel}` | required | integer | Ligand sub-resource lookup (structure/databaseLinks/interactions/pharmacology) |
+| (path) `families` | `/targets/families` | — | — | List of 867 IUPHAR families |
+
+## Best Practices
+
+1. **Use `geneSymbol=`/`accession=` for canonical lookups**, never `name=` — fuzzy `name=` matches across all fields and silently returns the wrong target.
+2. **Read sub-resources for everything beyond IDs.** Base `/targets/{id}` and `/ligands/{id}` records lack gene symbols, UniProt, SMILES, ChEMBL, etc. — they live under `/databaseLinks`, `/synonyms`, `/structure`.
+3. **Filter interactions via `/targets/{id}/interactions` or `/ligands/{id}/interactions`** — never `/interactions?targetId=…`, which silently ignores the filter.
+4. **Use `type=Approved` server alias** to fetch approved drugs; `approved=true` query param is ignored.
+5. **Always cast `affinity` numerically with `errors="coerce"`** — it's a string that can be ranges, qualified, or missing.
+6. **Family endpoint is `/targets/families`** — not `/families` (which 404s).
+
+## Common Recipes
+
+### Recipe: Resolve Gene Symbol → UniProt via GtoPdb
+
+```python
+import requests
+BASE = "https://www.guidetopharmacology.org/services"
+
+def gene_to_uniprot(symbol):
+    t = requests.get(f"{BASE}/targets", params={"geneSymbol": symbol}, timeout=30).json()
+    if not t:
+        return None
+    links = requests.get(f"{BASE}/targets/{t[0]['targetId']}/databaseLinks", timeout=30).json()
+    for x in links:
+        if x.get("database") == "UniProtKB" and x.get("species") == "Human":
+            return x["accession"]
+    return None
+
+print(gene_to_uniprot("OPRM1"))   # P35372
+print(gene_to_uniprot("ADRB2"))   # P07550
+```
+
+### Recipe: Approved Drugs in a Receptor Family
+
+```python
+import requests, pandas as pd
+BASE = "https://www.guidetopharmacology.org/services"
+
+def family_targets(family_id):
+    fams = requests.get(f"{BASE}/targets/families", timeout=30).json()
+    return next((f.get("targetIds", []) for f in fams if f["familyId"] == family_id), [])
+
+def approved_drugs_for_family(family_id):
+    rows = []
+    for tid in family_targets(family_id):
+        ints = requests.get(f"{BASE}/targets/{tid}/interactions", timeout=60).json()
+        for i in ints:
+            lig = requests.get(f"{BASE}/ligands/{i['ligandId']}", timeout=30).json()
+            if not lig.get("approved"):
+                continue
+            rows.append({"targetId": tid, "drug": i["ligandName"],
+                         "type": i.get("type"),
+                         "affinity": pd.to_numeric(i.get("affinity"), errors="coerce"),
+                         "param": i.get("affinityParameter")})
+    return pd.DataFrame(rows).drop_duplicates(subset=["targetId", "drug"])
+
+# family 50 = opioid receptors (example)
+df = approved_drugs_for_family(50)
+print(df.head(10).to_string(index=False))
+```
+
+### Recipe: SMILES Lookup for a List of GtoPdb Ligand IDs
+
+```python
+import requests, pandas as pd, time
+BASE = "https://www.guidetopharmacology.org/services"
+
+def smiles_table(ligand_ids):
+    rows = []
+    for lid in ligand_ids:
+        s = requests.get(f"{BASE}/ligands/{lid}/structure", timeout=30).json()
+        rows.append({"ligandId": lid, "smiles": s.get("smiles"),
+                     "inchiKey": s.get("inchiKey")})
+        time.sleep(0.2)
+    return pd.DataFrame(rows)
+
+print(smiles_table([1627, 1638, 5466]).to_string(index=False))  # morphine, naloxone, fentanyl
 ```
 
 ## Troubleshooting
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| Empty list from `GET /targets?name=...` | Exact name mismatch; GtoPdb uses official IUPHAR nomenclature | Try a shorter substring (e.g., `"beta-2"` instead of `"beta-2 adrenoceptor"`); use HGNC symbol with `geneSymbol` param |
-| `GET /interactions` times out | Large result set (all GPCRs is 90K+ records) | Add filters (`action`, `targetType`, `affinityParameter`) to reduce result set; increase timeout to 120s |
-| Interactions return `None` affinity for many records | Many interactions are qualitative (presence/absence, not Ki values) | Use `df.dropna(subset=["affinity"])` to work only with quantitative records; expect ~40% have numeric values |
-| Ligand search returns unexpected results | `name` parameter does substring match; common words match multiple ligands | Filter results by `ligand_type` or `approved` flag after retrieval; use `ligandId` if known |
-| Target found but no interactions returned | Rare target with no curated interactions or wrong species | Check `species` param — some targets have only Rat/Mouse data; try without species filter |
-| `requests.exceptions.ConnectionError` | GtoPdb server temporarily unavailable | Retry after 30s; GtoPdb is academic infrastructure and has occasional downtime |
-| Duplicate interactions for same ligand-target pair | Multiple assay entries per interaction (different labs, assay conditions) | Deduplicate by keeping the highest affinity value: `df.sort_values("affinity").drop_duplicates(subset=["ligand_id","target_id"], keep="last")` |
+| `name=...` returns wrong target | `name=` matches across all fields | Use `geneSymbol=` or `accession=` for canonical lookups |
+| `target["hgncSymbol"]` / `target["uniprotId"]` `KeyError` | Base record only has IDs | Call `/targets/{id}/databaseLinks` |
+| `ligand["smiles"]` / `inchikey` / `pubchemCid` `KeyError` | Base ligand record has flags only | Call `/ligands/{id}/structure` and `/ligands/{id}/databaseLinks` |
+| `/interactions?targetId=...` returns ~280k rows | Filter silently ignored | Use `/targets/{id}/interactions` |
+| `?approved=true` returns the full ligand list | Param silently ignored | Use `?type=Approved` (server alias) |
+| `/families` → HTTP 404 | Wrong path | Use `/targets/families` |
+| `ValueError: could not convert string to float` on `affinity` | Field is a string that can be a range or qualifier | `pd.to_numeric(s, errors="coerce")`; or parse ranges manually |
+| Filter by `ligandType="Approved"` on interactions returns empty | `ligandType` field does not exist on interactions | Filter via the ligand record's `approved` flag instead |
 
 ## Related Skills
 
-- `chembl-database-bioactivity` — Larger bioactivity dataset for SAR studies; complement GtoPdb curated potency data with ChEMBL's broader coverage
-- `unichem-database` — Translate GtoPdb `chemblId` or `pubchemCid` fields to cross-database identifiers
-- `pdb-database` — Retrieve 3D binding structures for receptor-ligand pairs identified in GtoPdb
-- `opentargets-database` — Integrate GtoPdb pharmacology data with genetic evidence and disease associations via Open Targets
+- `chembl-database-bioactivity` — Larger-scale bioactivity (2.4M+ compounds) for the same target classes
+- `pubchem-compound-search` — Compound-centric chemoinformatics; cross-reference via PubChem CID from `/ligands/{id}/databaseLinks`
+- `dailymed-database` — FDA-approved label text for marketed drugs (regulatory complement)
+- `uniprot-protein-database` — Resolve the UniProt accession that GtoPdb cross-references
 
 ## References
 
-- [Guide to Pharmacology REST API](https://www.guidetopharmacology.org/webServices.jsp) — Official web services documentation with all endpoint descriptions and example queries
-- [GtoPdb home page](https://www.guidetopharmacology.org/) — Interactive database browser and target/ligand search
-- [Alexander et al., Br J Pharmacol 2023](https://doi.org/10.1111/bph.15649) — Concise Guide to Pharmacology 2023/24 — the data content reference for GtoPdb
-- [Harding et al., Nucleic Acids Res 2022](https://doi.org/10.1093/nar/gkab1010) — GtoPdb database paper describing the data model, curation process, and API
+- [Guide to Pharmacology home](https://www.guidetopharmacology.org/)
+- [Web services API reference](https://www.guidetopharmacology.org/webServices.jsp)
+- [Nomenclature & Curation](https://www.guidetopharmacology.org/helpPage.jsp)
+- Harding SD et al. "The IUPHAR/BPS Guide to PHARMACOLOGY in 2024." *Nucleic Acids Research* 52(D1): D1438–D1449 (2024). https://doi.org/10.1093/nar/gkad944

@@ -50,13 +50,14 @@ def fetch_snp_by_rsid(rsid: str) -> dict:
     r.raise_for_status()
     return r.json()
 
-record = fetch_snp_by_rsid("rs80357906")
+record = fetch_snp_by_rsid("rs1800497")  # DRD2 Taq1A
 print(f"rsID: rs{record['refsnp_id']}")
-print(f"Organism: {record.get('organism', {}).get('common_name')}")
-print(f"SNP class: {record.get('primary_snapshot_data', {}).get('variant_type')}")
-# rsID: rs80357906
-# Organism: human
-# SNP class: snv
+print(f"Variant type: {record['primary_snapshot_data'].get('variant_type')}")
+# Top-level keys: citations, create_date, dbsnp1_merges, last_update_build_id,
+# last_update_date, lost_obs_movements, mane_select_ids, present_obs_movements,
+# primary_snapshot_data, refsnp_id. (No top-level `organism` field.)
+# rsID: rs1800497
+# Variant type: snv
 ```
 
 ## Core API
@@ -73,11 +74,13 @@ EMAIL = "your@email.com"
 BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
 def efetch_snp_xml(rsid: str) -> ET.Element:
-    """Fetch dbSNP XML record for a single rsID."""
+    """Fetch dbSNP XML record for a single rsID via the docsum rettype.
+    Note: rettype="xml" returns a namespaced ExchangeSet; rettype="docsum"
+    returns the simpler eSummaryResult/DocumentSummary tree without namespaces."""
     rs_num = str(rsid).lstrip("rs")
     r = requests.get(f"{BASE}/efetch.fcgi",
                      params={"db": "snp", "id": rs_num,
-                             "rettype": "xml", "retmode": "xml",
+                             "rettype": "docsum", "retmode": "xml",
                              "email": EMAIL},
                      timeout=20)
     r.raise_for_status()
@@ -85,17 +88,17 @@ def efetch_snp_xml(rsid: str) -> ET.Element:
 
 root = efetch_snp_xml("rs80357906")
 
-# Parse allele placements from the XML
+# Parse the DocumentSummary record (MAF/MAFALLELE were removed in 2024;
+# GLOBAL_MAFS is a sub-tree — use ESummary JSON below for easier access)
 for docsum in root.iter("DocumentSummary"):
     rs_id = docsum.get("uid")
     snp_class = docsum.findtext("SNP_CLASS", "Unknown")
-    maf = docsum.findtext("MAF", "N/A")
-    maf_allele = docsum.findtext("MAFALLELE", "N/A")
     chr_pos = docsum.findtext("CHRPOS", "N/A")
-    gene = docsum.findtext("GENES/GENE_E/NAME", "N/A")
     clin_sig = docsum.findtext("CLINICAL_SIGNIFICANCE", "N/A")
-    print(f"rs{rs_id} | Class: {snp_class} | MAF: {maf} ({maf_allele})")
-    print(f"  Position: {chr_pos} | Gene: {gene} | ClinSig: {clin_sig}")
+    print(f"rs{rs_id} | Class: {snp_class} | Position: {chr_pos}")
+    print(f"  ClinSig: {clin_sig}")
+# rs80357906 | Class: delins | Position: 17:43057062
+#   ClinSig: pathogenic,risk-factor,uncertain-significance
 ```
 
 ```python
@@ -112,9 +115,13 @@ def esummary_snp(rsid: str) -> dict:
 
 rec = esummary_snp("rs80357906")
 print(f"rs{rec.get('snp_id')}:")
-print(f"  Class       : {rec.get('snp_class')}")
-print(f"  MAF         : {rec.get('maf')} ({rec.get('mafallele')})")
-print(f"  ChrPos      : {rec.get('chrpos')}")
+print(f"  Class       : {rec.get('snp_class')}")            # e.g., 'delins'
+# `maf`/`mafallele` were removed from ESummary in 2024 — use `global_mafs`
+# (list of {study, freq}) and pick a study (e.g., 'GnomAD_genomes') or the
+# global aggregate ('TOPMED'/'1000Genomes').
+for m in rec.get('global_mafs', [])[:4]:
+    print(f"  MAF[{m['study']:18s}]: {m['freq']}")
+print(f"  ChrPos      : {rec.get('chrpos')}")               # 17:43057062
 print(f"  ClinSig     : {rec.get('clinical_significance')}")
 print(f"  FxnClass    : {rec.get('fxn_class')}")
 ```
@@ -207,9 +214,13 @@ result = fetch_snp_summaries(rsids)
 for rs_num in rsids:
     uid = str(rs_num).lstrip("rs")
     rec = result.get(uid, {})
+    # `global_mafs` is a list of {study, freq}; pick the first or filter by study
+    gmafs = rec.get("global_mafs", [])
+    maf_str = gmafs[0]["freq"] if gmafs else "N/A"
+    maf_study = gmafs[0]["study"] if gmafs else ""
     print(f"\n{rs_num}:")
     print(f"  Class        : {rec.get('snp_class', 'N/A')}")
-    print(f"  MAF          : {rec.get('maf', 'N/A')} allele={rec.get('mafallele', 'N/A')}")
+    print(f"  MAF          : {maf_str} (from {maf_study})")
     print(f"  Location     : {rec.get('chrpos', 'N/A')}")
     print(f"  ClinSig      : {rec.get('clinical_significance', 'N/A')}")
     print(f"  Function     : {rec.get('fxn_class', 'N/A')}")
@@ -261,11 +272,13 @@ for start in range(0, len(rsid_batch), 100):
     result = efetch_history(webenv, query_key, retstart=start, retmax=100)
     for uid in result.get("uids", []):
         rec = result[uid]
+        # global_mafs replaced maf/mafallele in 2024 — flatten the first entry
+        gmafs = rec.get("global_mafs", [])
         records.append({
             "rsid": f"rs{uid}",
             "snp_class": rec.get("snp_class"),
-            "maf": rec.get("maf"),
-            "maf_allele": rec.get("mafallele"),
+            "maf": gmafs[0]["freq"] if gmafs else None,
+            "maf_study": gmafs[0]["study"] if gmafs else None,
             "chrpos": rec.get("chrpos"),
             "clinical_sig": rec.get("clinical_significance"),
         })
@@ -294,29 +307,31 @@ def fetch_refsnp(rsid: str) -> dict:
     return r.json()
 
 def parse_allele_frequencies(record: dict) -> list:
-    """Extract allele frequencies from a Variation Services record."""
+    """Extract allele frequencies from a Variation Services record.
+    freq[i] keys: study_name, study_version, local_row_id, observation, allele_count, total_count.
+    The asserted allele identifier lives in freq.observation.inserted_sequence (NOT at ann.allele)."""
     freqs = []
     snapshot = record.get("primary_snapshot_data", {})
-    allele_annotations = snapshot.get("allele_annotations", [])
-    for ann in allele_annotations:
-        for freq in ann.get("frequency", []):
+    for ann in snapshot.get("allele_annotations", []):
+        for f in ann.get("frequency", []):
+            obs = f.get("observation", {})
             freqs.append({
-                "allele": ann.get("allele"),
-                "study": freq.get("study_name"),
-                "allele_count": freq.get("allele_count"),
-                "total_count": freq.get("total_count"),
-                "observation": freq.get("observation", {}).get("allele_count"),
+                "allele": obs.get("inserted_sequence"),
+                "study": f.get("study_name"),
+                "allele_count": f.get("allele_count"),
+                "total_count": f.get("total_count"),
+                "freq": (f["allele_count"] / f["total_count"]
+                         if f.get("total_count") else None),
             })
     return freqs
 
 record = fetch_refsnp("rs1800497")   # DRD2 Taq1A variant
 print(f"rsID: rs{record['refsnp_id']}")
-print(f"Variant type: {record.get('primary_snapshot_data', {}).get('variant_type')}")
+print(f"Variant type: {record['primary_snapshot_data'].get('variant_type')}")  # 'snv'
 
-placements = record.get("primary_snapshot_data", {}).get("placements_with_allele", [])
+placements = record["primary_snapshot_data"].get("placements_with_allele", [])
 for placement in placements[:2]:
     seq_id = placement.get("seq_id")
-    is_top = placement.get("is_ptlp")
     for allele in placement.get("alleles", []):
         spdi = allele.get("allele", {}).get("spdi", {})
         print(f"  Placement: {seq_id} | SPDI: {spdi.get('inserted_sequence')}")
@@ -394,11 +409,12 @@ for start in range(0, len(variant_rsids), 100):
     result = esummary_history(webenv, query_key, start=start, retmax=100)
     for uid in result.get("uids", []):
         rec = result[uid]
+        gmafs = rec.get("global_mafs", [])  # 2024 schema (replaced maf/mafallele)
         records.append({
             "rsid": f"rs{uid}",
             "snp_class": rec.get("snp_class"),
-            "maf": rec.get("maf"),
-            "maf_allele": rec.get("mafallele"),
+            "maf": gmafs[0]["freq"] if gmafs else None,
+            "maf_study": gmafs[0]["study"] if gmafs else None,
             "chrpos_grch38": rec.get("chrpos"),
             "gene": rec.get("genes", [{}])[0].get("name") if rec.get("genes") else None,
             "clinical_significance": rec.get("clinical_significance"),
@@ -527,24 +543,26 @@ def check_rsid(rsid: str) -> dict:
     rec = result.get(rs_num, {})
     if not rec or "error" in rec:
         return {"rsid": rsid, "found": False}
+    gmafs = rec.get("global_mafs", [])
     return {
         "rsid": rsid,
         "found": True,
         "snp_class": rec.get("snp_class"),
         "chrpos": rec.get("chrpos"),
-        "maf": rec.get("maf"),
+        "maf": gmafs[0]["freq"] if gmafs else None,
+        "maf_study": gmafs[0]["study"] if gmafs else None,
         "clinical_significance": rec.get("clinical_significance"),
     }
 
 for rsid in ["rs80357906", "rs9999999999", "rs1800497"]:
     info = check_rsid(rsid)
     if info["found"]:
-        print(f"{rsid}: {info['snp_class']} | pos={info['chrpos']} | MAF={info['maf']}")
+        print(f"{rsid}: {info['snp_class']} | pos={info['chrpos']} | MAF={info['maf']} ({info['maf_study']})")
     else:
         print(f"{rsid}: NOT FOUND in dbSNP")
-# rs80357906: snv | pos=17:43094692 | MAF=0.000008
+# rs80357906: delins | pos=17:43057062 | MAF=G=0.0008929/4 (Estonian)
 # rs9999999999: NOT FOUND in dbSNP
-# rs1800497: snv | pos=11:113270828 | MAF=0.3517
+# rs1800497: snv | pos=11:113400106 | MAF=G=0.42... (study varies)
 ```
 
 ### Recipe: Resolve Gene Variants to rsIDs and Coordinates
@@ -580,11 +598,12 @@ def gene_to_rsids(gene: str, max_variants: int = 200) -> pd.DataFrame:
     rows = []
     for uid in result.get("uids", []):
         rec = result[uid]
+        gmafs = rec.get("global_mafs", [])
         rows.append({
             "rsid": f"rs{uid}",
             "chrpos_grch38": rec.get("chrpos"),
             "snp_class": rec.get("snp_class"),
-            "maf": rec.get("maf"),
+            "maf": gmafs[0]["freq"] if gmafs else None,
         })
     return pd.DataFrame(rows)
 
@@ -601,7 +620,9 @@ df.to_csv("APOE_rsids.csv", index=False)
 | `HTTP 429` or connection refused | Rate limit exceeded (3 req/sec) | Add `time.sleep(0.35)` between requests; register for API key to get 10 req/sec |
 | ESummary returns `{"error": "Invalid uid"}` | rsID does not exist in dbSNP | Check rsID spelling; verify with NCBI browser; variant may be a novel call not yet in dbSNP |
 | `esearch` returns 0 results for a gene | Gene symbol mismatch or missing `human[orgn]` filter | Try adding `AND human[orgn]`; check NCBI gene symbol at https://www.ncbi.nlm.nih.gov/gene |
-| MAF field is empty or `"."` | Variant has no population frequency data in dbSNP | Use gnomAD via `gnomad-database` for population frequencies; not all rsIDs have MAF |
+| `KeyError: 'maf'` / `'mafallele'` in ESummary parsing | Fields removed in the 2024 dbSNP ESummary schema | Use `rec["global_mafs"]` — list of `{"study": ..., "freq": "<allele>=<value>/<count>"}`; pick a study (`GnomAD_genomes`, `TOPMED`, `ALFA`) and parse the `freq` string |
+| `global_mafs` empty | Variant has no aggregated population frequency in dbSNP | Use gnomAD via `gnomad-database` directly for population frequencies |
+| `root.iter("DocumentSummary")` returns 0 with `rettype="xml"` | EFetch XML root is namespaced (`{https://www.ncbi.nlm.nih.gov/SNP/docsum}ExchangeSet`) | Use `rettype="docsum"` (no namespace) or pass the full namespaced tag to `iter()` |
 | Variation Services API returns 404 | rsID not found or wrong URL format | Confirm integer rs number (no `rs` prefix) in `/refsnp/{rs_num}` endpoint |
 | EPost XML parsing fails | Non-XML response (rate limit HTML error page) | Check response status code first; add retry logic with `time.sleep(1)` |
 | Batch efetch returns fewer records than posted | Some rsIDs were merged or retired | Cross-check against NCBI merge history; retired rsIDs redirect to current active rs |
