@@ -52,12 +52,16 @@ def gwas_get(endpoint, params=None):
     time.sleep(0.2)
     return resp.json()
 
-# Find studies for a trait keyword
+# Find studies for a trait keyword. Study records have no top-level `title`
+# — the publication title lives at `publicationInfo.title`; the trait label
+# lives at `diseaseTrait.trait`.
 data = gwas_get("studies/search/findByDiseaseTrait", {"diseaseTrait": "diabetes"})
 studies = data["_embedded"]["studies"]
 print(f"Found {len(studies)} studies for 'diabetes'")
 for s in studies[:3]:
-    print(f"  {s['accessionId']}: {s.get('title', 'N/A')[:80]}")
+    title = (s.get("publicationInfo") or {}).get("title", "N/A")
+    trait = (s.get("diseaseTrait") or {}).get("trait", "N/A")
+    print(f"  {s['accessionId']} | {trait[:40]:<40} | {title[:60]}")
 ```
 
 ## Core API
@@ -71,17 +75,19 @@ Search GWAS studies by disease trait keyword or PubMed ID.
 data = gwas_get("studies/search/findByDiseaseTrait", {"diseaseTrait": "breast cancer"})
 studies = data["_embedded"]["studies"]
 for s in studies[:5]:
-    pubmed = s.get("publicationInfo", {}).get("pubmedId", "N/A")
-    print(f"  {s['accessionId']} | PMID:{pubmed} | {s.get('title', '')[:60]}")
+    pi = s.get("publicationInfo") or {}
+    print(f"  {s['accessionId']} | PMID:{pi.get('pubmedId','N/A')} | {pi.get('title','')[:60]}")
 
 time.sleep(0.2)
 
-# Search by PubMed ID
-data = gwas_get("studies/search/findByPubmedId", {"pubmedId": "25673413"})
+# Search by PubMed ID. NOTE: the older `findByPubmedId` 404s on /studies/;
+# the working endpoint is `findByPublicationIdPubmedId`.
+data = gwas_get("studies/search/findByPublicationIdPubmedId", {"pubmedId": "25673413"})
 studies = data["_embedded"]["studies"]
 print(f"Studies from PMID 25673413: {len(studies)}")
 for s in studies:
-    print(f"  {s['accessionId']}: {s.get('diseaseTrait', {}).get('trait', 'N/A')}")
+    trait = (s.get("diseaseTrait") or {}).get("trait", "N/A")
+    print(f"  {s['accessionId']}: {trait}")
 ```
 
 ### Module 2: Association Queries
@@ -89,32 +95,49 @@ for s in studies:
 Retrieve SNP-trait associations filtered by trait (EFO term), variant, or p-value.
 
 ```python
-# Associations for a trait by EFO URI
-efo_uri = "http://www.ebi.ac.uk/efo/EFO_0001360"  # Type 2 diabetes
-data = gwas_get("efoTraits/EFO_0001360/associations", {"size": 50})
+# Associations by EFO trait. The old path `efoTraits/{shortForm}/associations`
+# also works *if* you have the current shortForm — but trait shortForms have
+# been re-mapped to MONDO (e.g. EFO_0000249 → MONDO_0004975). The most reliable
+# path is `associations/search/findByEfoTrait?efoTrait=<canonical trait name>`.
+data = gwas_get("associations/search/findByEfoTrait",
+                {"efoTrait": "type 2 diabetes mellitus", "size": 50})
 assocs = data["_embedded"]["associations"]
-print(f"Associations for T2D: {len(assocs)}")
+print(f"Associations for 'type 2 diabetes mellitus': {len(assocs)}")
 
 for a in assocs[:5]:
     pval = a.get("pvalue", None)
-    loci = a.get("loci", [])
     genes = []
-    for locus in loci:
-        for gene in locus.get("authorReportedGenes", []):
+    for locus in a.get("loci", []) or []:
+        for gene in locus.get("authorReportedGenes", []) or []:
             genes.append(gene.get("geneName", ""))
+    loci = a.get("loci") or [{}]
     snps = [r.get("snps", [{}])[0].get("rsId", "N/A")
-            for r in a.get("loci", [{}])[0].get("strongestRiskAlleles", [])]
+            for r in (loci[0].get("strongestRiskAlleles") or [])]
     print(f"  rs={snps} | p={pval} | genes={genes}")
 ```
 
 ```python
-# Associations for a specific variant
-data = gwas_get("singleNucleotidePolymorphisms/rs7903146/associations", {"size": 100})
+# Associations for a specific variant. NOTE: association records do not embed
+# `efoTraits` inline — they expose them via the `_links.efoTraits.href`
+# HAL link. Follow the link (cached if needed) to resolve trait names.
+data = gwas_get("singleNucleotidePolymorphisms/rs7903146/associations", {"size": 5})
 assocs = data["_embedded"]["associations"]
-print(f"Associations for rs7903146: {len(assocs)}")
+print(f"Associations for rs7903146 (first page): {len(assocs)}")
+
+def association_traits(assoc):
+    """Resolve efoTraits via the HAL link on an association record."""
+    href = (assoc.get("_links") or {}).get("efoTraits", {}).get("href")
+    if not href:
+        return []
+    r = requests.get(href, timeout=15)
+    if not r.ok:
+        return []
+    return [t.get("trait") for t in r.json().get("_embedded", {}).get("efoTraits", [])]
+
 for a in assocs[:5]:
-    trait = a.get("efoTraits", [{}])[0].get("trait", "N/A") if a.get("efoTraits") else "N/A"
-    print(f"  p={a.get('pvalue')} | OR={a.get('orPerCopyNum', 'N/A')} | trait={trait}")
+    traits = association_traits(a)
+    print(f"  p={a.get('pvalue')} | OR={a.get('orPerCopyNum', 'N/A')} | traits={traits}")
+    time.sleep(0.1)
 ```
 
 ### Module 3: Variant Lookup
@@ -141,11 +164,12 @@ for v in snps[:5]:
 ```
 
 ```python
-# Search variants by cytogenetic band
-data = gwas_get("singleNucleotidePolymorphisms/search/findByCytogeneticBand",
-                {"cytogeneticBand": "10q25.2", "size": 50})
+# Search variants by gene name (the cytogenetic-band endpoint
+# `findByCytogeneticBand` was removed — use gene or chromosome-range instead).
+data = gwas_get("singleNucleotidePolymorphisms/search/findByGene",
+                {"geneName": "TCF7L2", "size": 5})
 snps = data["_embedded"]["singleNucleotidePolymorphisms"]
-print(f"Variants at 10q25.2: {len(snps)}")
+print(f"Variants in TCF7L2: {len(snps)}")
 ```
 
 ### Module 4: Trait Search
@@ -153,19 +177,25 @@ print(f"Variants at 10q25.2: {len(snps)}")
 Browse and search EFO-mapped traits in the GWAS Catalog.
 
 ```python
-# Search traits by keyword
-data = gwas_get("efoTraits/search/findByDescription", {"description": "alzheimer", "size": 20})
+# Search traits by exact name (the older `findByDescription` endpoint was
+# removed — search/efoTrait now expects the canonical trait label).
+data = gwas_get("efoTraits/search/findByEfoTrait", {"trait": "Alzheimer disease"})
 traits = data["_embedded"]["efoTraits"]
-print(f"Traits matching 'alzheimer': {len(traits)}")
+print(f"Traits matching 'Alzheimer disease': {len(traits)}")
 for t in traits[:5]:
-    print(f"  {t['shortForm']}: {t['trait']}")
+    print(f"  {t['shortForm']}: {t['trait']}  (uri={t['uri']})")
 
 time.sleep(0.2)
 
-# Get specific trait by EFO ID
-data = gwas_get("efoTraits/EFO_0000249")  # Alzheimer disease
+# Get specific trait by shortForm. NOTE: many legacy EFO IDs have been
+# re-mapped to MONDO (e.g. old `EFO_0000249` for Alzheimer is now
+# `MONDO_0004975` — `efoTraits/EFO_0000249` returns 404). Resolve via search
+# above first, then use the current shortForm:
+short_form = traits[0]["shortForm"]   # e.g. 'MONDO_0004975'
+data = gwas_get(f"efoTraits/{short_form}")
 print(f"Trait: {data['trait']}")
-print(f"  URI: {data['uri']}")
+print(f"  URI       : {data['uri']}")
+print(f"  shortForm : {data['shortForm']}")
 ```
 
 ### Module 5: Summary Statistics
@@ -178,13 +208,18 @@ data = gwas_get("studies/search/findByFullPvalueSet", {"fullPvalueSet": True, "s
 studies = data["_embedded"]["studies"]
 print(f"Studies with summary stats (first page): {len(studies)}")
 for s in studies[:5]:
-    print(f"  {s['accessionId']}: {s.get('diseaseTrait', {}).get('trait', 'N/A')[:50]}")
+    trait = (s.get("diseaseTrait") or {}).get("trait", "N/A")
+    print(f"  {s['accessionId']}: {trait[:50]}")
 
 time.sleep(0.2)
 
-# Get summary statistics metadata for a specific study
-data = gwas_get(f"studies/{studies[0]['accessionId']}/summaryStatistics")
-print(f"Summary stats available: {data}")
+# Summary statistics metadata is NOT exposed via the REST API
+# (`studies/{acc}/summaryStatistics` returns 404). Use the GWAS Catalog FTP
+# directly — paths are predictable by study accession:
+ftp_base = "http://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics"
+acc = studies[0]["accessionId"]
+ftp_url = f"{ftp_base}/{acc[:-3]}001-{acc[:-3]}999/{acc}/"
+print(f"Summary stats FTP directory: {ftp_url}")
 ```
 
 ```python
@@ -283,13 +318,14 @@ def gwas_get(endpoint, params=None):
     time.sleep(0.2)
     return resp.json()
 
-# Step 1: Find trait EFO ID
-traits = gwas_get("efoTraits/search/findByDescription",
-                  {"description": "schizophrenia", "size": 5})
+# Step 1: Resolve trait → current shortForm via findByEfoTrait
+# (the older `findByDescription` endpoint was removed).
+traits = gwas_get("efoTraits/search/findByEfoTrait", {"trait": "schizophrenia"})
 efo_id = traits["_embedded"]["efoTraits"][0]["shortForm"]
 print(f"Using EFO: {efo_id}")
 
-# Step 2: Get all associations for this trait
+# Step 2: Get all associations for this trait — nested path
+# `efoTraits/{shortForm}/associations` works once you have the canonical shortForm.
 all_assocs = []
 page = 0
 while True:
@@ -336,20 +372,31 @@ rs_id = "rs7903146"  # Well-known pleiotropic variant
 data = gwas_get(f"singleNucleotidePolymorphisms/{rs_id}/associations", {"size": 500})
 assocs = data["_embedded"]["associations"]
 
-# Collect unique traits
+# Association records don't embed efoTraits inline — follow the HAL
+# `_links.efoTraits.href` link per association. Cache per-href to avoid
+# duplicate fetches.
 trait_set = {}
+href_cache = {}
+def fetch_traits(href):
+    if href in href_cache:
+        return href_cache[href]
+    r = requests.get(href, timeout=15)
+    href_cache[href] = (r.json().get("_embedded", {}).get("efoTraits", [])) if r.ok else []
+    return href_cache[href]
+
 for a in assocs:
-    for t in a.get("efoTraits", []):
+    href = (a.get("_links") or {}).get("efoTraits", {}).get("href")
+    if not href:
+        continue
+    for t in fetch_traits(href):
         tid = t.get("shortForm", "unknown")
         if tid not in trait_set:
-            trait_set[tid] = {
-                "trait": t.get("trait", "N/A"),
-                "best_pval": a.get("pvalue", 1),
-                "count": 0
-            }
+            trait_set[tid] = {"trait": t.get("trait", "N/A"),
+                              "best_pval": a.get("pvalue", 1), "count": 0}
         trait_set[tid]["count"] += 1
         if a.get("pvalue") and a["pvalue"] < trait_set[tid]["best_pval"]:
             trait_set[tid]["best_pval"] = a["pvalue"]
+    time.sleep(0.1)
 
 print(f"{rs_id} is associated with {len(trait_set)} distinct traits:")
 for tid, info in sorted(trait_set.items(), key=lambda x: x[1]["best_pval"]):
@@ -416,12 +463,12 @@ print("Saved manhattan_plot.png")
 | `size` | All paginated endpoints | `20` | `1`-`500` | Results per page |
 | `page` | All paginated endpoints | `0` | `0`-`totalPages-1` | Page number (0-indexed) |
 | `diseaseTrait` | `studies/search/findByDiseaseTrait` | -- | Any string | Trait keyword search |
-| `pubmedId` | `studies/search/findByPubmedId` | -- | Valid PMID | Study lookup by publication |
+| `pubmedId` | `studies/search/findByPublicationIdPubmedId` | -- | Valid PMID | Study lookup by publication (`findByPubmedId` 404s on /studies/) |
 | `geneName` | `snps/search/findByGene` | -- | Gene symbol | Variants near a gene |
 | `chrom`, `bpStart`, `bpEnd` | `snps/search/findByChromBpLocationRange` | -- | chr:start-end | Regional variant query |
-| `cytogeneticBand` | `snps/search/findByCytogeneticBand` | -- | e.g., `10q25.2` | Variants by cytogenetic band |
 | `fullPvalueSet` | `studies/search/findByFullPvalueSet` | -- | `True`/`False` | Filter studies with summary stats |
-| `description` | `efoTraits/search/findByDescription` | -- | Any string | Trait keyword search |
+| `trait` | `efoTraits/search/findByEfoTrait` | -- | Canonical trait name | Trait lookup by exact name (`findByDescription` was removed) |
+| `efoTrait` | `associations/search/findByEfoTrait` | -- | Canonical trait name | All associations for a trait |
 
 ## Best Practices
 
@@ -448,10 +495,11 @@ Identify polygenic scores available for a GWAS trait.
 ```python
 import requests, time
 
-# Step 1: Get EFO ID from GWAS Catalog
+# Step 1: Get EFO/MONDO shortForm from GWAS Catalog
+# (the old `findByDescription` endpoint was removed; use `findByEfoTrait`)
 BASE = "https://www.ebi.ac.uk/gwas/rest/api"
-traits = requests.get(f"{BASE}/efoTraits/search/findByDescription",
-                      params={"description": "coronary artery disease"}).json()
+traits = requests.get(f"{BASE}/efoTraits/search/findByEfoTrait",
+                      params={"trait": "coronary artery disease"}).json()
 efo_id = traits["_embedded"]["efoTraits"][0]["shortForm"]
 time.sleep(0.2)
 

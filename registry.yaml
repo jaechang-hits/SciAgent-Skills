@@ -64,7 +64,7 @@ entries:
     sub_type: database
     category: "structural-biology-drug-discovery"
     path: "skills/structural-biology-drug-discovery/pubchem-compound-search/SKILL.md"
-    description: "Query PubChem (110M+ compounds) via PubChemPy: search by name/SMILES/CID, molecular properties, similarity/substructure search, bioactivity data"
+    description: "PubChem (110M+ compounds) via PUG-REST with plain `requests` (no SDK). Name/CID/SMILES/InChIKey lookup, properties (MW, XLogP, TPSA, HBD/HBA), similarity & substructure search, synonyms, assay summaries, SDF/PNG download."
     date_added: "2026-02-16"
   - name: "scientific-manuscript-writing"
     type: skill
@@ -400,7 +400,7 @@ entries:
     sub_type: database
     category: "structural-biology-drug-discovery"
     path: "skills/structural-biology-drug-discovery/chembl-database-bioactivity/SKILL.md"
-    description: "Query ChEMBL bioactivity database for drug discovery data. Search compounds by name, structure (SMILES similarity/substructure), or properties. Retrieve bioactivity measurements (IC50, Ki, EC50), target information, drug mechanisms, and approved drug data. Python client with Django-style filter operators for programmatic access to 2.4M+ compounds and 20M+ bioactivities."
+    description: "ChEMBL (2M+ compounds, 19M+ bioactivities, 13K+ targets) via REST/JSON with plain `requests` (no SDK). IC50/Ki/EC50 bioactivities, target inhibitors, SAR, drug mechanisms/indications."
     date_added: "2026-02-17"
 
   - name: "string-database-ppi"
@@ -496,7 +496,7 @@ entries:
     sub_type: database
     category: "structural-biology-drug-discovery"
     path: "skills/structural-biology-drug-discovery/pdb-database/SKILL.md"
-    description: "Query RCSB PDB (200K+ experimental structures) via rcsb-api Python SDK. Text, attribute, sequence, and structure similarity search. Fetch metadata via Schema or GraphQL. Download PDB/mmCIF coordinate files. For AlphaFold predicted structures use alphafold-database-access."
+    description: "RCSB PDB (200K+ structures) via REST + GraphQL with plain `requests` (no SDK). Text/attribute/sequence/3D-similarity search, GraphQL metadata, PDB/mmCIF downloads. For AlphaFold use alphafold-database-access."
     date_added: "2026-02-17"
 
   - name: "scientific-brainstorming"
@@ -656,7 +656,7 @@ entries:
     sub_type: database
     category: "genomics-bioinformatics"
     path: "skills/genomics-bioinformatics/clinpgx-database/SKILL.md"
-    description: "Query PharmGKB (Clinical Pharmacogenomics) database via REST API for drug-gene interactions, clinical annotations, dosing guidelines (CPIC, DPWG), variant-drug associations, and pharmacogenomic pathways. Search by gene, drug, rsID, or pathway. No authentication required. For somatic cancer pharmacogenomics use cosmic-database or opentargets-database; for drug structures use chembl-database-bioactivity."
+    description: "ClinPGx (formerly PharmGKB) REST + CPIC PostgREST companion: clinical annotations, CPIC/DPWG dosing guidelines, variant-drug associations, FDA/EMA labels. Two hosts: api.clinpgx.org + api.cpicpgx.org. No auth."
     date_added: "2026-02-18"
 
   - name: "imaging-data-commons"
