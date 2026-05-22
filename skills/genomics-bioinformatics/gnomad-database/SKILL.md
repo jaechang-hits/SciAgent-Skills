@@ -50,20 +50,20 @@ def gnomad_query(query: str, variables: dict = None) -> dict:
         raise ValueError(f"GraphQL errors: {result['errors']}")
     return result["data"]
 
-# Quick check: get pLI for BRCA1
+# Quick check: get pLI / LOEUF for BRCA1
+# GnomadConstraint fields are FLAT (no nested `lof { oe_ci { upper } }` type).
+# `pli` is the current field; `pLI` is preserved as a deprecated alias.
 query = """
 query GeneConstraint($gene_symbol: String!, $reference_genome: ReferenceGenomeId!) {
   gene(gene_symbol: $gene_symbol, reference_genome: $reference_genome) {
-    gnomad_constraint { pLI lof { oe_ci { upper } } }
+    gnomad_constraint { pli oe_lof_upper }
   }
 }
 """
 data = gnomad_query(query, {"gene_symbol": "BRCA1", "reference_genome": "GRCh38"})
 constraint = data["gene"]["gnomad_constraint"]
-print(f"BRCA1 pLI: {constraint['pLI']:.3f}")
-print(f"BRCA1 LOEUF: {constraint['lof']['oe_ci']['upper']:.3f}")
-# BRCA1 pLI: 0.999
-# BRCA1 LOEUF: 0.127
+print(f"BRCA1 pLI:   {constraint['pli']:.3e}")        # ~5.5e-38 (very high LoF-intolerant)
+print(f"BRCA1 LOEUF: {constraint['oe_lof_upper']:.3f}") # 0.928
 ```
 
 ## Core API
@@ -89,7 +89,7 @@ GENE_VARIANTS_QUERY = """
 query GeneVariants($gene_symbol: String!, $reference_genome: ReferenceGenomeId!, $dataset: DatasetId!) {
   gene(gene_symbol: $gene_symbol, reference_genome: $reference_genome) {
     gene_id
-    gene_name
+    symbol
     variants(dataset: $dataset) {
       variant_id
       rsids
@@ -116,7 +116,7 @@ data = gnomad_query(GENE_VARIANTS_QUERY, {
     "dataset": "gnomad_r4"
 })
 variants = data["gene"]["variants"]
-print(f"Gene: {data['gene']['gene_name']} ({data['gene']['gene_id']})")
+print(f"Gene: {data['gene']['symbol']} ({data['gene']['gene_id']})")
 print(f"Total variants: {len(variants)}")
 # Filter to rare variants (AF < 0.001)
 rare = [v for v in variants if v["genome"] and v["genome"]["af"] is not None and v["genome"]["af"] < 0.001]
@@ -131,44 +131,51 @@ Fetch detailed information for a single variant by its gnomAD variant ID (CHROM-
 
 ```python
 VARIANT_QUERY = """
-query VariantDetails($variant_id: String!, $dataset: DatasetId!) {
-  variant(variant_id: $variant_id, dataset: $dataset) {
+query VariantDetails($variantId: String!, $dataset: DatasetId!) {
+  variant(variantId: $variantId, dataset: $dataset) {
     variant_id
     rsids
     chrom
     pos
     ref
     alt
-    consequence
-    lof
-    lof_filter
-    lof_flags
+    transcript_consequences {
+      gene_symbol
+      transcript_id
+      is_canonical
+      major_consequence
+      lof
+      lof_filter
+      lof_flags
+    }
     genome {
       an
       ac
       af
       faf95 { popmax popmax_population }
-      populations {
-        id
-        ac
-        an
-        af
-      }
+      populations { id ac an homozygote_count }
     }
   }
 }
 """
 
+# Query.variant() arg is `variantId` (camelCase). The top-level deprecated
+# `consequence`/`lof`/`lof_filter`/`lof_flags` fields on VariantDetails were
+# removed — read them from `transcript_consequences` (plural list; pick the
+# canonical transcript with is_canonical=True).
 data = gnomad_query(VARIANT_QUERY, {
-    "variant_id": "1-55039974-G-T",   # PCSK9 p.Tyr142Ter (LoF)
+    "variantId": "1-55039974-G-T",    # PCSK9 p.Tyr142Ter (LoF)
     "dataset": "gnomad_r4"
 })
 v = data["variant"]
-print(f"Variant: {v['variant_id']}")
-print(f"rsIDs: {v['rsids']}")
-print(f"Consequence: {v['consequence']}  |  LoF: {v['lof']}")
+canon = next((t for t in (v.get("transcript_consequences") or []) if t.get("is_canonical")),
+             (v.get("transcript_consequences") or [{}])[0])
+print(f"Variant     : {v['variant_id']}")
+print(f"rsIDs       : {v['rsids']}")
+print(f"Gene        : {canon.get('gene_symbol')}")
+print(f"Consequence : {canon.get('major_consequence')}  |  LoF: {canon.get('lof')}")
 g = v["genome"]
-print(f"Genome AF: {g['af']:.2e}  (AC={g['ac']}, AN={g['an']})")
+print(f"Genome AF   : {g['af']:.2e}  (AC={g['ac']}, AN={g['an']})")
 print(f"FAF95 popmax: {g['faf95']['popmax']:.2e} in {g['faf95']['popmax_population']}")
 ```
 
@@ -180,15 +187,14 @@ Retrieve allele frequency broken down by ancestry group for a specific variant.
 import pandas as pd
 
 POPULATION_FREQ_QUERY = """
-query PopFreqs($variant_id: String!, $dataset: DatasetId!) {
-  variant(variant_id: $variant_id, dataset: $dataset) {
+query PopFreqs($variantId: String!, $dataset: DatasetId!) {
+  variant(variantId: $variantId, dataset: $dataset) {
     variant_id
     genome {
       populations {
         id
         ac
         an
-        af
         homozygote_count
       }
     }
@@ -209,14 +215,15 @@ ANCESTRY_LABELS = {
 }
 
 data = gnomad_query(POPULATION_FREQ_QUERY, {
-    "variant_id": "1-55039974-G-T",
+    "variantId": "1-55039974-G-T",
     "dataset": "gnomad_r4"
 })
 pops = data["variant"]["genome"]["populations"]
 
-# Filter to top-level ancestry groups (exclude sex-specific)
+# VariantPopulation no longer exposes `af` directly — compute from ac/an.
 main_pops = [p for p in pops if p["id"] in ANCESTRY_LABELS and p["an"] > 0]
 df = pd.DataFrame(main_pops)
+df["af"] = df["ac"] / df["an"]
 df["label"] = df["id"].map(ANCESTRY_LABELS)
 df = df.sort_values("af", ascending=False)
 print(df[["label", "ac", "an", "af", "homozygote_count"]].to_string(index=False))
@@ -228,37 +235,38 @@ Retrieve per-base read depth coverage for a gene region to assess data completen
 
 ```python
 COVERAGE_QUERY = """
-query Coverage($chrom: String!, $start: Int!, $stop: Int!, $dataset: DatasetId!) {
-  coverage(dataset: $dataset, chrom: $chrom, start: $start, stop: $stop) {
-    pos
-    mean
-    median
-    over_1
-    over_10
-    over_20
-    over_30
-    over_100
+query Coverage($chrom: String!, $start: Int!, $stop: Int!,
+               $reference_genome: ReferenceGenomeId!, $dataset: DatasetId!) {
+  region(chrom: $chrom, start: $start, stop: $stop, reference_genome: $reference_genome) {
+    coverage(dataset: $dataset) {
+      exome  { mean median over_1 over_10 over_20 over_30 over_100 }
+      genome { mean median over_1 over_10 over_20 over_30 over_100 }
+    }
   }
 }
 """
 
+# Coverage is no longer a top-level Query field — it lives under Region, and the
+# `RegionCoverage` shape returns parallel `exome` / `genome` arrays (one entry per
+# position; there is no per-row `pos` — the array index is implicit position).
 data = gnomad_query(COVERAGE_QUERY, {
     "chrom": "1",
     "start": 55039700,
     "stop": 55040200,
-    "dataset": "gnomad_r4"
+    "reference_genome": "GRCh38",
+    "dataset": "gnomad_r4",
 })
-cov = data["coverage"]
-print(f"Coverage positions retrieved: {len(cov)}")
-if cov:
-    avg_mean = sum(c["mean"] for c in cov) / len(cov)
-    pct_20x = sum(1 for c in cov if c["over_20"] > 0.9) / len(cov) * 100
-    print(f"Average mean depth: {avg_mean:.1f}x")
-    print(f"Positions with >90% samples at >=20x: {pct_20x:.1f}%")
-    # Example single position
-    c = cov[0]
-    print(f"\nPosition {c['pos']}: mean={c['mean']:.1f}x, median={c['median']}x")
-    print(f"  Fraction >=10x: {c['over_10']:.3f}, >=20x: {c['over_20']:.3f}, >=30x: {c['over_30']:.3f}")
+cov = data["region"]["coverage"]
+exome  = cov.get("exome")  or []
+genome = cov.get("genome") or []
+print(f"Coverage positions: exome={len(exome)}, genome={len(genome)}")
+if exome:
+    avg_mean = sum(c["mean"] for c in exome) / len(exome)
+    pct_20x = sum(1 for c in exome if (c.get("over_20") or 0) > 0.9) / len(exome) * 100
+    print(f"Exome  — average mean depth: {avg_mean:.1f}x; {pct_20x:.1f}% positions >=90% at >=20x")
+    c = exome[0]
+    print(f"  Sample position: mean={c['mean']:.1f}x, median={c['median']}x, "
+          f">=10x:{c['over_10']:.3f} >=20x:{c['over_20']:.3f} >=30x:{c['over_30']:.3f}")
 ```
 
 ### Query 5: Gene Constraint
@@ -270,37 +278,37 @@ CONSTRAINT_QUERY = """
 query GeneConstraint($gene_symbol: String!, $reference_genome: ReferenceGenomeId!) {
   gene(gene_symbol: $gene_symbol, reference_genome: $reference_genome) {
     gene_id
-    gene_name
+    symbol
+    name
     gnomad_constraint {
-      pLI
-      pNull
-      pRec
+      pli
       mis_z
-      lof {
-        obs
-        exp
-        oe
-        oe_ci { lower upper }
-      }
+      lof_z
+      obs_lof
+      exp_lof
+      oe_lof
+      oe_lof_lower
+      oe_lof_upper
     }
   }
 }
 """
 
+# GnomadConstraint fields are flat (no nested `lof { obs exp oe oe_ci }`).
+# `gene_name` was removed from Gene — use `name` or `symbol`. `pNull`/`pRec` are gone.
 genes = ["PCSK9", "BRCA1", "TP53", "TTN"]
-print(f"{'Gene':<10} {'pLI':>6} {'LOEUF':>7} {'mis_z':>7}")
-print("-" * 35)
+print(f"{'Gene':<10} {'pLI':>10} {'LOEUF':>7} {'mis_z':>7}")
+print("-" * 38)
 for gene in genes:
     data = gnomad_query(CONSTRAINT_QUERY, {"gene_symbol": gene, "reference_genome": "GRCh38"})
     c = data["gene"]["gnomad_constraint"]
-    loeuf = c["lof"]["oe_ci"]["upper"]
-    print(f"{gene:<10} {c['pLI']:>6.3f} {loeuf:>7.3f} {c['mis_z']:>7.2f}")
+    print(f"{gene:<10} {c['pli']:>10.3e} {c['oe_lof_upper']:>7.3f} {c['mis_z']:>7.2f}")
     time.sleep(0.5)
-# Gene        pLI   LOEUF   mis_z
-# PCSK9     0.855   0.543    2.11
-# BRCA1     0.999   0.127    3.84
-# TP53      0.993   0.191    5.21
-# TTN       0.001   0.993   -2.40
+# Gene             pLI   LOEUF   mis_z
+# PCSK9      4.27e-04   0.456    1.41
+# BRCA1      5.52e-38   0.928    1.73
+# TP53       8.86e-22   1.020    1.93
+# TTN        1.00e+00   0.871    1.30
 ```
 
 ### Query 6: Variant Search by Region
@@ -411,13 +419,13 @@ def gnomad_query(query, variables=None):
 GENE_VARIANTS_QUERY = """
 query GeneVariants($gene_symbol: String!, $reference_genome: ReferenceGenomeId!, $dataset: DatasetId!) {
   gene(gene_symbol: $gene_symbol, reference_genome: $reference_genome) {
-    gene_id gene_name
+    gene_id symbol name
     variants(dataset: $dataset) {
       variant_id rsids chrom pos ref alt consequence lof lof_filter
       genome {
         an ac af
         faf95 { popmax popmax_population }
-        populations { id ac an af }
+        populations { id ac an homozygote_count }
       }
     }
   }
@@ -483,11 +491,11 @@ def gnomad_query(query, variables=None):
     return result["data"]
 
 POPULATION_FREQ_QUERY = """
-query PopFreqs($variant_id: String!, $dataset: DatasetId!) {
-  variant(variant_id: $variant_id, dataset: $dataset) {
+query PopFreqs($variantId: String!, $dataset: DatasetId!) {
+  variant(variantId: $variantId, dataset: $dataset) {
     variant_id
     genome {
-      populations { id ac an af }
+      populations { id ac an homozygote_count }
     }
   }
 }
@@ -500,12 +508,12 @@ ANCESTRY_LABELS = {
 
 variant_id = "1-55039974-G-T"   # PCSK9 p.Tyr142Ter
 data = gnomad_query(POPULATION_FREQ_QUERY, {
-    "variant_id": variant_id,
+    "variantId": variant_id,
     "dataset": "gnomad_r4"
 })
 
 pops = data["variant"]["genome"]["populations"]
-rows = [{"code": p["id"], "af": p["af"], "ac": p["ac"], "an": p["an"]}
+rows = [{"code": p["id"], "af": p["ac"] / p["an"], "ac": p["ac"], "an": p["an"]}
         for p in pops if p["id"] in ANCESTRY_LABELS and p["an"] > 0]
 df = pd.DataFrame(rows)
 df["label"] = df["code"].map(ANCESTRY_LABELS)
@@ -544,15 +552,18 @@ def gnomad_query(query, variables=None):
 CONSTRAINT_QUERY = """
 query GeneConstraint($gene_symbol: String!, $reference_genome: ReferenceGenomeId!) {
   gene(gene_symbol: $gene_symbol, reference_genome: $reference_genome) {
-    gene_id gene_name
+    gene_id symbol
     gnomad_constraint {
-      pLI pNull pRec mis_z
-      lof { obs exp oe oe_ci { lower upper } }
+      pli mis_z lof_z
+      obs_lof exp_lof oe_lof oe_lof_lower oe_lof_upper
     }
   }
 }
 """
 
+# GnomadConstraint is flat (no nested `lof` type); `pNull` / `pRec` are gone;
+# `gene_name` is gone — use `symbol`. Filter LoF-intolerant by LOEUF < 0.35
+# (the gnomAD recommendation), which is more robust than pLI > 0.9.
 gene_list = ["BRCA1", "BRCA2", "PCSK9", "LDLR", "TTN", "CFTR", "HTT"]
 records = []
 for gene in gene_list:
@@ -561,22 +572,22 @@ for gene in gene_list:
         c = data["gene"]["gnomad_constraint"]
         records.append({
             "gene": gene,
-            "pLI": c["pLI"],
-            "LOEUF": c["lof"]["oe_ci"]["upper"],
+            "pli": c["pli"],
+            "LOEUF": c["oe_lof_upper"],
             "mis_z": c["mis_z"],
-            "lof_obs": c["lof"]["obs"],
-            "lof_exp": c["lof"]["exp"],
-            "lof_oe": c["lof"]["oe"],
+            "lof_obs": c["obs_lof"],
+            "lof_exp": c["exp_lof"],
+            "lof_oe":  c["oe_lof"],
         })
     except Exception as e:
         print(f"Warning: {gene} failed — {e}")
     time.sleep(0.5)
 
 df = pd.DataFrame(records).sort_values("LOEUF")
-df["lof_intolerant"] = df["pLI"] > 0.9
-print(df[["gene", "pLI", "LOEUF", "mis_z", "lof_intolerant"]].to_string(index=False))
+df["lof_intolerant"] = df["LOEUF"] < 0.35
+print(df[["gene", "pli", "LOEUF", "mis_z", "lof_intolerant"]].to_string(index=False))
 df.to_csv("constraint_scores.csv", index=False)
-print(f"\nLoF-intolerant genes: {df['lof_intolerant'].sum()}/{len(df)}")
+print(f"\nLoF-intolerant genes (LOEUF < 0.35): {df['lof_intolerant'].sum()}/{len(df)}")
 ```
 
 ## Key Parameters
@@ -617,14 +628,14 @@ GNOMAD_API = "https://gnomad.broadinstitute.org/api"
 
 def is_common_in_any_population(variant_id, threshold=0.01, dataset="gnomad_r4"):
     query = """
-    query($variant_id: String!, $dataset: DatasetId!) {
-      variant(variant_id: $variant_id, dataset: $dataset) {
+    query($variantId: String!, $dataset: DatasetId!) {
+      variant(variantId: $variantId, dataset: $dataset) {
         genome { faf95 { popmax popmax_population } af }
       }
     }
     """
     r = requests.post(GNOMAD_API, json={"query": query,
-                                         "variables": {"variant_id": variant_id, "dataset": dataset}},
+                                         "variables": {"variantId": variant_id, "dataset": dataset}},
                       timeout=15)
     data = r.json()["data"]["variant"]
     if not data or not data["genome"]:
@@ -653,7 +664,7 @@ def get_constraint(gene_symbol, reference_genome="GRCh38"):
     query = """
     query($gene_symbol: String!, $reference_genome: ReferenceGenomeId!) {
       gene(gene_symbol: $gene_symbol, reference_genome: $reference_genome) {
-        gnomad_constraint { pLI mis_z lof { oe_ci { upper } } }
+        gnomad_constraint { pli mis_z oe_lof_upper }
       }
     }
     """
@@ -664,7 +675,7 @@ def get_constraint(gene_symbol, reference_genome="GRCh38"):
     if not data or not data.get("gnomad_constraint"):
         return None
     c = data["gnomad_constraint"]
-    return {"gene": gene_symbol, "pLI": c["pLI"], "LOEUF": c["lof"]["oe_ci"]["upper"], "mis_z": c["mis_z"]}
+    return {"gene": gene_symbol, "pli": c["pli"], "LOEUF": c["oe_lof_upper"], "mis_z": c["mis_z"]}
 
 genes = ["BRCA1", "BRCA2", "ATM", "CHEK2", "PALB2"]
 rows = [r for g in genes for r in [get_constraint(g)] if r]
@@ -672,9 +683,9 @@ time.sleep(0.5)   # polite delay per gene in real loop
 
 df = pd.DataFrame(rows)
 print(df.to_string(index=False))
-# gene     pLI   LOEUF  mis_z
-# BRCA1  0.999   0.127   3.84
-# BRCA2  1.000   0.176   3.21
+# gene        pli    LOEUF  mis_z
+# BRCA1  5.52e-38   0.928   1.73
+# BRCA2  6.34e-09   0.521   0.97
 ```
 
 ### Recipe: Export LoF Variants for CADD/ClinVar Cross-Reference
