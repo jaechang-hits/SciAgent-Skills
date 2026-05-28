@@ -50,7 +50,8 @@ SUBTYPE_TEMPLATE = {
 
 NAME_PATTERN = re.compile(r"^[a-z][a-z0-9-]*[a-z0-9]$")
 TAG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
-STOP_VERBS = {"use", "a", "an", "the", "query", "fetch", "run"}
+# Description stop-verb / promo-word lists live in validate_description.py;
+# scaffold.py delegates to that module via validate_description().
 
 
 def fail(msg: str) -> None:

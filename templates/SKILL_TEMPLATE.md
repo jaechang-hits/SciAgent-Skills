@@ -5,7 +5,12 @@
      into the correct category, fill the frontmatter, and append the registry entry for you.
 
      Note: the optional `tags: [...]` field lives in registry.yaml (entry-level), NOT in the
-     SKILL.md frontmatter below. See CLAUDE.md Step 5 "tags field" for when to use it. -->
+     SKILL.md frontmatter below. See CLAUDE.md Step 5 "tags field" for when to use it.
+
+     Plotting: when adding plotting code, use library defaults — no hex codes, no cmap
+     definitions, no per-condition color dicts, no themes. See sciagent-skill-creator
+     "Content authoring rules" for the full list. The skill teaches HOW to compute the
+     plot's data; HOW to color it is consumer choice. -->
 ---
 name: "Skill Name Here"
 # Description rules (CLAUDE.md Step 5):
