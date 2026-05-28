@@ -502,7 +502,7 @@ print(f"Total archived: {len(to_archive)}")
 ## Related Skills
 
 - **biopython-molecular-biology** — local sequence analysis (BLAST, alignment) before uploading to Benchling
-- **opentrons-integration** — automate lab protocols that feed samples into Benchling inventory
+- **opentrons-protocol-api** — automate lab protocols that feed samples into Benchling inventory
 
 ## References
 

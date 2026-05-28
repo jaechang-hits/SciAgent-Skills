@@ -806,7 +806,7 @@ print("Saved clustermap_annotated.png")
 ## Related Skills
 
 - **matplotlib-scientific-plotting** — low-level figure building, custom annotations, non-statistical plot types, and multi-panel layouts that mix seaborn with raw matplotlib
-- **plotly-interactive-visualization** — interactive charts with hover, zoom, and HTML/Dash export
+- **plotly-interactive-plots** — interactive charts with hover, zoom, and HTML/Dash export
 - **pydeseq2-differential-expression** — produces the log2FC and p-values that feed into volcano-style scatter plots
 - **scikit-image-processing** — generates cell morphology measurements visualized with seaborn categorical/distribution plots
 - **scientific-visualization** — decision guide for selecting the right chart type and color scheme before coding

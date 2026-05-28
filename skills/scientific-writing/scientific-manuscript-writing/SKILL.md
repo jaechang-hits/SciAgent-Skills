@@ -237,8 +237,8 @@ What type of scientific document are you writing?
 ## Related Skills
 
 - `matplotlib-scientific-plotting` -- Create publication-quality figures for manuscripts
-- `seaborn-statistical-visualization` -- Statistical visualizations with automatic CI and aggregation
-- `plotly-interactive-visualization` -- Interactive figures for supplementary materials
+- `seaborn-statistical-plots` -- Statistical visualizations with automatic CI and aggregation
+- `plotly-interactive-plots` -- Interactive figures for supplementary materials
 - `statsmodels-statistical-modeling` -- Statistical models whose outputs you report in manuscripts
 - `pymc-bayesian-modeling` -- Bayesian analysis results for reporting
 - `peer-review-methodology` -- Structured peer review of manuscripts (complements this entry)

@@ -1,6 +1,6 @@
 ---
 name: "protocolsio-integration"
-description: "protocols.io REST API: search and fetch wet-lab, bioinformatics, and clinical protocols by keyword, DOI, or category, with steps, reagents, materials, equipment, timing. Public access free; auth needed for private or publishing. Pair with opentrons-integration or benchling-integration to execute."
+description: "protocols.io REST API: search and fetch wet-lab, bioinformatics, and clinical protocols by keyword, DOI, or category, with steps, reagents, materials, equipment, timing. Public access free; auth needed for private or publishing. Pair with opentrons-protocol-api or benchling-integration to execute."
 license: "CC-BY-4.0"
 ---
 
@@ -18,7 +18,7 @@ protocols.io is the leading protocol repository for life sciences with 90,000+ o
 - Building lab automation workflows by extracting protocol steps and reagent lists programmatically
 - Verifying protocol versions and citing the correct DOI for methods sections
 - Discovering community-validated protocols as alternatives to proprietary methods
-- Use alongside `opentrons-integration` or `benchling-integration` to implement downloaded protocols in automated workflows
+- Use alongside `opentrons-protocol-api` or `benchling-integration` to implement downloaded protocols in automated workflows
 
 ## Prerequisites
 
@@ -437,7 +437,7 @@ print(df.sort_values("forks", ascending=False).head(5).to_string(index=False))
 
 ## Related Skills
 
-- `opentrons-integration` — Execute protocols on Opentrons liquid handling robots using steps extracted via this skill
+- `opentrons-protocol-api` — Execute protocols on Opentrons liquid handling robots using steps extracted via this skill
 - `benchling-integration` — Store retrieved protocols in Benchling ELN with reagent tracking
 - `scientific-manuscript-writing` — Reference protocols correctly in methods sections using protocols.io DOIs
 
