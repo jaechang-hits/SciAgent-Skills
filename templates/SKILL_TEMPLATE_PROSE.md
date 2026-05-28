@@ -1,6 +1,22 @@
+<!-- Template: Guide Sub-type (prose-centric) — for entries whose core value is domain
+     knowledge, decision frameworks, and best practices rather than runnable code.
+     For code-centric entries, use SKILL_TEMPLATE.md (Pipeline) or SKILL_TEMPLATE_TOOLKIT.md.
+
+     Scaffolding shortcut: `.claude/skills/sciagent-skill-creator/` can drop this template
+     into the correct category, fill the frontmatter, and append the registry entry for you.
+
+     Note: the optional `tags: [...]` field lives in registry.yaml (entry-level), NOT in the
+     SKILL.md frontmatter below. See CLAUDE.md Step 5 "tags field" for when to use it. -->
 ---
 name: "Skill Name Here"
-description: "Brief description of what domain knowledge this covers and when to consult it (max 1024 chars)"
+# Description rules (CLAUDE.md Step 5):
+#   - Length ≤ 1024 chars; first 120 chars carry discovery weight
+#   - Lead with the domain or decision-space keyword — NOT stop verbs (Use/A/An/The/...)
+#   - Cross-references ("For X use Y") go at the END
+#   - No promotional adjectives (powerful/comprehensive/state-of-the-art/...)
+# Good: "scRNA-seq cell-type annotation decision framework. Three-tier strategy: manual markers, CellTypist, popV ensemble transfer. ..."
+# Bad:  "A comprehensive guide to single-cell annotation best practices..."
+description: "<Domain or decision-space keyword> <what it covers>. <When to consult>. <Disambiguation>."
 license: "CC-BY-4.0"
 ---
 

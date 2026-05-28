@@ -1,8 +1,21 @@
 <!-- Template: Pipeline Sub-type — for tools with a linear input→processing→output flow.
-     For toolkit-style tools (multiple independent modules), use SKILL_TEMPLATE_TOOLKIT.md instead. -->
+     For toolkit-style tools (multiple independent modules), use SKILL_TEMPLATE_TOOLKIT.md instead.
+
+     Scaffolding shortcut: `.claude/skills/sciagent-skill-creator/` can drop this template
+     into the correct category, fill the frontmatter, and append the registry entry for you.
+
+     Note: the optional `tags: [...]` field lives in registry.yaml (entry-level), NOT in the
+     SKILL.md frontmatter below. See CLAUDE.md Step 5 "tags field" for when to use it. -->
 ---
 name: "Skill Name Here"
-description: "Brief description of what this skill does and when to use it (max 1024 chars)"
+# Description rules (CLAUDE.md Step 5):
+#   - Length ≤ 1024 chars; first 120 chars carry discovery weight
+#   - Lead with tool name or domain keyword — NOT stop verbs (Use/A/An/The/Query/Fetch/Run)
+#   - Cross-references ("For X use Y") go at the END
+#   - No promotional adjectives (powerful/comprehensive/state-of-the-art/...)
+# Good: "PyDESeq2 differential expression for bulk RNA-seq. Wraps DESeq2's negative-binomial model in Python; pandas in, results DataFrame out. ..."
+# Bad:  "Use this comprehensive skill to perform powerful differential expression analysis..."
+description: "<Tool/Domain keyword> <what it does>. <Inputs → outputs>. <Disambiguation: for X use Y>."
 license: "CC-BY-4.0"  # Use tool's license if known; CC-BY-4.0 for original content
 ---
 
@@ -135,6 +148,17 @@ result = package1.other_method(data, correction=True)
 | `ModuleNotFoundError` | Package not installed | `pip install package1` |
 | `MemoryError` | Dataset too large | Use chunked processing or subsample |
 | Empty results | Input format mismatch | Check input file has expected columns |
+
+## Bundled Resources
+
+<!-- Optional. Only include if this skill ships sibling directories next to SKILL.md.
+     See CLAUDE.md Step 4 "Bundled resources" for the references/ vs assets/ vs scripts/ rule.
+     Extract code into scripts/ when a block exceeds ~80 lines, the same helper repeats
+     across recipes, or the entry effectively ships a CLI utility. -->
+
+- `references/<topic>.md` — long-form prose or decision tables the agent loads on demand
+- `assets/<file.ext>` — copy-paste templates, fixtures, or static artifacts
+- `scripts/<name>.py` — runnable helpers; include docstring header (purpose + usage)
 
 ## References
 
