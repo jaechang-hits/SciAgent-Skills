@@ -92,6 +92,20 @@ The generated SKILL.md is a **skeleton with placeholders**. The agent's remainin
 
 The scaffold script does not pretend to write content. Content stays with the agent and the source material.
 
+## Content authoring rules (what NOT to bake into a SKILL.md)
+
+Skills document a tool's *analysis surface*, not the consumer's *house style*. A SKILL.md is read by many agents for many downstream tasks — visual choices that fit one analysis brief leak into every future invocation. Strip the following before committing:
+
+- **Color palettes, cmaps, themes** — no hex codes (`#08306b`), no `LinearSegmentedColormap.from_list(...)`, no `ListedColormap([...])`, no prescribed `cmap=` arguments unless the cmap *is* the tool's API (e.g., a tool that ships its own palette). Let matplotlib pick defaults; the consumer overrides downstream.
+- **Per-replicate / per-condition color dicts** — e.g., `colors = {"rep1": "#1f77b4", ...}`. Matplotlib auto-cycles colors.
+- **Font choices, dpi presets, figure sizes tuned for one report** — `figsize=(8, 4)` for a routine line plot is fine; `figsize=(12, 4)` chosen to fit a slide deck is not.
+- **One-shot user-brief specifics** — if the user asked for "blue for low, red for high" in *their* analysis, that belongs in their code, not the skill. The skill teaches *how to compute* phi/psi density; *how to color it* is consumer choice.
+- **Hardcoded paths beyond the tool's defaults** — `"figures/"`, `"results/"`, `f"{pdb_id}_protein.pdb"` are fine as illustrative outputs; `"/Users/me/proj42/output"` is not.
+
+What to keep: the analysis logic, the data shape, the units, the parameter semantics, the expected output *structure* (columns, axes, units), and any visual choice the tool itself enforces (e.g., a DSSP code → meaning mapping is API; pastel-blue for α-helix is taste).
+
+Rule of thumb: if a downstream consumer would *override* the choice, don't ship the choice in the skill.
+
 ## Files in this skill
 
 - `SKILL.md` — this file (when/how/what)
