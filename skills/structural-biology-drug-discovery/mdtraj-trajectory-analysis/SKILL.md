@@ -257,15 +257,12 @@ phi_deg   = np.degrees(phi_rad)
 
 ### Workflow 1: Multi-Replicate Stability + Flexibility + Contacts + Ramachandran + DSSP
 
-**Goal**: full structural-analysis report for three MD replicates — RMSD/Rg over time, per-residue RMSF, residue contact frequency map (replica 1), Ramachandran (general + Gly + Pro for replica 1), and DSSP 8-state time series (replica 1). Produces the figures described in the user's analysis brief.
+**Goal**: full structural-analysis report for three MD replicates — RMSD/Rg over time, per-residue RMSF, residue contact frequency map (replica 1), Ramachandran (general + Gly + Pro for replica 1), and DSSP 8-state time series (replica 1). Plots use matplotlib defaults so the consumer picks their own palette downstream.
 
 ```python
 import mdtraj as md
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-from matplotlib.colors import LinearSegmentedColormap, ListedColormap
-import seaborn as sns
 from pathlib import Path
 
 # --- Inputs -----------------------------------------------------------------
@@ -285,15 +282,14 @@ ca    = next(iter(trajs.values())).topology.select("name CA")
 # 1. RMSD vs time + Radius of gyration (Å) for all three replicates
 # ============================================================================
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-colors = {"rep1": "#1f77b4", "rep2": "#ff7f0e", "rep3": "#2ca02c"}
 
 for name, traj in trajs.items():
     traj.superpose(traj, frame=0, atom_indices=ca)
     rmsd_ang = md.rmsd(traj, traj, frame=0, atom_indices=ca) * 10.0
     rg_ang   = md.compute_rg(traj) * 10.0
     t_ns     = traj.time / 1000.0
-    ax1.plot(t_ns, rmsd_ang, color=colors[name], lw=1, label=name)
-    ax2.plot(t_ns, rg_ang,   color=colors[name], lw=1, label=name)
+    ax1.plot(t_ns, rmsd_ang, lw=1, label=name)
+    ax2.plot(t_ns, rg_ang,   lw=1, label=name)
 
 ax1.set(xlabel="Time (ns)", ylabel="RMSD (Å)", title="Backbone RMSD vs reference")
 ax2.set(xlabel="Time (ns)", ylabel="Rg (Å)",   title="Radius of gyration")
@@ -311,13 +307,13 @@ for name, traj in trajs.items():
     diff     = ca_traj.xyz - ca_traj.xyz.mean(axis=0)
     rmsf_ang = np.sqrt((diff ** 2).sum(axis=2).mean(axis=0)) * 10.0
     res_ids  = [a.residue.resSeq for a in ca_traj.topology.atoms]
-    ax.plot(res_ids, rmsf_ang, color=colors[name], lw=1, label=name)
+    ax.plot(res_ids, rmsf_ang, lw=1, label=name)
 ax.set(xlabel="Residue", ylabel="RMSF (Å)", title="Per-residue flexibility")
 ax.legend(frameon=False); fig.tight_layout()
 fig.savefig(outdir / "02_rmsf.png", dpi=200); plt.close(fig)
 
 # ============================================================================
-# 3. Contact frequency map for replica 1 (white -> blue)
+# 3. Contact frequency map for replica 1
 # ============================================================================
 rep1 = trajs["rep1"]
 dist_nm, pairs = md.compute_contacts(rep1, contacts="all", scheme="closest-heavy")
@@ -329,16 +325,15 @@ for (i, j), f in zip(pairs, freq):
     freq_map[i, j] = freq_map[j, i] = f
 np.fill_diagonal(freq_map, 1.0)
 
-cmap_contact = LinearSegmentedColormap.from_list("white_blue", ["white", "#08306b"])
 fig, ax = plt.subplots(figsize=(6, 5))
-im = ax.imshow(freq_map, cmap=cmap_contact, vmin=0, vmax=1, origin="lower")
+im = ax.imshow(freq_map, vmin=0, vmax=1, origin="lower")
 ax.set(xlabel="Residue", ylabel="Residue", title="Contact frequency (rep1, 5 Å cutoff)")
 fig.colorbar(im, ax=ax, label="Fraction of frames in contact")
 fig.tight_layout(); fig.savefig(outdir / "03_contact_map.png", dpi=200)
 plt.close(fig)
 
 # ============================================================================
-# 4. Ramachandran (replica 1) — density colored blue (low) -> red (high)
+# 4. Ramachandran (replica 1) — 2D density of phi/psi
 # ============================================================================
 phi_ix, phi_rad = md.compute_phi(rep1)
 psi_ix, psi_rad = md.compute_psi(rep1)
@@ -351,18 +346,16 @@ common  = np.intersect1d(phi_res, psi_res)
 phi_deg = np.degrees(phi_rad[:, np.isin(phi_res, common)]).ravel()
 psi_deg = np.degrees(psi_rad[:, np.isin(psi_res, common)]).ravel()
 
-cmap_density = LinearSegmentedColormap.from_list("blue_red", ["#08306b", "white", "#a50f15"])
 fig, ax = plt.subplots(figsize=(5, 5))
 H, xe, ye = np.histogram2d(phi_deg, psi_deg, bins=72, range=[[-180, 180], [-180, 180]])
-ax.imshow(H.T, origin="lower", extent=[-180, 180, -180, 180],
-          cmap=cmap_density, aspect="equal")
+ax.imshow(H.T, origin="lower", extent=[-180, 180, -180, 180], aspect="equal")
 ax.set(xlabel=r"$\phi$ (°)", ylabel=r"$\psi$ (°)",
        title="Ramachandran (rep1) — density")
 fig.tight_layout(); fig.savefig(outdir / "04_ramachandran_all.png", dpi=200)
 plt.close(fig)
 
 # ============================================================================
-# 5. Glycine + proline Ramachandran (frequency-colored blue -> red)
+# 5. Glycine + proline Ramachandran
 # ============================================================================
 res_names = [rep1.topology.residue(r).name for r in common]
 gly_cols  = [i for i, n in enumerate(res_names) if n == "GLY"]
@@ -376,8 +369,7 @@ for label, cols, fname in [("Glycine", gly_cols, "05_rama_gly.png"),
     psi = np.degrees(psi_rad[:, cols]).ravel()
     H, _, _ = np.histogram2d(phi, psi, bins=60, range=[[-180, 180], [-180, 180]])
     fig, ax = plt.subplots(figsize=(5, 5))
-    ax.imshow(H.T, origin="lower", extent=[-180, 180, -180, 180],
-              cmap=cmap_density, aspect="equal")
+    ax.imshow(H.T, origin="lower", extent=[-180, 180, -180, 180], aspect="equal")
     ax.set(xlabel=r"$\phi$ (°)", ylabel=r"$\psi$ (°)",
            title=f"{label} Ramachandran (rep1, frequency)")
     fig.tight_layout(); fig.savefig(outdir / fname, dpi=200); plt.close(fig)
@@ -388,35 +380,20 @@ for label, cols, fname in [("Glycine", gly_cols, "05_rama_gly.png"),
 dssp = md.compute_dssp(rep1, simplified=False)
 dssp[dssp == " "] = "C"
 
-dssp_colors = {
-    "C": "#ffffff",  # coil — white
-    "E": "#fbb4ae",  # beta-sheet — pastel red
-    "B": "#000000",  # beta-bridge — black
-    "S": "#ccebc5",  # bend — pastel green
-    "T": "#ffffcc",  # turn — pastel yellow
-    "H": "#b3cde3",  # alpha-helix — pastel blue
-    "I": "#decbe4",  # pi-helix — pastel purple
-    "G": "#bdbdbd",  # 3_10-helix — grey
-}
 codes_order = ["C", "E", "B", "S", "T", "H", "I", "G"]
 code_to_int = {c: i for i, c in enumerate(codes_order)}
 dssp_int    = np.vectorize(lambda c: code_to_int.get(c, 0))(dssp)    # (n_frames, n_res)
 
-cmap_dssp = ListedColormap([dssp_colors[c] for c in codes_order])
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.imshow(dssp_int.T, aspect="auto", cmap=cmap_dssp, vmin=-0.5, vmax=len(codes_order) - 0.5,
-          origin="lower", interpolation="nearest",
+ax.imshow(dssp_int.T, aspect="auto", origin="lower", interpolation="nearest",
           extent=[rep1.time[0] / 1000.0, rep1.time[-1] / 1000.0, 0, rep1.n_residues])
 ax.set(xlabel="Time (ns)", ylabel="Residue", title="DSSP 8-state evolution (rep1)")
-
-# Discrete legend
-from matplotlib.patches import Patch
-labels = {"C": "Coil", "E": "β-sheet", "B": "β-bridge", "S": "Bend",
-          "T": "Turn", "H": "α-helix", "I": "π-helix", "G": "3_10-helix"}
-patches = [Patch(facecolor=dssp_colors[c], edgecolor="black", label=labels[c]) for c in codes_order]
-ax.legend(handles=patches, bbox_to_anchor=(1.02, 1), loc="upper left", frameon=False)
 fig.tight_layout(); fig.savefig(outdir / "07_dssp_8state.png", dpi=200)
 plt.close(fig)
+
+# Optional: dump the DSSP code→index mapping alongside the figure so a downstream
+# script can pick its own color scheme and legend
+np.savez(outdir / "07_dssp_8state.npz", dssp=dssp, dssp_int=dssp_int, codes_order=codes_order)
 
 print("All figures written to figures/")
 ```
