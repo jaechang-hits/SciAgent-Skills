@@ -24,7 +24,7 @@ BioServices provides a unified Python interface to 40+ bioinformatics web servic
 - Retrieving Gene Ontology annotations via QuickGO
 - Finding protein-protein interactions via PSICQUIC (IntAct, MINT, BioGRID)
 - Batch converting thousands of biological identifiers with error handling
-- For single-database deep queries → use gget (Ensembl), pubchempy (PubChem), or chembl-database skill
+- For single-database deep queries → use gget (Ensembl), pubchempy (PubChem), or chembl-database-bioactivity skill
 - For pathway visualization → use pathway analysis tools (Cytoscape, NetworkX) after retrieving data with bioservices
 
 ## Prerequisites
@@ -590,9 +590,9 @@ Comprehensive guide to cross-database identifier conversion: UniProt mapping ser
 
 ## Related Skills
 
-- **gget-genomic-data** — deeper Ensembl/BLAST/enrichment queries via gget (simpler API for single-database access)
-- **chembl-database** — dedicated ChEMBL bioactivity queries beyond compound lookup
-- **pubchem-database** — dedicated PubChem compound/assay queries with similarity search
+- **gget-genomic-databases** — deeper Ensembl/BLAST/enrichment queries via gget (simpler API for single-database access)
+- **chembl-database-bioactivity** — dedicated ChEMBL bioactivity queries beyond compound lookup
+- **pubchem-compound-search** — dedicated PubChem compound/assay queries with similarity search
 
 ## References
 

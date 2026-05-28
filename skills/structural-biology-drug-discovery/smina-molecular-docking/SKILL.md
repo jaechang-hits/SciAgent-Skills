@@ -1,6 +1,6 @@
 ---
 name: "smina-molecular-docking"
-description: "smina molecular docking CLI. AutoDock Vina fork with customizable scoring functions, native SDF/MOL2/PDB ligand input, autoboxing, local energy minimization, and per-atom score breakdowns. Pipeline: receptor PDBQT prep -> ligand prep (RDKit/OpenBabel) -> dock via autobox or explicit grid -> rescore/minimize with custom scoring -> rank poses by affinity. Choose smina over Vina when you need custom scoring terms (--custom_scoring), local optimization of an existing pose (--local_only), per-atom contributions (--atom_term_data), or SDF/MOL2 ligands without manual PDBQT conversion. For unknown binding sites use diffdock-blind-docking; for the Python-bindings/Vinardo workflow use autodock-vina-docking."
+description: "smina molecular docking CLI. AutoDock Vina fork with customizable scoring functions, native SDF/MOL2/PDB ligand input, autoboxing, local energy minimization, and per-atom score breakdowns. Pipeline: receptor PDBQT prep -> ligand prep (RDKit/OpenBabel) -> dock via autobox or explicit grid -> rescore/minimize with custom scoring -> rank poses by affinity. Choose smina over Vina when you need custom scoring terms (--custom_scoring), local optimization of an existing pose (--local_only), per-atom contributions (--atom_term_data), or SDF/MOL2 ligands without manual PDBQT conversion. For unknown binding sites use diffdock; for the Python-bindings/Vinardo workflow use autodock-vina-docking."
 license: "GPL-2.0"
 ---
 
@@ -19,7 +19,7 @@ smina is an AutoDock Vina 1.1.2 fork focused on flexible scoring and minimizatio
 - Autoboxing the grid around a co-crystallized reference ligand
 - Per-atom energy decomposition (`--atom_term_data`) for medchem analog design
 - Batch virtual screening that parallelizes well across nodes (one CLI process per ligand)
-- Use **autodock-vina-docking** instead when you need Vina Python bindings, Vinardo scoring, or Vina 1.2's expanded force field; use **diffdock-blind-docking** when the binding site is unknown
+- Use **autodock-vina-docking** instead when you need Vina Python bindings, Vinardo scoring, or Vina 1.2's expanded force field; use **diffdock** when the binding site is unknown
 
 ## Prerequisites
 

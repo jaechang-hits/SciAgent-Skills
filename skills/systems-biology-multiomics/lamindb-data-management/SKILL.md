@@ -461,7 +461,7 @@ for child in descendants:
 
 ## Related Skills
 
-- **anndata-annotated-data** — AnnData format used as primary data container in LaminDB for single-cell data
+- **anndata-data-structure** — AnnData format used as primary data container in LaminDB for single-cell data
 - **scanpy-scrna-seq** — single-cell analysis pipeline; LaminDB manages data that scanpy analyzes
 - **scvi-tools-single-cell** — deep learning models for single-cell; integrates with LaminDB for data/model tracking
 

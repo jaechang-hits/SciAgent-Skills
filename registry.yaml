@@ -1335,7 +1335,7 @@ entries:
     sub_type: database
     category: "genomics-bioinformatics"
     path: "skills/genomics-bioinformatics/databases/cbioportal-database/SKILL.md"
-    description: "Access TCGA and other cancer genomics datasets via cBioPortal REST API. Retrieve somatic mutations, copy number alterations, gene expression profiles, and clinical data (survival, stage, treatment) for thousands of cancer studies. Use for tumor mutation burden analysis, oncoprint queries, and survival analysis. For population variant frequencies use gnomad-database; for drug-gene interactions use dgidb-database."
+    description: "Access TCGA and other cancer genomics datasets via cBioPortal REST API. Retrieve somatic mutations, copy number alterations, gene expression profiles, and clinical data (survival, stage, treatment) for thousands of cancer studies. Use for tumor mutation burden analysis, oncoprint queries, and survival analysis. For population variant frequencies use gnomad-database; for drug-gene interactions use opentargets-database."
     date_added: "2026-03-08"
 
   - name: "archs4-database"
@@ -1552,7 +1552,7 @@ entries:
     sub_type: pipeline
     category: "structural-biology-drug-discovery"
     path: "skills/structural-biology-drug-discovery/smina-molecular-docking/SKILL.md"
-    description: "smina molecular docking CLI. AutoDock Vina fork with customizable scoring functions, native SDF/MOL2/PDB ligand input, autoboxing, local energy minimization, and per-atom score breakdowns. Pipeline: receptor PDBQT prep -> ligand prep (RDKit/OpenBabel) -> dock via autobox or explicit grid -> rescore/minimize with custom scoring -> rank poses by affinity. Choose smina over Vina when you need custom scoring terms (--custom_scoring), local optimization of an existing pose (--local_only), per-atom contributions (--atom_term_data), or SDF/MOL2 ligands without manual PDBQT conversion. For unknown binding sites use diffdock-blind-docking; for the Python-bindings/Vinardo workflow use autodock-vina-docking."
+    description: "smina molecular docking CLI. AutoDock Vina fork with customizable scoring functions, native SDF/MOL2/PDB ligand input, autoboxing, local energy minimization, and per-atom score breakdowns. Pipeline: receptor PDBQT prep -> ligand prep (RDKit/OpenBabel) -> dock via autobox or explicit grid -> rescore/minimize with custom scoring -> rank poses by affinity. Choose smina over Vina when you need custom scoring terms (--custom_scoring), local optimization of an existing pose (--local_only), per-atom contributions (--atom_term_data), or SDF/MOL2 ligands without manual PDBQT conversion. For unknown binding sites use diffdock; for the Python-bindings/Vinardo workflow use autodock-vina-docking."
     date_added: "2026-05-28"
 
   - name: "mdtraj-trajectory-analysis"

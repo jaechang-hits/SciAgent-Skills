@@ -19,7 +19,7 @@ Molfeat is a comprehensive Python library for molecular featurization that unifi
 - Deep learning on molecules using pretrained embeddings (ChemBERTa, GIN)
 - Featurization pipelines integrating with scikit-learn or PyTorch
 - Comparing multiple molecular representations for benchmarking
-- For molecular manipulation and filtering use datamol instead; for substructure-based molecular operations use rdkit-molecular-toolkit
+- For molecular manipulation and filtering use datamol instead; for substructure-based molecular operations use rdkit-cheminformatics
 
 ## Prerequisites
 
@@ -381,8 +381,8 @@ def featurize_chunks(smiles_list, transformer, chunk_size=10000):
 
 ## Related Skills
 
-- `datamol-molecular-toolkit` — High-level molecular manipulation (standardization, I/O, conformers)
-- `rdkit-molecular-toolkit` — Low-level cheminformatics (substructure, reactions, 3D)
+- `datamol-cheminformatics` — High-level molecular manipulation (standardization, I/O, conformers)
+- `rdkit-cheminformatics` — Low-level cheminformatics (substructure, reactions, 3D)
 - `scikit-learn` — ML models consuming molfeat features
 
 ## References

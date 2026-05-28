@@ -1,6 +1,6 @@
 ---
 name: "cbioportal-database"
-description: "Cancer genomics (TCGA et al.) via cBioPortal REST API. Retrieve somatic mutations, CNAs, expression, clinical data (survival/stage/treatment) across thousands of studies. Use for TMB, oncoprints, survival analysis. For population frequencies use gnomad-database; for drug-gene interactions use dgidb-database."
+description: "Cancer genomics (TCGA et al.) via cBioPortal REST API. Retrieve somatic mutations, CNAs, expression, clinical data (survival/stage/treatment) across thousands of studies. Use for TMB, oncoprints, survival analysis. For population frequencies use gnomad-database; for drug-gene interactions use opentargets-database."
 license: "AGPL-3.0"
 ---
 
@@ -19,7 +19,7 @@ cBioPortal for Cancer Genomics is a public repository of cancer genomics data in
 - Downloading gene expression (RNA-seq FPKM/RSEM) data from specific TCGA cohorts for differential expression analysis
 - Correlating genomic alterations with clinical outcomes in a specific study
 - Use `gnomad-database` instead when you need population-level variant allele frequencies in healthy individuals
-- For drug-gene interaction lookups use `dgidb-database`; cBioPortal provides the genomic alteration data, not drug interaction annotations
+- For drug-gene interaction lookups use `opentargets-database`; cBioPortal provides the genomic alteration data, not drug interaction annotations
 
 ## Prerequisites
 
