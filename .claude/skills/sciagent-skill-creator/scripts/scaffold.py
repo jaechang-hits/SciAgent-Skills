@@ -134,10 +134,12 @@ def render_skill_md(
     template_path: Path, name: str, description: str, license_str: str
 ) -> str:
     text = template_path.read_text(encoding="utf-8")
-    # The templates open with a comment then a frontmatter block. Replace the
-    # placeholder name/description/license in the frontmatter only.
-    frontmatter_end = text.index("\n---\n", text.index("---") + 3)
-    head = text[: frontmatter_end + len("\n---\n")]
+    # The templates may open with an HTML comment before the frontmatter. The
+    # registry validator requires the file to START with `---`, so trim any
+    # leading content before the opening fence.
+    fm_start = text.index("---")
+    frontmatter_end = text.index("\n---\n", fm_start + 3)
+    head = text[fm_start : frontmatter_end + len("\n---\n")]
     body = text[frontmatter_end + len("\n---\n") :]
 
     # Replace the three frontmatter fields. Templates use varying quoting; rewrite each line.
