@@ -35,7 +35,13 @@ Claude Code uses this guide to author new entries when given a topic.
 
 When given a topic (e.g., "CRISPR guide RNA design"), follow these steps:
 
-> **Scaffolding shortcut**: the repo-local skill `.claude/skills/sciagent-skill-creator/` (when present) automates Steps 1, 2, 4, 5, and 6 — it picks the right template, drops the SKILL.md skeleton in the correct category, adds the registry entry, and runs the validator. The steps below remain the source of truth for *why* each field exists and *how* to fill it.
+> ## STOP — invoke the scaffolder first
+>
+> When the user asks to add a new SciAgent-Skills entry (any phrasing — "add a skill for X", "create a SciAgent skill", "scaffold X", "스킬 만들어줘", "신규 skill 추가"), the agent **MUST** invoke the `sciagent-skill-creator` skill via the Skill tool **before** writing any file or editing `registry.yaml`. Do not pattern-match on "add" and jump straight to manual authoring — that produces drift (missing tags, wrong path, malformed frontmatter, registry/disk mismatch).
+>
+> The scaffolder owns Steps 1, 2, 4, 5, and 6 (sub-type selection, category, template copy, registry append, validation). The numbered steps below explain *why* each field exists; the scaffolder is *how* you fill them. Use them together: read the rule, let the scaffolder enforce it.
+>
+> Only skip the scaffolder when (a) editing existing entry content, or (b) migrating an existing entry (see "Migrating from Existing Entries" below).
 
 ### Step 1. Classify — Code-centric vs Prose-centric, then Sub-type
 
