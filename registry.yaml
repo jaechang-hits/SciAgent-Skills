@@ -322,10 +322,11 @@ entries:
   - name: "pubmed-database"
     type: skill
     sub_type: database
-    category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/pubmed-database/SKILL.md"
+    category: "scientific-writing"
+    path: "skills/scientific-writing/pubmed-database/SKILL.md"
     description: "Programmatic PubMed access via NCBI E-utilities REST API. Boolean/MeSH query construction, field-tagged searching, ESearch/EFetch/ESummary/EPost/ELink endpoints, history server batch processing, citation matching, systematic review search strategies. For biomedical literature search and automated extraction pipelines."
     date_added: "2026-02-17"
+    tags: ["databases", "literature"]
 
   - name: "medchem"
     type: skill
@@ -622,6 +623,7 @@ entries:
     path: "skills/scientific-writing/openalex-database/SKILL.md"
     description: "Query OpenAlex REST API for scholarly literature — 250M+ works, authors, institutions, journals, and concepts. Search by title/abstract keywords, author, DOI, ORCID, or OpenAlex ID. Filter by year, open access status, citation count, or field. Retrieve citations, references, and author disambiguation. Free, no authentication required. For PubMed biomedical search use pubmed-database; for bioRxiv preprints use biorxiv-database."
     date_added: "2026-02-18"
+    tags: ["databases", "literature"]
 
   - name: "biorxiv-database"
     type: skill
@@ -630,6 +632,7 @@ entries:
     path: "skills/scientific-writing/biorxiv-database/SKILL.md"
     description: "Query bioRxiv and medRxiv preprint servers via REST API for biology and health science preprints. Search by DOI, category, or date range. Retrieve metadata (title, abstract, authors, category, DOI, version history) and download full-text PDFs. No authentication required. For peer-reviewed biomedical literature use pubmed-database; for broader scholarly search use openalex-database."
     date_added: "2026-02-18"
+    tags: ["databases", "literature"]
 
   - name: "cosmic-database"
     type: skill
