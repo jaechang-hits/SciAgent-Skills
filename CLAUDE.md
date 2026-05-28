@@ -77,7 +77,8 @@ Pick the best-fit category directory under `skills/`:
 | `proteomics-protein-engineering` | Mass spec (proteomics AND metabolomics), protein design, structure prediction |
 | `structural-biology-drug-discovery` | Docking, virtual screening, ADMET, drug design principles |
 | `systems-biology-multiomics` | Pathway analysis, multi-omics integration, network biology |
-| `cell-biology` | Imaging, flow cytometry, cell culture analysis, digital pathology |
+| `cell-biology` | Cell-level microscopy, flow cytometry, cell culture analysis, particle tracking |
+| `medical-imaging` | Clinical and radiology imaging: DICOM, WSI digital pathology, 3D volume registration, medical image segmentation, imaging archives |
 | `biostatistics` | Statistical tests, experimental design, power analysis, study design |
 | `data-visualization` | Plotting libraries, figure generation, scientific graphics |
 | `lab-automation` | Robotics, LIMS, automated protocols |

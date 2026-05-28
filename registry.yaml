@@ -433,8 +433,8 @@ entries:
   - name: "histolab-wsi-processing"
     type: skill
     sub_type: toolkit
-    category: "cell-biology"
-    path: "skills/cell-biology/histolab-wsi-processing/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/histolab-wsi-processing/SKILL.md"
     description: "Whole slide image processing for digital pathology. Tissue detection, tile extraction (random, grid, score-based), filter pipelines for H&E/IHC preprocessing. Use for dataset preparation, tile-based deep learning, and slide quality assessment. For advanced spatial proteomics or multiplexed imaging use pathml."
     date_added: "2026-02-17"
 
@@ -529,8 +529,8 @@ entries:
   - name: "pydicom-medical-imaging"
     type: skill
     sub_type: toolkit
-    category: "cell-biology"
-    path: "skills/cell-biology/pydicom-medical-imaging/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/pydicom-medical-imaging/SKILL.md"
     description: "Pure Python DICOM library for medical imaging (CT, MRI, X-ray, ultrasound). Read/write DICOM files, extract pixel data as NumPy arrays, access/modify metadata tags, apply windowing (VOI LUT), anonymize PHI, build DICOM from scratch, process series into 3D volumes. For whole-slide pathology use histolab; for NIfTI neuroimaging use nibabel."
     date_added: "2026-02-17"
 
@@ -641,8 +641,8 @@ entries:
   - name: "imaging-data-commons"
     type: skill
     sub_type: database
-    category: "cell-biology"
-    path: "skills/cell-biology/imaging-data-commons/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/imaging-data-commons/SKILL.md"
     description: "Query NCI Imaging Data Commons (IDC) for cancer radiology and pathology imaging datasets hosted on Google Cloud. Search DICOM collections by modality, anatomical site, cancer type, or collection name. Download images via Google Cloud Storage or IDAT tool. 50TB+ of publicly accessible DICOM images. Requires Google Cloud account for large downloads; small queries work without billing. For local DICOM processing use pydicom-medical-imaging; for whole-slide pathology use histolab."
     date_added: "2026-02-18"
 
@@ -657,8 +657,8 @@ entries:
   - name: "omero-integration"
     type: skill
     sub_type: toolkit
-    category: "cell-biology"
-    path: "skills/cell-biology/omero-integration/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/omero-integration/SKILL.md"
     description: "OMERO is an open-source platform for biological image data management. Use the omero-py Python client to connect to an OMERO server, search and retrieve images as numpy arrays, annotate images with tags and key-value pairs, manage ROIs, and integrate OMERO image data into downstream analysis pipelines — all programmatically without the OMERO desktop GUI."
     date_added: "2026-02-18"
 
@@ -1177,8 +1177,8 @@ entries:
   - name: "simpleitk-image-registration"
     type: skill
     sub_type: toolkit
-    category: "cell-biology"
-    path: "skills/cell-biology/simpleitk-image-registration/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/simpleitk-image-registration/SKILL.md"
     description: "Register, segment, filter, and resample 3D medical images (MRI, CT, microscopy) using SimpleITK's Python API with support for DICOM, NIfTI, and multi-modal image analysis. Provides rigid/affine/deformable registration, threshold and region-growing segmentation, Gaussian and morphological filtering, label statistics, and format conversion. Use when aligning volumetric images across timepoints or modalities, automating segmentation of fluorescence microscopy, or converting DICOM series to NIfTI for analysis pipelines."
     date_added: "2026-03-08"
 
@@ -1225,8 +1225,8 @@ entries:
   - name: "nnunet-segmentation"
     type: skill
     sub_type: pipeline
-    category: "cell-biology"
-    path: "skills/cell-biology/nnunet-segmentation/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/nnunet-segmentation/SKILL.md"
     description: "Train and deploy automated medical image segmentation models using nnU-Net's self-configuring framework that auto-selects optimal architecture, preprocessing, and training for any modality. Supports CT, MRI, microscopy, and ultrasound with 2D, 3D full-res, 3D low-res, and cascade configurations. Pipeline: convert dataset → plan and preprocess → train (5-fold cross-validation) → find best configuration → predict → ensemble. Use when classical segmentation fails and annotated training data is available."
     date_added: "2026-03-08"
 
