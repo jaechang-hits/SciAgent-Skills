@@ -115,13 +115,6 @@ entries:
     path: "skills/biostatistics/hypothesis-generation/SKILL.md"
     description: "Structured hypothesis formulation from observations: competing hypotheses, quality criteria (testability, falsifiability, parsimony), experimental design, testable predictions. Follows scientific method framework."
     date_added: "2026-02-17"
-  - name: "plotly-interactive-visualization"
-    type: skill
-    sub_type: toolkit
-    category: "data-visualization"
-    path: "skills/data-visualization/plotly-interactive-visualization/SKILL.md"
-    description: "Interactive visualization with Plotly. 40+ chart types with hover, zoom, pan. Plotly Express (quick, DataFrame-oriented) and Graph Objects (fine-grained control). HTML, PNG/PDF/SVG export."
-    date_added: "2026-02-17"
   - name: "esm-protein-language-model"
     type: skill
     sub_type: toolkit
@@ -135,13 +128,6 @@ entries:
     category: "genomics-bioinformatics"
     path: "skills/genomics-bioinformatics/cellxgene-census/SKILL.md"
     description: "Query CELLxGENE Census (61M+ cells) programmatically. Search by cell type, tissue, disease. Expression matrices as AnnData, out-of-core streaming, PyTorch ML integration."
-    date_added: "2026-02-17"
-  - name: "seaborn-statistical-visualization"
-    type: skill
-    sub_type: toolkit
-    category: "data-visualization"
-    path: "skills/data-visualization/seaborn-statistical-visualization/SKILL.md"
-    description: "Statistical visualization with pandas integration. Distribution, categorical, relational, regression, and matrix plots with automatic aggregation and CI."
     date_added: "2026-02-17"
   - name: "pysam-genomic-files"
     type: skill
@@ -177,13 +163,6 @@ entries:
     category: "scientific-writing"
     path: "skills/scientific-writing/peer-review-methodology/SKILL.md"
     description: "Structured peer review of scientific manuscripts and grants. 7-stage evaluation workflow, CONSORT/STROBE/PRISMA compliance, review report structure (major/minor comments). For evidence evaluation use scientific-critical-thinking."
-    date_added: "2026-02-17"
-  - name: "opentrons-integration"
-    type: skill
-    sub_type: toolkit
-    category: "lab-automation"
-    path: "skills/lab-automation/opentrons-integration/SKILL.md"
-    description: "Opentrons Protocol API v2 for OT-2 and Flex liquid handling robots. Automated pipetting, serial dilutions, PCR setup, plate replication. Hardware module control (thermocycler, heater-shaker, magnetic, temperature)."
     date_added: "2026-02-17"
   - name: "scvi-tools-single-cell"
     type: skill
@@ -672,7 +651,7 @@ entries:
     sub_type: database
     category: "lab-automation"
     path: "skills/lab-automation/protocolsio-integration/SKILL.md"
-    description: "Access protocols.io public library via REST API. Search and retrieve experimental protocols (wet-lab, bioinformatics, clinical) by keyword, DOI, or category. Download step-by-step protocol content including reagents, materials, equipment, and timing. Free public access; authentication needed for private protocols or publishing. Use alongside opentrons-integration or benchling-integration to programmatically execute downloaded protocols."
+    description: "Access protocols.io public library via REST API. Search and retrieve experimental protocols (wet-lab, bioinformatics, clinical) by keyword, DOI, or category. Download step-by-step protocol content including reagents, materials, equipment, and timing. Free public access; authentication needed for private protocols or publishing. Use alongside opentrons-protocol-api or benchling-integration to programmatically execute downloaded protocols."
     date_added: "2026-02-18"
 
   - name: "omero-integration"
@@ -1393,14 +1372,6 @@ entries:
     category: "biostatistics"
     path: "skills/biostatistics/nan-safe-correlation/SKILL.md"
     description: "Per-feature NaN-safe Spearman/Pearson correlation computation. Covers why bulk matrix shortcuts fail with missing data, correct pairwise deletion, degenerate input filtering, and performance optimization for large datasets."
-    date_added: "2026-03-31"
-
-  - name: "single-cell-annotation"
-    type: skill
-    sub_type: guide
-    category: "cell-biology"
-    path: "skills/cell-biology/single-cell-annotation/SKILL.md"
-    description: "Guide to annotating cell types in single-cell RNA-seq data. Covers manual marker-based, automated (CellTypist, scAnnotate), and reference-based (scArches, Azimuth, SingleR) approaches with decision framework for tool selection."
     date_added: "2026-03-31"
 
   - name: "busco-status-interpretation"

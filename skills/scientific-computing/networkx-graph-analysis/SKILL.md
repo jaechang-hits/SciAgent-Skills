@@ -540,7 +540,7 @@ Omitted: `write_gpickle`/`read_gpickle` (deprecated), `read_shp`/`write_shp` (re
 
 - **torch-geometric-graph-neural-networks** -- graph neural networks (GCN, GAT, GraphSAGE) for node/graph classification and link prediction on graph-structured data
 - **matplotlib-scientific-plotting** -- advanced figure customization beyond NetworkX's built-in `nx.draw`
-- **plotly-interactive-visualization** -- interactive network plots with hover, zoom, and pan
+- **plotly-interactive-plots** -- interactive network plots with hover, zoom, and pan
 - **pandas** (planned) -- DataFrame operations for preparing edge/node data before graph construction
 - **scipy** (planned) -- sparse matrix operations and numerical algorithms used by NetworkX internally
 

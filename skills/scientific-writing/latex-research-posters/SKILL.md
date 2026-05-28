@@ -1,6 +1,6 @@
 ---
 name: latex-research-posters
-description: "Research posters in LaTeX using beamerposter, tikzposter, or baposter. Layout, typography, color schemes, figure integration, accessibility, and QA for conferences. Includes templates. For figure generation use matplotlib-scientific-plotting or plotly-interactive-visualization."
+description: "Research posters in LaTeX using beamerposter, tikzposter, or baposter. Layout, typography, color schemes, figure integration, accessibility, and QA for conferences. Includes templates. For figure generation use matplotlib-scientific-plotting or plotly-interactive-plots."
 license: CC-BY-4.0
 ---
 
@@ -241,8 +241,8 @@ tlmgr install beamerposter tikzposter baposter qrcode subcaption tcolorbox
 ## Related Skills
 
 - **matplotlib-scientific-plotting** — generate publication-quality figures (bar charts, heatmaps, scatter plots) for poster content
-- **plotly-interactive-visualization** — create interactive figures exportable as static PNG/PDF for posters
-- **seaborn-statistical-visualization** — statistical plots with automatic aggregation for results figures
+- **plotly-interactive-plots** — create interactive figures exportable as static PNG/PDF for posters
+- **seaborn-statistical-plots** — statistical plots with automatic aggregation for results figures
 
 ## Companion Assets
 
