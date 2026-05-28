@@ -1,6 +1,23 @@
 # Skills Registry
 # Each entry is added here when a new SKILL.md is created.
 # This file is maintained by following the workflow in CLAUDE.md (Step 5).
+#
+# Entry schema:
+#   name         (required) — kebab-case unique slug; must match frontmatter `name`
+#   type         (required) — always "skill" today
+#   sub_type     (required) — pipeline | toolkit | database | guide
+#   category     (required) — primary category directory under skills/
+#   path         (required) — relative path to SKILL.md
+#   description  (required) — short discovery string; first 120 chars carry the
+#                             discovery weight (keep tool/domain keywords up front)
+#   date_added   (required) — ISO-8601 date the entry first landed
+#   tags         (optional) — list of cross-cutting tags for secondary discovery.
+#                             Use when an entry meaningfully belongs to more than
+#                             one category. Examples: ["databases", "literature"],
+#                             ["machine-learning"], ["medical-informatics"].
+#                             Tags do NOT replace `category`; the primary home
+#                             stays in `category`. Tag names are lowercase and
+#                             hyphen-separated, validated as plain strings only.
 
 entries:
   - name: "scanpy-scrna-seq"
