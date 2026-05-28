@@ -2,6 +2,7 @@
 """Validate registry.yaml: check all entries point to existing SKILL.md files
 with valid YAML frontmatter."""
 
+import re
 import sys
 from pathlib import Path
 
@@ -11,6 +12,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY_PATH = ROOT / "registry.yaml"
 REQUIRED_FRONTMATTER = {"name", "description"}
+TAG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
 
 def parse_frontmatter(skill_path: Path) -> dict:
@@ -50,6 +52,23 @@ def validate() -> list[str]:
         for field in ("name", "path", "category", "description"):
             if not entry.get(field):
                 errors.append(f"[{name}] Missing registry field: {field}")
+
+        # Optional tags field
+        tags = entry.get("tags")
+        if tags is not None:
+            if not isinstance(tags, list):
+                errors.append(f"[{name}] tags must be a list, got {type(tags).__name__}")
+            else:
+                for t in tags:
+                    if not isinstance(t, str):
+                        errors.append(f"[{name}] tag must be a string, got {type(t).__name__}: {t!r}")
+                    elif not TAG_PATTERN.match(t):
+                        errors.append(
+                            f"[{name}] tag '{t}' must be lowercase kebab-case "
+                            f"(matching {TAG_PATTERN.pattern})"
+                        )
+                if len(tags) != len(set(tags)):
+                    errors.append(f"[{name}] tags has duplicates: {tags}")
 
         # File existence
         skill_path = ROOT / entry.get("path", "")
