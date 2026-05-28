@@ -55,8 +55,8 @@ entries:
   - name: "scikit-learn-machine-learning"
     type: skill
     sub_type: toolkit
-    category: "biostatistics"
-    path: "skills/biostatistics/scikit-learn-machine-learning/SKILL.md"
+    category: "scientific-computing"
+    path: "skills/scientific-computing/scikit-learn-machine-learning/SKILL.md"
     description: "Classical ML: classification, regression, clustering, dimensionality reduction, preprocessing pipelines, model evaluation, hyperparameter tuning"
     date_added: "2026-02-16"
   - name: "pubchem-compound-search"
@@ -76,8 +76,8 @@ entries:
   - name: "matplotlib-scientific-plotting"
     type: skill
     sub_type: toolkit
-    category: "biostatistics"
-    path: "skills/biostatistics/matplotlib-scientific-plotting/SKILL.md"
+    category: "data-visualization"
+    path: "skills/data-visualization/matplotlib-scientific-plotting/SKILL.md"
     description: "Low-level Python plotting for publication-quality scientific figures: line, scatter, bar, heatmap, 3D, multi-panel layouts, export to PNG/PDF/SVG"
     date_added: "2026-02-16"
   - name: "statsmodels-statistical-modeling"
@@ -104,15 +104,15 @@ entries:
   - name: "clinical-decision-support-documents"
     type: skill
     sub_type: guide
-    category: "biostatistics"
-    path: "skills/biostatistics/clinical-decision-support-documents/SKILL.md"
+    category: "scientific-writing"
+    path: "skills/scientific-writing/clinical-decision-support-documents/SKILL.md"
     description: "Guidelines for clinical decision support documents: patient cohort analyses (biomarker-stratified outcomes) and treatment recommendation reports (GRADE-graded evidence). Document structure, evidence grading, statistical reporting."
     date_added: "2026-02-17"
   - name: "hypothesis-generation"
     type: skill
     sub_type: guide
-    category: "biostatistics"
-    path: "skills/biostatistics/hypothesis-generation/SKILL.md"
+    category: "scientific-writing"
+    path: "skills/scientific-writing/hypothesis-generation/SKILL.md"
     description: "Structured hypothesis formulation from observations: competing hypotheses, quality criteria (testability, falsifiability, parsimony), experimental design, testable predictions. Follows scientific method framework."
     date_added: "2026-02-17"
   - name: "esm-protein-language-model"
@@ -281,8 +281,8 @@ entries:
   - name: "shap-model-explainability"
     type: skill
     sub_type: pipeline
-    category: "biostatistics"
-    path: "skills/biostatistics/shap-model-explainability/SKILL.md"
+    category: "scientific-computing"
+    path: "skills/scientific-computing/shap-model-explainability/SKILL.md"
     description: "Model interpretability using SHAP. Explainer selection (Tree, Deep, Linear, Kernel), feature attributions, visualization (waterfall, beeswarm, bar, scatter, force, heatmap). Model debugging, fairness analysis, feature importance comparison. Works with tree-based, deep learning, linear, and black-box models."
     date_added: "2026-02-17"
 
@@ -833,8 +833,8 @@ entries:
   - name: "pyhealth"
     type: skill
     sub_type: toolkit
-    category: "biostatistics"
-    path: "skills/biostatistics/pyhealth/SKILL.md"
+    category: "scientific-computing"
+    path: "skills/scientific-computing/pyhealth/SKILL.md"
     description: "PyHealth is a Python library for healthcare machine learning. Build clinical prediction models from EHR (Electronic Health Record) data: process MIMIC-III/IV, eICU, and OMOP-CDM datasets, encode medical codes (ICD, ATC, NDC), construct patient-level datasets, and train models (Transformer, RETAIN, GRASP, MedBERT) for tasks including mortality prediction, drug recommendation, readmission, and diagnosis prediction. Alternatives: FIDDLE (EHR preprocessing only), clinical-longformer (NLP on clinical notes only), ehr-ml (EHR embedding only)."
     date_added: "2026-02-18"
 
@@ -1361,16 +1361,16 @@ entries:
   - name: "degenerate-input-filtering"
     type: skill
     sub_type: guide
-    category: "biostatistics"
-    path: "skills/biostatistics/degenerate-input-filtering/SKILL.md"
+    category: "scientific-computing"
+    path: "skills/scientific-computing/degenerate-input-filtering/SKILL.md"
     description: "Mandatory filtering of degenerate and uninformative data points before statistical tests. Covers single-sequence alignments, empty files, constant-value features, zero-variance inputs, and all-NaN columns."
     date_added: "2026-03-31"
 
   - name: "nan-safe-correlation"
     type: skill
     sub_type: guide
-    category: "biostatistics"
-    path: "skills/biostatistics/nan-safe-correlation/SKILL.md"
+    category: "scientific-computing"
+    path: "skills/scientific-computing/nan-safe-correlation/SKILL.md"
     description: "Per-feature NaN-safe Spearman/Pearson correlation computation. Covers why bulk matrix shortcuts fail with missing data, correct pairwise deletion, degenerate input filtering, and performance optimization for large datasets."
     date_added: "2026-03-31"
 
