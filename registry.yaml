@@ -1543,3 +1543,19 @@ entries:
     description: "Compute the bacterial pan-genome from Prokka/Bakta GFF3 annotations with Roary's CD-HIT + BLASTP + MCL clustering pipeline. Outputs the gene presence/absence matrix, core/soft-core/shell/cloud partitions, a non-redundant pan-genome reference FASTA, and an optional concatenated core-gene alignment for phylogenetics. Use Panaroo for fragmented assemblies or noisy annotations; PIRATE for paralog-aware multi-threshold clustering; PPanGGOLiN for graph-based statistical partitioning."
     date_added: "2026-05-08"
 
+
+  - name: "smina-molecular-docking"
+    type: skill
+    sub_type: pipeline
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/smina-molecular-docking/SKILL.md"
+    description: "smina molecular docking CLI. AutoDock Vina fork with customizable scoring functions, native SDF/MOL2/PDB ligand input, autoboxing, local energy minimization, and per-atom score breakdowns. Pipeline: receptor PDBQT prep -> ligand prep (RDKit/OpenBabel) -> dock via autobox or explicit grid -> rescore/minimize with custom scoring -> rank poses by affinity. Choose smina over Vina when you need custom scoring terms (--custom_scoring), local optimization of an existing pose (--local_only), per-atom contributions (--atom_term_data), or SDF/MOL2 ligands without manual PDBQT conversion. For unknown binding sites use diffdock-blind-docking; for the Python-bindings/Vinardo workflow use autodock-vina-docking."
+    date_added: "2026-05-28"
+
+  - name: "mdtraj-trajectory-analysis"
+    type: skill
+    sub_type: toolkit
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/mdtraj-trajectory-analysis/SKILL.md"
+    description: "mdtraj molecular dynamics trajectory analysis (Python). Reads DCD/XTC/TRR/NetCDF/H5/PDB topologies and trajectories; computes RMSD vs time, radius of gyration, per-residue RMSF, residue-residue contact frequency maps, phi/psi torsions for Ramachandran plots (general + Gly/Pro), and 8-state DSSP secondary structure. Modules: trajectory I/O, geometry (distances/angles/dihedrals), structural analysis (RMSD/Rg/RMSF/SASA), contacts, hydrogen bonds, secondary structure (DSSP), NMR observables. For broader atom-selection grammar use mdanalysis-trajectory; for running MD simulations use OpenMM/GROMACS."
+    date_added: "2026-05-28"
