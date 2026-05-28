@@ -383,7 +383,7 @@ print(f"Loaded embedding: {embedding.shape}")
 
 ## Related Skills
 
-- **alphafold-database** — retrieve predicted structures from AlphaFold DB; use ESM for de novo structure prediction
+- **alphafold-database-access** — retrieve predicted structures from AlphaFold DB; use ESM for de novo structure prediction
 - **biopython** — sequence I/O and alignment; preprocess sequences before ESM embedding
 - **scikit-learn** — downstream ML on ESM embeddings (classification, clustering, regression)
 - **rdkit** — cheminformatics for small-molecule drug design (complementary to protein design)

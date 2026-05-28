@@ -526,7 +526,7 @@ print(f"Written: {z.shape}, {z.npartitions} partitions")
 ## Related Skills
 
 - **lamindb-data-management** — uses Zarr as a storage backend; provides data management, lineage, and ontology validation on top of Zarr arrays
-- **anndata-annotated-data** — AnnData objects can be backed by Zarr stores for out-of-core single-cell data
+- **anndata-data-structure** — AnnData objects can be backed by Zarr stores for out-of-core single-cell data
 - **sympy-symbolic-math** — unrelated but co-exists in scientific-computing category
 
 ## References

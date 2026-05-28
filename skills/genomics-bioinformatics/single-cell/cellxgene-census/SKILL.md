@@ -381,7 +381,7 @@ with cellxgene_census.open_soma() as census:
 ## Related Skills
 
 - **scanpy-scrna-seq** — downstream analysis of Census data (clustering, DEG, visualization)
-- **anndata-annotated-data** — manipulating AnnData objects returned by Census queries
+- **anndata-data-structure** — manipulating AnnData objects returned by Census queries
 - **esm-protein-language-model** — protein embeddings from sequences; complementary to Census gene expression data
 
 ## References

@@ -1,6 +1,6 @@
 ---
 name: uniprot-protein-database
-description: "Query UniProt REST API: search by gene/protein name, fetch FASTA, map IDs (Ensembl, PDB, RefSeq), access Swiss-Prot annotations. Use bioservices for multi-DB access; alphafold-database for structures."
+description: "Query UniProt REST API: search by gene/protein name, fetch FASTA, map IDs (Ensembl, PDB, RefSeq), access Swiss-Prot annotations. Use bioservices for multi-DB access; alphafold-database-access for structures."
 license: CC-BY-4.0
 ---
 
@@ -19,7 +19,7 @@ UniProt is the most comprehensive protein sequence and functional annotation dat
 - Batch retrieving multiple protein entries for comparative analysis
 - Downloading reviewed (Swiss-Prot) protein datasets for a specific organism
 - For **unified access to 40+ databases**, use bioservices instead
-- For **protein 3D structures**, use alphafold-database or pdb-database
+- For **protein 3D structures**, use alphafold-database-access or pdb-database
 
 ## Prerequisites
 
@@ -359,7 +359,7 @@ for r in results.get("results", []):
 ## Related Skills
 
 - **biopython-molecular-biology** — parse FASTA sequences returned by UniProt; run BLAST with retrieved sequences
-- **alphafold-database** — retrieve predicted 3D structures using UniProt accessions
+- **alphafold-database-access** — retrieve predicted 3D structures using UniProt accessions
 - **esm-protein-language-model** — generate embeddings from UniProt protein sequences
 - **gget-genomic-databases** — alternative interface for quick gene/protein lookups across databases
 
