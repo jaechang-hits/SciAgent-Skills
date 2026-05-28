@@ -1555,3 +1555,11 @@ entries:
     description: "Compute the bacterial pan-genome from Prokka/Bakta GFF3 annotations with Roary's CD-HIT + BLASTP + MCL clustering pipeline. Outputs the gene presence/absence matrix, core/soft-core/shell/cloud partitions, a non-redundant pan-genome reference FASTA, and an optional concatenated core-gene alignment for phylogenetics. Use Panaroo for fragmented assemblies or noisy annotations; PIRATE for paralog-aware multi-threshold clustering; PPanGGOLiN for graph-based statistical partitioning."
     date_added: "2026-05-08"
 
+  - name: "organism-aware-variant-calling"
+    type: skill
+    sub_type: guide
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/organism-aware-variant-calling/SKILL.md"
+    description: "Variant calling and variant-set analysis that respects the source organism's biology. Identify the organism from reference FASTA, VCF, or BAM headers; pick the correct ploidy (bacteria/archaea/most viruses = 1, mammals/most plants = 2, polyploid/cancer special-cased); re-call from BAM with bcftools or GATK when an inherited VCF was produced with the wrong --sample-ploidy. Apply before computing Ts/Tv, dN/dS, SNP counts, or allele frequencies on any inherited VCF."
+    date_added: "2026-05-26"
+
