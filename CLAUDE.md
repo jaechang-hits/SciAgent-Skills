@@ -12,6 +12,8 @@ Claude Code uses this guide to author new entries when given a topic.
 │   ├── SKILL_TEMPLATE.md          ← Pipeline-style skills (code-centric)
 │   ├── SKILL_TEMPLATE_TOOLKIT.md  ← Toolkit-style skills (code-centric)
 │   └── SKILL_TEMPLATE_PROSE.md    ← Guide-style skills (prose-centric)
+├── legacy/                ← deprecated entries kept for historical reference;
+│                            not in registry, not surfaced to agents
 └── skills/                ← all entries (SKILL.md per entry)
     ├── molecular-biology/
     ├── genomics-bioinformatics/
@@ -19,6 +21,7 @@ Claude Code uses this guide to author new entries when given a topic.
     ├── structural-biology-drug-discovery/
     ├── systems-biology-multiomics/
     ├── cell-biology/
+    ├── medical-imaging/
     ├── biostatistics/
     ├── data-visualization/
     ├── lab-automation/
@@ -31,6 +34,8 @@ Claude Code uses this guide to author new entries when given a topic.
 ## Workflow: Topic → Entry (5 Steps)
 
 When given a topic (e.g., "CRISPR guide RNA design"), follow these steps:
+
+> **Scaffolding shortcut**: the repo-local skill `.claude/skills/sciagent-skill-creator/` (when present) automates Steps 1, 2, 4, 5, and 6 — it picks the right template, drops the SKILL.md skeleton in the correct category, adds the registry entry, and runs the validator. The steps below remain the source of truth for *why* each field exists and *how* to fill it.
 
 ### Step 1. Classify — Code-centric vs Prose-centric, then Sub-type
 
@@ -77,7 +82,8 @@ Pick the best-fit category directory under `skills/`:
 | `proteomics-protein-engineering` | Mass spec (proteomics AND metabolomics), protein design, structure prediction |
 | `structural-biology-drug-discovery` | Docking, virtual screening, ADMET, drug design principles |
 | `systems-biology-multiomics` | Pathway analysis, multi-omics integration, network biology |
-| `cell-biology` | Imaging, flow cytometry, cell culture analysis, digital pathology |
+| `cell-biology` | Cell-level microscopy, flow cytometry, cell culture analysis, particle tracking |
+| `medical-imaging` | Clinical and radiology imaging: DICOM, WSI digital pathology, 3D volume registration, medical image segmentation, imaging archives |
 | `biostatistics` | Statistical tests, experimental design, power analysis, study design |
 | `data-visualization` | Plotting libraries, figure generation, scientific graphics |
 | `lab-automation` | Robotics, LIMS, automated protocols |
@@ -144,6 +150,29 @@ Use the appropriate template:
 - Code-centric (Toolkit) → `templates/SKILL_TEMPLATE_TOOLKIT.md`
 - Prose-centric (Guide) → `templates/SKILL_TEMPLATE_PROSE.md`
 
+#### Bundled resources: `references/`, `assets/`, `scripts/`
+
+A SKILL.md is meant to be read top-to-bottom by an agent. When supporting material would balloon the main file or is better consumed as a standalone artifact, place it in a sibling directory next to SKILL.md:
+
+| Directory | Use for | Examples |
+|-----------|---------|----------|
+| `references/` | Long-form prose, decision tables, theory notes, API cheatsheets that the agent should *read on demand*. Markdown only. | `references/theory.md`, `references/tile_extraction.md` |
+| `assets/` | Static binary or copy-paste artifacts the agent should *use as-is*. | LaTeX style files, ICC color profiles, schema templates, sample input fixtures |
+| `scripts/` | Runnable helper code that the agent should *execute or copy out wholesale*. Use when a code block exceeds ~80 lines, when the same boilerplate (`fetch_with_retry`, `download_to_tmp`, large CLI parsers) repeats across recipes, or when a self-contained CLI utility belongs to the entry. Python preferred; bash/R acceptable when matching the tool's native interface. | `scripts/scaffold.py`, `scripts/validate_description.py`, `scripts/batch_query.sh` |
+
+When to extract code from SKILL.md into `scripts/`:
+- The block is **>80 lines** and only ~5 lines of it carry teaching value
+- The exact same helper repeats across multiple recipes
+- The code defines a CLI tool the entry effectively *ships*
+- Reproducibility hinges on the code running unchanged
+
+When NOT to extract:
+- The code is the lesson (showing `Chem.MolFromSmiles(s)` API usage is the point)
+- The block is <30 lines
+- Extraction would force a reader to switch files mid-thought
+
+Scripts must be self-contained, runnable from the repo root, and include a docstring header (purpose + usage) so an agent can read the script as if it were a `references/` doc.
+
 #### SKILL.md Format Rules — Pipeline Sub-type
 
 For tools with a linear input→processing→output flow (e.g., scanpy, AutoDock Vina, DESeq2).
@@ -194,7 +223,41 @@ entries:
     path: "skills/genomics-bioinformatics/entry-name/SKILL.md"
     description: "Brief description"
     date_added: "YYYY-MM-DD"
+    tags: ["databases", "literature"]   # optional, see below
 ```
+
+#### Description writing rules
+
+The `description` field is the *only* hook an agent has when deciding whether to load the SKILL.md. Treat it as a search snippet, not a sentence.
+
+- **Length**: 1024-character hard ceiling. Aim for the **first 120 characters** to be the carrier — tool name + domain + key outputs must all land in that window.
+- **Lead with keywords, not stop verbs**: start with the tool name, library, or concept. Avoid `Use`, `Query`, `A`, `An`, `The` as the first word.
+- **Disambiguation goes last**: cross-references like `For X use Y; for Z use W` belong at the end of the description, not the start.
+- **Avoid promotional language**: no `powerful`, `comprehensive`, `state-of-the-art`. The reader is an LLM scoring relevance — adjectives waste tokens.
+
+Anti-pattern → Fix:
+- `Use the JASPAR REST API to query TF binding profiles...` → `JASPAR 2024 TF binding profile database via REST API and pyJASPAR. Retrieve PFMs/PWMs by TF name...`
+- `An interactive visualization library...` → `Plotly interactive visualization. 40+ chart types (scatter, line, heatmap, 3D)...`
+
+#### `tags` field (optional, cross-cutting discovery)
+
+Use `tags` when an entry meaningfully belongs to more than one bucket but lives in a single `category` directory. Tags surface the entry under alternative lenses without duplicating the file.
+
+When to use:
+- Entry sits in one category but spans another (e.g., literature DB stored under `scientific-writing` deserves `["databases", "literature"]`)
+- Cross-cutting concept that warrants discovery from multiple angles (e.g., ML libraries: `["machine-learning"]`)
+- Future second-category lift (mark with a tag now, promote to a real category if the cluster grows)
+
+When NOT to use:
+- The entry has one obvious home and no meaningful secondary lens
+- The "secondary" angle is just the description text (don't tag every genomics tool with `genomics`)
+
+Conventions:
+- Lowercase kebab-case (`machine-learning`, not `MachineLearning`)
+- No duplicates within an entry
+- Tags do **not** replace `category` — the primary home stays in `category`
+
+Validator (`scripts/validate_registry.py`) enforces type, item type, kebab-case pattern, and uniqueness; missing tags is fine, malformed tags fails CI.
 
 ---
 
@@ -277,10 +340,58 @@ Before finalizing any entry, verify:
 - [ ] No promotional or advertising content
 - [ ] **Check-before-install**: Prerequisites sections for CLI executables include a note telling the agent to run `command -v <tool>` first and skip the install commands if the tool is already present (e.g., inside a `pixi` / `conda` env), and to invoke tools via `pixi run <tool>` when inside a pixi project
 - [ ] `registry.yaml` updated with new entry
-- [ ] Cross-cutting tools: secondary categories noted in description field
+- [ ] Description leads with tool/domain keyword in the first 120 characters (no stop-verb start)
+- [ ] Cross-cutting entries: `tags` field set in registry (kebab-case list); description still leads with the primary lens
+- [ ] Bundled code: only inline blocks <80 lines OR repeating boilerplate; longer/repeated helpers live in `scripts/`
+- [ ] No duplicate of an existing entry: `grep -i <topic>` on `registry.yaml` and `legacy/` before authoring
 - [ ] (migrations) Capability completeness, pitfall migration, narrative use-case disposition, stub detection checks completed
 
 > **Type-specific additional checks** (Database, ML model, Platform, Visualization, Hardware, Data infra, Model zoo, Document generation, Guide migration, Migration quality): see `references/quality-checklist-by-type.md`
+
+---
+
+## Category Hygiene
+
+The category list is intentionally short. Two operational rules keep it that way:
+
+### When to split a category
+
+A category becomes harmful when its name no longer predicts what lives inside. Signals to split:
+
+- **Size**: 50+ entries and growing — agents start scanning irrelevant entries during discovery
+- **Cluster mixture**: more than ~3 distinct sub-clusters share one directory (e.g., `cell-biology` once held cell microscopy + DICOM + WSI + flow cytometry — four clusters under one name)
+- **Description drift**: new entries land with descriptions that need to disambiguate "this isn't actually about X" against the category name
+
+Process when splitting:
+1. Propose the new category (name + scope) in an issue or RFC PR
+2. List every entry that moves, with reasoning
+3. Update the **category table in Step 2** of this file
+4. Move entries via `git mv` so history is preserved; update `category` and `path` in `registry.yaml`
+5. Refresh cross-references in other SKILL.md files
+6. Run `pixi run test` — `test_category_matches_directory` and `test_path_matches_category` catch most slip-ups
+
+### Sub-clustering large categories (genomics-bioinformatics)
+
+When a category is genuinely cohesive but oversized (`genomics-bioinformatics` sits at 60+ entries), consider an internal sub-cluster directory layer:
+
+```
+skills/genomics-bioinformatics/
+  databases/        ← *-database entries
+  alignment/        ← aligners, BAM/SAM tooling
+  single-cell/      ← scRNA/scATAC pipelines
+  variant/          ← variant calling, annotation, GWAS
+  rnaseq/           ← bulk RNA-seq counting + DE
+  annotation/       ← prokka, bakta, ensembl-style
+  ...
+```
+
+Rules if introducing sub-clusters:
+- `registry.yaml` `category` field stays at the top-level name (`genomics-bioinformatics`) — sub-clusters are filesystem-only
+- Update `path` to include the sub-cluster directory
+- Run the schema tests; the path/category check uses the *first* path segment under `skills/`
+- Don't sub-cluster categories under 20 entries — the directory hop is friction without payoff
+
+This is the only place internal hierarchy is allowed below `skills/{category}/`.
 
 ---
 

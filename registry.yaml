@@ -1,6 +1,23 @@
 # Skills Registry
 # Each entry is added here when a new SKILL.md is created.
 # This file is maintained by following the workflow in CLAUDE.md (Step 5).
+#
+# Entry schema:
+#   name         (required) — kebab-case unique slug; must match frontmatter `name`
+#   type         (required) — always "skill" today
+#   sub_type     (required) — pipeline | toolkit | database | guide
+#   category     (required) — primary category directory under skills/
+#   path         (required) — relative path to SKILL.md
+#   description  (required) — short discovery string; first 120 chars carry the
+#                             discovery weight (keep tool/domain keywords up front)
+#   date_added   (required) — ISO-8601 date the entry first landed
+#   tags         (optional) — list of cross-cutting tags for secondary discovery.
+#                             Use when an entry meaningfully belongs to more than
+#                             one category. Examples: ["databases", "literature"],
+#                             ["machine-learning"], ["medical-informatics"].
+#                             Tags do NOT replace `category`; the primary home
+#                             stays in `category`. Tag names are lowercase and
+#                             hyphen-separated, validated as plain strings only.
 
 entries:
   - name: "scanpy-scrna-seq"
@@ -55,8 +72,8 @@ entries:
   - name: "scikit-learn-machine-learning"
     type: skill
     sub_type: toolkit
-    category: "biostatistics"
-    path: "skills/biostatistics/scikit-learn-machine-learning/SKILL.md"
+    category: "scientific-computing"
+    path: "skills/scientific-computing/scikit-learn-machine-learning/SKILL.md"
     description: "Classical ML: classification, regression, clustering, dimensionality reduction, preprocessing pipelines, model evaluation, hyperparameter tuning"
     date_added: "2026-02-16"
   - name: "pubchem-compound-search"
@@ -76,8 +93,8 @@ entries:
   - name: "matplotlib-scientific-plotting"
     type: skill
     sub_type: toolkit
-    category: "biostatistics"
-    path: "skills/biostatistics/matplotlib-scientific-plotting/SKILL.md"
+    category: "data-visualization"
+    path: "skills/data-visualization/matplotlib-scientific-plotting/SKILL.md"
     description: "Low-level Python plotting for publication-quality scientific figures: line, scatter, bar, heatmap, 3D, multi-panel layouts, export to PNG/PDF/SVG"
     date_added: "2026-02-16"
   - name: "statsmodels-statistical-modeling"
@@ -104,23 +121,16 @@ entries:
   - name: "clinical-decision-support-documents"
     type: skill
     sub_type: guide
-    category: "biostatistics"
-    path: "skills/biostatistics/clinical-decision-support-documents/SKILL.md"
+    category: "scientific-writing"
+    path: "skills/scientific-writing/clinical-decision-support-documents/SKILL.md"
     description: "Guidelines for clinical decision support documents: patient cohort analyses (biomarker-stratified outcomes) and treatment recommendation reports (GRADE-graded evidence). Document structure, evidence grading, statistical reporting."
     date_added: "2026-02-17"
   - name: "hypothesis-generation"
     type: skill
     sub_type: guide
-    category: "biostatistics"
-    path: "skills/biostatistics/hypothesis-generation/SKILL.md"
+    category: "scientific-writing"
+    path: "skills/scientific-writing/hypothesis-generation/SKILL.md"
     description: "Structured hypothesis formulation from observations: competing hypotheses, quality criteria (testability, falsifiability, parsimony), experimental design, testable predictions. Follows scientific method framework."
-    date_added: "2026-02-17"
-  - name: "plotly-interactive-visualization"
-    type: skill
-    sub_type: toolkit
-    category: "data-visualization"
-    path: "skills/data-visualization/plotly-interactive-visualization/SKILL.md"
-    description: "Interactive visualization with Plotly. 40+ chart types with hover, zoom, pan. Plotly Express (quick, DataFrame-oriented) and Graph Objects (fine-grained control). HTML, PNG/PDF/SVG export."
     date_added: "2026-02-17"
   - name: "esm-protein-language-model"
     type: skill
@@ -135,13 +145,6 @@ entries:
     category: "genomics-bioinformatics"
     path: "skills/genomics-bioinformatics/cellxgene-census/SKILL.md"
     description: "Query CELLxGENE Census (61M+ cells) programmatically. Search by cell type, tissue, disease. Expression matrices as AnnData, out-of-core streaming, PyTorch ML integration."
-    date_added: "2026-02-17"
-  - name: "seaborn-statistical-visualization"
-    type: skill
-    sub_type: toolkit
-    category: "data-visualization"
-    path: "skills/data-visualization/seaborn-statistical-visualization/SKILL.md"
-    description: "Statistical visualization with pandas integration. Distribution, categorical, relational, regression, and matrix plots with automatic aggregation and CI."
     date_added: "2026-02-17"
   - name: "pysam-genomic-files"
     type: skill
@@ -177,13 +180,6 @@ entries:
     category: "scientific-writing"
     path: "skills/scientific-writing/peer-review-methodology/SKILL.md"
     description: "Structured peer review of scientific manuscripts and grants. 7-stage evaluation workflow, CONSORT/STROBE/PRISMA compliance, review report structure (major/minor comments). For evidence evaluation use scientific-critical-thinking."
-    date_added: "2026-02-17"
-  - name: "opentrons-integration"
-    type: skill
-    sub_type: toolkit
-    category: "lab-automation"
-    path: "skills/lab-automation/opentrons-integration/SKILL.md"
-    description: "Opentrons Protocol API v2 for OT-2 and Flex liquid handling robots. Automated pipetting, serial dilutions, PCR setup, plate replication. Hardware module control (thermocycler, heater-shaker, magnetic, temperature)."
     date_added: "2026-02-17"
   - name: "scvi-tools-single-cell"
     type: skill
@@ -302,8 +298,8 @@ entries:
   - name: "shap-model-explainability"
     type: skill
     sub_type: pipeline
-    category: "biostatistics"
-    path: "skills/biostatistics/shap-model-explainability/SKILL.md"
+    category: "scientific-computing"
+    path: "skills/scientific-computing/shap-model-explainability/SKILL.md"
     description: "Model interpretability using SHAP. Explainer selection (Tree, Deep, Linear, Kernel), feature attributions, visualization (waterfall, beeswarm, bar, scatter, force, heatmap). Model debugging, fairness analysis, feature importance comparison. Works with tree-based, deep learning, linear, and black-box models."
     date_added: "2026-02-17"
 
@@ -454,8 +450,8 @@ entries:
   - name: "histolab-wsi-processing"
     type: skill
     sub_type: toolkit
-    category: "cell-biology"
-    path: "skills/cell-biology/histolab-wsi-processing/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/histolab-wsi-processing/SKILL.md"
     description: "Whole slide image processing for digital pathology. Tissue detection, tile extraction (random, grid, score-based), filter pipelines for H&E/IHC preprocessing. Use for dataset preparation, tile-based deep learning, and slide quality assessment. For advanced spatial proteomics or multiplexed imaging use pathml."
     date_added: "2026-02-17"
 
@@ -550,8 +546,8 @@ entries:
   - name: "pydicom-medical-imaging"
     type: skill
     sub_type: toolkit
-    category: "cell-biology"
-    path: "skills/cell-biology/pydicom-medical-imaging/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/pydicom-medical-imaging/SKILL.md"
     description: "Pure Python DICOM library for medical imaging (CT, MRI, X-ray, ultrasound). Read/write DICOM files, extract pixel data as NumPy arrays, access/modify metadata tags, apply windowing (VOI LUT), anonymize PHI, build DICOM from scratch, process series into 3D volumes. For whole-slide pathology use histolab; for NIfTI neuroimaging use nibabel."
     date_added: "2026-02-17"
 
@@ -662,8 +658,8 @@ entries:
   - name: "imaging-data-commons"
     type: skill
     sub_type: database
-    category: "cell-biology"
-    path: "skills/cell-biology/imaging-data-commons/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/imaging-data-commons/SKILL.md"
     description: "Query NCI Imaging Data Commons (IDC) for cancer radiology and pathology imaging datasets hosted on Google Cloud. Search DICOM collections by modality, anatomical site, cancer type, or collection name. Download images via Google Cloud Storage or IDAT tool. 50TB+ of publicly accessible DICOM images. Requires Google Cloud account for large downloads; small queries work without billing. For local DICOM processing use pydicom-medical-imaging; for whole-slide pathology use histolab."
     date_added: "2026-02-18"
 
@@ -672,22 +668,22 @@ entries:
     sub_type: database
     category: "lab-automation"
     path: "skills/lab-automation/protocolsio-integration/SKILL.md"
-    description: "Access protocols.io public library via REST API. Search and retrieve experimental protocols (wet-lab, bioinformatics, clinical) by keyword, DOI, or category. Download step-by-step protocol content including reagents, materials, equipment, and timing. Free public access; authentication needed for private protocols or publishing. Use alongside opentrons-integration or benchling-integration to programmatically execute downloaded protocols."
+    description: "Access protocols.io public library via REST API. Search and retrieve experimental protocols (wet-lab, bioinformatics, clinical) by keyword, DOI, or category. Download step-by-step protocol content including reagents, materials, equipment, and timing. Free public access; authentication needed for private protocols or publishing. Use alongside opentrons-protocol-api or benchling-integration to programmatically execute downloaded protocols."
     date_added: "2026-02-18"
 
   - name: "omero-integration"
     type: skill
     sub_type: toolkit
-    category: "cell-biology"
-    path: "skills/cell-biology/omero-integration/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/omero-integration/SKILL.md"
     description: "OMERO is an open-source platform for biological image data management. Use the omero-py Python client to connect to an OMERO server, search and retrieve images as numpy arrays, annotate images with tags and key-value pairs, manage ROIs, and integrate OMERO image data into downstream analysis pipelines — all programmatically without the OMERO desktop GUI."
     date_added: "2026-02-18"
 
   - name: "pathml"
     type: skill
     sub_type: pipeline
-    category: "cell-biology"
-    path: "skills/cell-biology/pathml/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/pathml/SKILL.md"
     description: "PathML is an open-source toolkit for computational pathology. Use it to process whole-slide images (WSIs): load slides, extract tiles, apply stain normalization and nuclear segmentation preprocessing, extract features, and train machine learning models. Supports H&E and multiplex imaging. Ideal for building end-to-end digital pathology pipelines from raw WSI files to quantitative outputs."
     date_added: "2026-02-18"
 
@@ -854,8 +850,8 @@ entries:
   - name: "pyhealth"
     type: skill
     sub_type: toolkit
-    category: "biostatistics"
-    path: "skills/biostatistics/pyhealth/SKILL.md"
+    category: "scientific-computing"
+    path: "skills/scientific-computing/pyhealth/SKILL.md"
     description: "PyHealth is a Python library for healthcare machine learning. Build clinical prediction models from EHR (Electronic Health Record) data: process MIMIC-III/IV, eICU, and OMOP-CDM datasets, encode medical codes (ICD, ATC, NDC), construct patient-level datasets, and train models (Transformer, RETAIN, GRASP, MedBERT) for tasks including mortality prediction, drug recommendation, readmission, and diagnosis prediction. Alternatives: FIDDLE (EHR preprocessing only), clinical-longformer (NLP on clinical notes only), ehr-ml (EHR embedding only)."
     date_added: "2026-02-18"
 
@@ -1198,8 +1194,8 @@ entries:
   - name: "simpleitk-image-registration"
     type: skill
     sub_type: toolkit
-    category: "cell-biology"
-    path: "skills/cell-biology/simpleitk-image-registration/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/simpleitk-image-registration/SKILL.md"
     description: "Register, segment, filter, and resample 3D medical images (MRI, CT, microscopy) using SimpleITK's Python API with support for DICOM, NIfTI, and multi-modal image analysis. Provides rigid/affine/deformable registration, threshold and region-growing segmentation, Gaussian and morphological filtering, label statistics, and format conversion. Use when aligning volumetric images across timepoints or modalities, automating segmentation of fluorescence microscopy, or converting DICOM series to NIfTI for analysis pipelines."
     date_added: "2026-03-08"
 
@@ -1246,8 +1242,8 @@ entries:
   - name: "nnunet-segmentation"
     type: skill
     sub_type: pipeline
-    category: "cell-biology"
-    path: "skills/cell-biology/nnunet-segmentation/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/nnunet-segmentation/SKILL.md"
     description: "Train and deploy automated medical image segmentation models using nnU-Net's self-configuring framework that auto-selects optimal architecture, preprocessing, and training for any modality. Supports CT, MRI, microscopy, and ultrasound with 2D, 3D full-res, 3D low-res, and cascade configurations. Pipeline: convert dataset → plan and preprocess → train (5-fold cross-validation) → find best configuration → predict → ensemble. Use when classical segmentation fails and annotated training data is available."
     date_added: "2026-03-08"
 
@@ -1382,25 +1378,17 @@ entries:
   - name: "degenerate-input-filtering"
     type: skill
     sub_type: guide
-    category: "biostatistics"
-    path: "skills/biostatistics/degenerate-input-filtering/SKILL.md"
+    category: "scientific-computing"
+    path: "skills/scientific-computing/degenerate-input-filtering/SKILL.md"
     description: "Mandatory filtering of degenerate and uninformative data points before statistical tests. Covers single-sequence alignments, empty files, constant-value features, zero-variance inputs, and all-NaN columns."
     date_added: "2026-03-31"
 
   - name: "nan-safe-correlation"
     type: skill
     sub_type: guide
-    category: "biostatistics"
-    path: "skills/biostatistics/nan-safe-correlation/SKILL.md"
+    category: "scientific-computing"
+    path: "skills/scientific-computing/nan-safe-correlation/SKILL.md"
     description: "Per-feature NaN-safe Spearman/Pearson correlation computation. Covers why bulk matrix shortcuts fail with missing data, correct pairwise deletion, degenerate input filtering, and performance optimization for large datasets."
-    date_added: "2026-03-31"
-
-  - name: "single-cell-annotation"
-    type: skill
-    sub_type: guide
-    category: "cell-biology"
-    path: "skills/cell-biology/single-cell-annotation/SKILL.md"
-    description: "Guide to annotating cell types in single-cell RNA-seq data. Covers manual marker-based, automated (CellTypist, scAnnotate), and reference-based (scArches, Azimuth, SingleR) approaches with decision framework for tool selection."
     date_added: "2026-03-31"
 
   - name: "busco-status-interpretation"

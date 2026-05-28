@@ -237,8 +237,8 @@ Detailed reference files in `references/`:
 ## Related Skills
 
 - **matplotlib-scientific-plotting** — generate publication-quality figures adapted for slide presentation (larger fonts, simplified panels)
-- **plotly-interactive-visualization** — create interactive figures exportable as static images for slides
-- **seaborn-statistical-visualization** — statistical plots with automatic aggregation for results slides
+- **plotly-interactive-plots** — create interactive figures exportable as static images for slides
+- **seaborn-statistical-plots** — statistical plots with automatic aggregation for results slides
 - **latex-research-posters** — poster-specific design guidance; shares typography and color principles with slides
 
 ## Companion Assets
