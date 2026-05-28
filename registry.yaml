@@ -686,8 +686,8 @@ entries:
   - name: "pathml"
     type: skill
     sub_type: pipeline
-    category: "cell-biology"
-    path: "skills/cell-biology/pathml/SKILL.md"
+    category: "medical-imaging"
+    path: "skills/medical-imaging/pathml/SKILL.md"
     description: "PathML is an open-source toolkit for computational pathology. Use it to process whole-slide images (WSIs): load slides, extract tiles, apply stain normalization and nuclear segmentation preprocessing, extract features, and train machine learning models. Supports H&E and multiplex imaging. Ideal for building end-to-end digital pathology pipelines from raw WSI files to quantitative outputs."
     date_added: "2026-02-18"
 
