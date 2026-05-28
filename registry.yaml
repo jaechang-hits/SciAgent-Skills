@@ -24,7 +24,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/scanpy-scrna-seq/SKILL.md"
+    path: "skills/genomics-bioinformatics/single-cell/scanpy-scrna-seq/SKILL.md"
     description: "Single-cell RNA-seq analysis with Scanpy: QC, normalization, clustering, marker genes, cell type annotation"
     date_added: "2026-02-16"
   - name: "autodock-vina-docking"
@@ -38,7 +38,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/pydeseq2-differential-expression/SKILL.md"
+    path: "skills/genomics-bioinformatics/rnaseq/pydeseq2-differential-expression/SKILL.md"
     description: "Bulk RNA-seq differential expression analysis with PyDESeq2: normalization, Wald test, FDR correction, LFC shrinkage, volcano/MA plots"
     date_added: "2026-02-16"
   - name: "biopython-molecular-biology"
@@ -66,7 +66,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/gget-genomic-databases/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/gget-genomic-databases/SKILL.md"
     description: "Unified CLI/Python interface to 20+ genomic databases: gene lookups, BLAST, AlphaFold, enrichment, disease/drug associations, single-cell data"
     date_added: "2026-02-16"
   - name: "scikit-learn-machine-learning"
@@ -108,7 +108,7 @@ entries:
     type: skill
     sub_type: toolkit
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/anndata-data-structure/SKILL.md"
+    path: "skills/genomics-bioinformatics/single-cell/anndata-data-structure/SKILL.md"
     description: "Annotated data matrices for single-cell analysis. Create, read, write, subset, and concatenate AnnData objects (.h5ad). Use when handling single-cell data, integrating with scverse (Scanpy, scvi-tools), or managing large sparse matrices."
     date_added: "2026-02-17"
   - name: "cobrapy-metabolic-modeling"
@@ -143,14 +143,14 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/cellxgene-census/SKILL.md"
+    path: "skills/genomics-bioinformatics/single-cell/cellxgene-census/SKILL.md"
     description: "Query CELLxGENE Census (61M+ cells) programmatically. Search by cell type, tissue, disease. Expression matrices as AnnData, out-of-core streaming, PyTorch ML integration."
     date_added: "2026-02-17"
   - name: "pysam-genomic-files"
     type: skill
     sub_type: toolkit
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/pysam-genomic-files/SKILL.md"
+    path: "skills/genomics-bioinformatics/alignment/pysam-genomic-files/SKILL.md"
     description: "Genomic file toolkit: SAM/BAM/CRAM alignments, VCF/BCF variants, FASTA/FASTQ sequences. Region queries, coverage/pileup analysis, samtools/bcftools CLI access."
     date_added: "2026-02-17"
   - name: "pymc-bayesian-modeling"
@@ -185,7 +185,7 @@ entries:
     type: skill
     sub_type: toolkit
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/scvi-tools-single-cell/SKILL.md"
+    path: "skills/genomics-bioinformatics/single-cell/scvi-tools-single-cell/SKILL.md"
     description: "Deep generative models for single-cell omics. Probabilistic batch correction (scVI), semi-supervised annotation (scANVI), multi-modal integration (totalVI, MultiVI), differential expression with uncertainty. Unified setup→train→extract API."
     date_added: "2026-02-17"
   - name: "flowio-flow-cytometry"
@@ -199,7 +199,7 @@ entries:
     type: skill
     sub_type: toolkit
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/deeptools-ngs-analysis/SKILL.md"
+    path: "skills/genomics-bioinformatics/interval-ops/deeptools-ngs-analysis/SKILL.md"
     description: "NGS analysis CLI toolkit for ChIP-seq, RNA-seq, ATAC-seq. BAM→bigWig conversion with normalization (RPGC, CPM, RPKM), sample correlation/PCA, heatmaps and profile plots around genomic features."
     date_added: "2026-02-17"
   - name: "scikit-survival-analysis"
@@ -241,7 +241,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/kegg-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/kegg-database/SKILL.md"
     description: "Direct REST API access to KEGG (academic use only). Query pathways, genes, compounds, enzymes, diseases, drugs. Seven operations: info, list, find, get, conv, link, ddi. ID conversion (NCBI, UniProt, PubChem)."
     date_added: "2026-02-17"
   - name: "latex-research-posters"
@@ -388,7 +388,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/bioservices-multi-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/bioservices-multi-database/SKILL.md"
     description: "Unified Python interface to 40+ bioinformatics web services via bioservices library. Query UniProt proteins, KEGG pathways, ChEMBL/ChEBI/PubChem compounds, run BLAST searches, map identifiers across databases, retrieve GO annotations, and find protein-protein interactions. For single-database deep queries use dedicated tools (gget, pubchempy); bioservices excels at cross-database integration."
     date_added: "2026-02-17"
 
@@ -524,7 +524,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/ena-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/ena-database/SKILL.md"
     description: "European Nucleotide Archive (ENA) REST API access for genomic sequences, raw reads, assemblies, and annotations. Portal API search with query syntax, Browser API retrieval (XML/FASTA/EMBL), file reports for FASTQ/BAM download URLs, taxonomy queries, cross-references."
     date_added: "2026-02-17"
 
@@ -532,7 +532,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/gwas-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/gwas-database/SKILL.md"
     description: "NHGRI-EBI GWAS Catalog REST API for SNP-trait associations from published genome-wide association studies. Query studies, associations, variants, traits, genes, and summary statistics. No authentication required."
     date_added: "2026-02-17"
 
@@ -564,7 +564,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/ensembl-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/ensembl-database/SKILL.md"
     description: "Query Ensembl REST API for gene/transcript/variant annotations across 300+ species. Retrieve gene info by symbol/ID, sequence, cross-references (HGNC, RefSeq, UniProt), variants, regulatory features, comparative genomics. For bulk local access use pyensembl; for pathway lookups use kegg-database or reactome-database."
     date_added: "2026-02-18"
 
@@ -572,7 +572,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/clinvar-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/clinvar-database/SKILL.md"
     description: "Query NCBI ClinVar via E-utilities REST API for clinical significance, pathogenicity classifications, and disease associations of genetic variants. Search by gene, rsID, condition, or review status. Returns structured variant records: ClinSig, submitter data, conditions, HGVS expressions. For GWAS associations use gwas-database; for variant consequence prediction use Ensembl VEP."
     date_added: "2026-02-18"
 
@@ -580,7 +580,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/gene-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/gene-database/SKILL.md"
     description: "Query NCBI Gene via E-utilities for curated gene records across 1M+ taxa. Retrieve official gene symbols, aliases, RefSeq accessions, summary descriptions, genomic coordinates, GO annotations, and interaction data. Use for gene ID resolution, cross-species queries, and gene function summaries. For sequence retrieval use Ensembl; for expression data use geo-database."
     date_added: "2026-02-18"
 
@@ -588,7 +588,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/geo-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/geo-database/SKILL.md"
     description: "Query NCBI Gene Expression Omnibus (GEO) for gene expression datasets and sample metadata via GEOparse Python library and E-utilities. Search datasets by keyword/organism/platform, download GSE series matrices, parse GPL platform annotations, extract GSM sample metadata, and load expression matrices into pandas. For single-cell data use cellxgene-census; for programmatic multi-DB access use gget-genomic-databases."
     date_added: "2026-02-18"
 
@@ -638,7 +638,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/cosmic-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/cosmic-database/SKILL.md"
     description: "Query COSMIC (Catalogue Of Somatic Mutations In Cancer) for cancer somatic mutations, gene census data, mutational signatures, drug resistance variants, and cancer gene annotations. REST API v3.1 supports gene/sample/variant queries. Free registration required. For germline clinical variants use clinvar-database; for drug-target data use opentargets-database or chembl-database-bioactivity."
     date_added: "2026-02-18"
 
@@ -654,7 +654,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/clinpgx-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/clinpgx-database/SKILL.md"
     description: "ClinPGx (formerly PharmGKB) REST + CPIC PostgREST companion: clinical annotations, CPIC/DPWG dosing guidelines, variant-drug associations, FDA/EMA labels. Two hosts: api.clinpgx.org + api.cpicpgx.org. No auth."
     date_added: "2026-02-18"
 
@@ -710,7 +710,7 @@ entries:
     type: skill
     sub_type: toolkit
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/geniml/SKILL.md"
+    path: "skills/genomics-bioinformatics/interval-ops/geniml/SKILL.md"
     description: "Geniml is a Python library for genomic interval machine learning. Train and apply region2vec embeddings to convert BED file regions into numeric vectors, load and index genomic interval datasets for ML pipelines, search embedding spaces with BEDSpace, and evaluate embedding quality. Use for chromatin accessibility clustering, regulatory element classification, cross-sample region comparison, and building ML models on genomic intervals."
     date_added: "2026-02-18"
 
@@ -718,7 +718,7 @@ entries:
     type: skill
     sub_type: toolkit
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/gtars/SKILL.md"
+    path: "skills/genomics-bioinformatics/interval-ops/gtars/SKILL.md"
     description: "GTARS is a Rust-backed Python library for fast genomic token arithmetic and BED file processing. Perform high-performance BED file I/O, genomic interval set operations (intersect, merge, complement, subtract), tokenization of genomic regions against a universe, and universe construction. Use for preprocessing large BED file collections, building token vocabularies for ML pipelines, and computing interval statistics at scale."
     date_added: "2026-02-18"
 
@@ -862,7 +862,7 @@ entries:
     type: skill
     sub_type: toolkit
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/samtools-bam-processing/SKILL.md"
+    path: "skills/genomics-bioinformatics/alignment/samtools-bam-processing/SKILL.md"
     description: "Command-line toolkit for SAM/BAM/CRAM alignment file manipulation. Sort, index, convert, filter, and QC sequencing alignments. Core commands: view (filter/convert), sort, index, flagstat, stats, depth, markdup, merge. Required for all NGS pipelines between alignment and variant calling or peak calling. Use pysam for Python-native BAM access; use deeptools for normalized coverage tracks."
     date_added: "2026-02-18"
 
@@ -870,7 +870,7 @@ entries:
     type: skill
     sub_type: toolkit
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/bedtools-genomic-intervals/SKILL.md"
+    path: "skills/genomics-bioinformatics/interval-ops/bedtools-genomic-intervals/SKILL.md"
     description: "Toolkit for genomic interval operations on BED, BAM, GFF, VCF files. Find overlapping regions, merge adjacent intervals, calculate coverage depth, extract FASTA sequences, find nearest features, and manipulate interval coordinates. Essential for ChIP-seq peak annotation, target region filtering, and genome arithmetic. Use tabix for indexed single-region queries; use deeptools for normalized bigWig coverage."
     date_added: "2026-02-18"
 
@@ -886,7 +886,7 @@ entries:
     type: skill
     sub_type: toolkit
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/bcftools-variant-manipulation/SKILL.md"
+    path: "skills/genomics-bioinformatics/variant/bcftools-variant-manipulation/SKILL.md"
     description: "Command-line toolkit for VCF/BCF variant file manipulation. Filter, merge, annotate, query, normalize, and compute statistics on variant call files. Essential for post-variant-calling pipelines: quality filtering, multi-sample merging, rsID annotation, and genotype extraction. Companion to samtools in the HTSlib ecosystem. Use GATK instead for complex indel realignment; use VCFtools for population genetics statistics."
     date_added: "2026-02-18"
 
@@ -894,7 +894,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/multiqc-qc-reports/SKILL.md"
+    path: "skills/genomics-bioinformatics/qc/multiqc-qc-reports/SKILL.md"
     description: "Aggregates QC outputs from 150+ bioinformatics tools into a single interactive HTML report. Scans directories for FastQC, samtools, STAR, HISAT2, Trim Galore, featureCounts, Kallisto, Salmon, Picard, and GATK logs; merges statistics across samples with interactive plots. Essential for NGS pipeline QC review. Use FastQC directly for single-sample initial assessment; MultiQC is for multi-sample pipeline-wide reporting."
     date_added: "2026-02-18"
 
@@ -910,7 +910,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/star-rna-seq-aligner/SKILL.md"
+    path: "skills/genomics-bioinformatics/alignment/star-rna-seq-aligner/SKILL.md"
     description: "Splice-aware RNA-seq read aligner producing sorted BAM files and splice junction tables. Performs genome index generation and two-pass alignment for improved junction detection. Outputs coordinate-sorted BAM, splice junctions (SJ.out.tab), alignment statistics (Log.final.out), and optional gene count tables. Use Salmon instead for ultra-fast pseudoalignment; use STAR when you need a genome-aligned BAM for downstream tools (variant calling, visualization, ENCODE pipelines)."
     date_added: "2026-02-18"
 
@@ -918,7 +918,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/salmon-rna-quantification/SKILL.md"
+    path: "skills/genomics-bioinformatics/rnaseq/salmon-rna-quantification/SKILL.md"
     description: "Ultra-fast RNA-seq transcript and gene-level quantification using quasi-mapping (no BAM required). Builds a k-mer index from a transcriptome FASTA, then quantifies reads in minutes. Outputs transcript-level TPM/count tables (quant.sf) with optional GC-bias and sequence-bias correction. Integrates directly with tximeta/tximport for DESeq2 or edgeR. Use STAR instead when a genome-aligned BAM is required for variant calling or visualization."
     date_added: "2026-02-18"
 
@@ -934,7 +934,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/gseapy-gene-enrichment/SKILL.md"
+    path: "skills/genomics-bioinformatics/rnaseq/gseapy-gene-enrichment/SKILL.md"
     description: "Gene set enrichment analysis (GSEA) and over-representation analysis (ORA) for RNA-seq and proteomics data. Wraps Enrichr API for ORA against MSigDB, KEGG, GO, and 200+ gene set databases; implements preranked GSEA for ranked gene lists from differential expression. Outputs enrichment tables and GSEA running-score plots. Use after DESeq2 or edgeR for pathway-level interpretation of differential expression results."
     date_added: "2026-02-18"
 
@@ -950,7 +950,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/bwa-mem2-dna-aligner/SKILL.md"
+    path: "skills/genomics-bioinformatics/alignment/bwa-mem2-dna-aligner/SKILL.md"
     description: "Fast short-read DNA aligner for whole-genome, whole-exome, and ChIP-seq alignment to a reference genome. BWA-MEM2 is the 2× faster successor to BWA-MEM; outputs SAM/BAM with read group headers required by GATK. Produces primary alignments with supplementary records for chimeric reads. Use STAR instead for RNA-seq splice-aware alignment; use Bowtie2 as an alternative with comparable accuracy."
     date_added: "2026-02-18"
 
@@ -966,7 +966,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/fastp-fastq-preprocessing/SKILL.md"
+    path: "skills/genomics-bioinformatics/qc/fastp-fastq-preprocessing/SKILL.md"
     description: "All-in-one FASTQ quality control and adapter trimming tool. Automatically detects and removes Illumina adapters, filters low-quality reads, corrects paired-end overlaps, and generates HTML+JSON QC reports in a single fast pass. 3-10× faster than Trim Galore/Trimmomatic. Use as the first step before STAR, BWA-MEM2, or Salmon alignment in any NGS pipeline."
     date_added: "2026-02-18"
 
@@ -974,7 +974,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/featurecounts-rna-counting/SKILL.md"
+    path: "skills/genomics-bioinformatics/rnaseq/featurecounts-rna-counting/SKILL.md"
     description: "Counts aligned RNA-seq reads overlapping gene features in a GTF annotation. Takes sorted BAM files from STAR alignment and a GTF file; outputs a tab-delimited count matrix per gene across all samples. Handles strandedness (0=unstranded, 1=stranded, 2=reverse-stranded), paired-end, and multi-sample batch counting in a single command. Use Salmon instead for alignment-free quantification; use featureCounts when STAR BAMs already exist and a gene-level count matrix is needed."
     date_added: "2026-02-18"
 
@@ -990,7 +990,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/plink2-gwas-analysis/SKILL.md"
+    path: "skills/genomics-bioinformatics/variant/plink2-gwas-analysis/SKILL.md"
     description: "Genome-wide association study (GWAS) and population genetics analysis tool. Processes PLINK (.bed/.bim/.fam), VCF, and BGEN files; performs QC (MAF, HWE, missingness), identity-by-descent estimation, principal component analysis, and linear/logistic regression GWAS. Outputs Manhattan-plot-ready summary statistics. Use regenie or SAIGE instead for very large biobanks (>100k samples) with mixed models."
     date_added: "2026-02-18"
 
@@ -998,7 +998,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/gatk-variant-calling/SKILL.md"
+    path: "skills/genomics-bioinformatics/variant/gatk-variant-calling/SKILL.md"
     description: "GATK Best Practices pipeline for germline SNP and indel variant calling from WGS/WES BAM files. Runs HaplotypeCaller in GVCF mode per sample, consolidates with GenomicsDBImport, joint-genotypes with GenotypeGVCFs, and applies VQSR or hard filters. Requires BWA-MEM2-aligned, markdup, and BQSR-processed BAMs. Use DeepVariant instead for a faster deep-learning alternative; GATK is the ENCODE/NIH standard for research and clinical genomics."
     date_added: "2026-02-18"
 
@@ -1094,7 +1094,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/harmony-batch-correction/SKILL.md"
+    path: "skills/genomics-bioinformatics/single-cell/harmony-batch-correction/SKILL.md"
     description: "Batch correction for single-cell RNA-seq (and other omics) with Harmony. Removes technical batch effects from PCA embeddings while preserving biological variation. Use after PCA, before UMAP/neighbors. Fast and scalable to millions of cells. Python (harmonypy, scanpy integration) and R (Seurat) APIs."
     date_added: "2026-02-18"
 
@@ -1102,7 +1102,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/deseq2-differential-expression/SKILL.md"
+    path: "skills/genomics-bioinformatics/rnaseq/deseq2-differential-expression/SKILL.md"
     description: "R/Bioconductor DESeq2 differential expression for bulk RNA-seq. Negative binomial GLM with empirical Bayes shrinkage, Wald and LRT tests, multi-factor designs, interaction terms, Salmon tximeta import, apeglm LFC shrinkage, MA/volcano/heatmap visualization. R gold standard with native Bioconductor integration. Use pydeseq2-differential-expression for Python; use edgeR for TMM normalization."
     date_added: "2026-02-18"
 
@@ -1110,7 +1110,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/snpeff-variant-annotation/SKILL.md"
+    path: "skills/genomics-bioinformatics/variant/snpeff-variant-annotation/SKILL.md"
     description: "Annotate and filter genetic variants in VCF files with SnpEff (functional effect prediction: HIGH/MODERATE/LOW/MODIFIER impact, gene, HGVS) and SnpSift (filter by impact, AF, ClinVar pathogenicity; add dbSNP rsIDs; extract fields to TSV). Java CLI with Python cyvcf2 integration. Use ANNOVAR for multi-database annotation; use Ensembl VEP for REST API annotation."
     date_added: "2026-02-18"
 
@@ -1142,7 +1142,7 @@ entries:
     type: skill
     sub_type: toolkit
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/popv-cell-annotation/SKILL.md"
+    path: "skills/genomics-bioinformatics/single-cell/popv-cell-annotation/SKILL.md"
     description: "Consensus cell type annotation by running 10+ algorithms (KNN-Harmony, KNN-BBKNN, KNN-Scanorama, KNN-scVI, CellTypist, ONCLASS, Random Forest, SCANVI, SVM, XGBoost) on a labeled reference and transferring labels to a query dataset via majority voting. popV produces per-method labels, an overall consensus prediction, and an agreement score quantifying confidence across methods. Use when single-method annotation is insufficient or when you need ensemble uncertainty estimates for novel cell states."
     date_added: "2026-03-08"
 
@@ -1158,7 +1158,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/cnvkit-copy-number/SKILL.md"
+    path: "skills/genomics-bioinformatics/variant/cnvkit-copy-number/SKILL.md"
     description: "Detect somatic copy number variants (CNVs) from WES, WGS, or targeted sequencing BAM files with CNVkit v0.9.x. Pipeline: calculate bin-level coverage in target/antitarget regions, normalize against a reference, segment copy ratios with CBS or HMM, call amplifications and deletions, generate scatter/diagram plots, estimate tumor purity and ploidy, and export to VCF/SEG. Both CLI and Python API (cnvlib) shown. Use GATK CNV instead for deep WGS with population-scale controls; use CNVkit for targeted or exome sequencing where antitarget bins are critical."
     date_added: "2026-03-08"
 
@@ -1174,7 +1174,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/remap-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/remap-database/SKILL.md"
     description: "Query the ReMap 2022 TF ChIP-seq binding peak database via REST API and BED file downloads. Retrieve all TF binding peaks overlapping a genomic region (chr:start-end), find TF peaks near a gene by name, list TFs available for a species, filter peaks by regulatory biotype (promoter, enhancer), and download peak BED files for a TF-cell type pair. Use for TF co-occupancy analysis, regulatory region annotation, and building TF binding atlases. For JASPAR motif matrices use jaspar-database; for ENCODE regulatory tracks use encode-database."
     date_added: "2026-03-08"
 
@@ -1190,7 +1190,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/prokka-genome-annotation/SKILL.md"
+    path: "skills/genomics-bioinformatics/annotation/prokka-genome-annotation/SKILL.md"
     description: "Annotate prokaryotic genome assemblies (bacteria, archaea, viruses) with Prokka's BLAST/HMM-based pipeline. Identifies CDS, rRNA, tRNA, tmRNA, and signal peptides against Pfam, TIGRFAMs, and RefSeq databases. Produces GFF3, GenBank, protein FASTA, and TSV outputs. Use PGAP instead when submitting to NCBI GenBank; use Bakta for faster annotation with NCBI-compatible outputs on modern assemblies."
     date_added: "2026-03-08"
 
@@ -1206,7 +1206,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/celltypist-cell-annotation/SKILL.md"
+    path: "skills/genomics-bioinformatics/single-cell/celltypist-cell-annotation/SKILL.md"
     description: "Automated cell type annotation for scRNA-seq data using pre-trained logistic regression models. CellTypist ships 45+ models covering immune cells, gut, lung, brain, fetal tissues, and cancer microenvironments. Inputs a normalized AnnData; outputs per-cell predicted labels, majority-vote cluster labels, and confidence scores. Use when you want fast, reproducible, reference-model-backed annotation without manual marker inspection."
     date_added: "2026-03-08"
 
@@ -1214,7 +1214,7 @@ entries:
     type: skill
     sub_type: guide
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/single-cell-annotation-guide/SKILL.md"
+    path: "skills/genomics-bioinformatics/single-cell/single-cell-annotation-guide/SKILL.md"
     description: "Decision framework for choosing between manual marker-based, automated (CellTypist), and reference-based (popV) cell type annotation strategies in single-cell RNA-seq analysis. Covers a three-tier strategy: Tier 1 (manual canonical markers), Tier 2 (CellTypist pre-trained models), and Tier 3 (popV ensemble label transfer). Use when planning or troubleshooting cell type annotation in any scRNA-seq project."
     date_added: "2026-03-08"
 
@@ -1238,7 +1238,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/mouse-phenome-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/mouse-phenome-database/SKILL.md"
     description: "Retrieve quantitative phenotype measurements across inbred mouse strains from the Mouse Phenome Database (MPD) for metabolic, behavioral, and physiological traits. Query strain means and raw individual measurements for body weight, glucose, blood pressure, behavioral assays, and 40+ additional procedures. Use for QTL analysis support, cross-strain phenotype comparison, and identifying mouse models for metabolic or behavioral traits. For mouse gene-disease-phenotype associations use monarch-database; for mouse genome annotations use ensembl-database."
     date_added: "2026-03-08"
 
@@ -1254,7 +1254,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/jaspar-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/jaspar-database/SKILL.md"
     description: "Query the JASPAR 2024 TF binding profile database via REST API and pyJASPAR. Retrieve position frequency matrices (PFMs) and position weight matrices (PWMs) by TF name, JASPAR ID, species, or structural class. Scan DNA sequences for transcription factor binding sites (TFBS). Browse profiles by taxon (Homo sapiens, Mus musculus) or TF family (bHLH, zinc finger). Use for motif enrichment input, TFBS scanning, and regulatory sequence analysis. For ChIP-seq peak-based motif discovery use homer-motif-analysis; for regulatory variant scoring use regulomedb-database."
     date_added: "2026-03-08"
 
@@ -1302,7 +1302,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/gnomad-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/gnomad-database/SKILL.md"
     description: "Query gnomAD v4 population variant frequencies via GraphQL API. Retrieve allele counts and frequencies stratified by ancestry group (AFR, AMR, EAS, NFE, SAS, FIN, ASJ, MID), gene-level constraint metrics (pLI, LOEUF, missense z-score), and read depth coverage. Identify variants with low population frequency or under evolutionary constraint. For clinical pathogenicity classifications use clinvar-database; for GWAS associations use gwas-database."
     date_added: "2026-03-08"
 
@@ -1310,7 +1310,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/quickgo-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/quickgo-database/SKILL.md"
     description: "Query the EBI QuickGO REST API for Gene Ontology terms and protein GO annotations. Fetch GO term metadata by ID, search terms by keyword, retrieve ancestor/descendant hierarchies, and download GO annotations filtered by taxon ID, evidence code, and GO aspect. Use for GO term resolution, ontology traversal, and annotation-set retrieval before enrichment analysis. For enrichment analysis itself use gseapy-gene-enrichment; for protein function annotations use uniprot-protein-database."
     date_added: "2026-03-08"
 
@@ -1318,7 +1318,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/regulomedb-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/regulomedb-database/SKILL.md"
     description: "Query RegulomeDB v2 REST API to score genetic variants for regulatory function and retrieve overlapping regulatory evidence (TF binding sites, histone marks, DNase-seq peaks, eQTLs, motifs). Score a single rsID or genomic position, batch-score variant lists, search regions for all regulatory variants, and retrieve full annotation details. Scores range from 1a (strongest: eQTL + TF + DNase + motif) to 7 (no known regulatory function). Use for GWAS hit prioritization, regulatory variant annotation, and cis-regulatory element discovery. For clinical pathogenicity use clinvar-database; for GWAS associations use gwas-database."
     date_added: "2026-03-08"
 
@@ -1326,7 +1326,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/encode-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/encode-database/SKILL.md"
     description: "Query the ENCODE Portal REST API for regulatory genomics data: TF ChIP-seq experiments, ATAC-seq/DNase-seq accessibility peaks, histone mark tracks, and RNA-seq datasets across 1000+ cell types and tissues. Search experiments by assay, biosample, or target protein; download BED/bigWig files; retrieve candidate cis-regulatory elements (cCREs) from ENCODE SCREEN by genomic region or gene. Use for finding regulatory tracks to annotate variants, identifying open chromatin in a cell type of interest, and downloading peak files for ChIP-seq or ATAC-seq analysis. For regulatory variant scoring use regulomedb-database; for GWAS associations use gwas-database."
     date_added: "2026-03-08"
 
@@ -1334,7 +1334,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/cbioportal-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/cbioportal-database/SKILL.md"
     description: "Access TCGA and other cancer genomics datasets via cBioPortal REST API. Retrieve somatic mutations, copy number alterations, gene expression profiles, and clinical data (survival, stage, treatment) for thousands of cancer studies. Use for tumor mutation burden analysis, oncoprint queries, and survival analysis. For population variant frequencies use gnomad-database; for drug-gene interactions use dgidb-database."
     date_added: "2026-03-08"
 
@@ -1342,7 +1342,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/archs4-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/archs4-database/SKILL.md"
     description: "Query uniformly processed RNA-seq gene expression profiles, tissue-specific expression patterns, and co-expression networks from the ARCHS4 database REST API. Retrieve z-score normalized expression across 1M+ human and mouse samples, find co-expressed genes, search samples by metadata, and download HDF5 expression matrices. For variant-level population genetics use gnomad-database; for pathway enrichment from gene lists use gget-genomic-databases (Enrichr)."
     date_added: "2026-03-08"
 
@@ -1350,7 +1350,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/dbsnp-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/dbsnp-database/SKILL.md"
     description: "Query NCBI dbSNP for SNP records by rsID, gene, or genomic region via E-utilities (esearch, efetch, epost) and NCBI Variation Services REST API. Retrieve allele data, minor allele frequency, variant class (SNV, indel, MNV), clinical significance links, and cross-database IDs (ClinVar, dbVar, 1000G). Free access; 3 req/sec without API key, 10 req/sec with key. For clinical pathogenicity classifications use clinvar-database; for population frequencies use gnomad-database."
     date_added: "2026-03-08"
 
@@ -1358,7 +1358,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/monarch-database/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/monarch-database/SKILL.md"
     description: "Query disease-gene-phenotype associations, entity details, and cross-species orthology from the Monarch Initiative knowledge graph REST API. Retrieve MONDO disease-to-gene and disease-to-phenotype mappings, HP phenotype profiles, and cross-species phenotype comparisons. Use for rare disease gene prioritization, phenotype-based candidate gene ranking, and building disease-phenotype networks. For GWAS associations use gwas-database; for clinical pathogenicity use clinvar-database."
     date_added: "2026-03-08"
 
@@ -1374,7 +1374,7 @@ entries:
     type: skill
     sub_type: database
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/ucsc-genome-browser/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/ucsc-genome-browser/SKILL.md"
     description: "Query the UCSC Genome Browser REST API for DNA sequences, track annotations, gene models, and conservation scores across 100+ genome assemblies. Retrieve sequence for any genomic region, list or fetch BED/bigWig track data, get chromosome sizes, query RefSeq/GENCODE gene structures, and access PhyloP/PhastCons conservation scores. Use for programmatic access to UCSC annotations; use Ensembl REST API instead for Ensembl-native gene IDs and VEP variant annotation."
     date_added: "2026-03-08"
 
@@ -1398,7 +1398,7 @@ entries:
     type: skill
     sub_type: guide
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/busco-status-interpretation/SKILL.md"
+    path: "skills/genomics-bioinformatics/qc/busco-status-interpretation/SKILL.md"
     description: "Guide to correctly interpreting BUSCO completeness statuses. Covers why Duplicated BUSCOs count as complete, how to parse BUSCO output files, and how to compute and compare completeness across proteomes and genomes."
     date_added: "2026-03-31"
 
@@ -1406,7 +1406,7 @@ entries:
     type: skill
     sub_type: guide
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/depmap-crispr-essentiality/SKILL.md"
+    path: "skills/genomics-bioinformatics/databases/depmap-crispr-essentiality/SKILL.md"
     description: "Guide to DepMap CRISPR gene effect (Chronos) data analysis. Covers the critical sign convention for essentiality interpretation, per-gene NaN-safe Spearman correlation computation, and data loading/alignment patterns."
     date_added: "2026-03-31"
 
@@ -1414,7 +1414,7 @@ entries:
     type: skill
     sub_type: guide
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/vcf-variant-filtering/SKILL.md"
+    path: "skills/genomics-bioinformatics/variant/vcf-variant-filtering/SKILL.md"
     description: "Guide to mandatory quality filtering of raw/unfiltered VCF files before computing summary statistics such as Ts/Tv ratio, variant counts, or allele frequency distributions. Covers detection of raw VCFs, QUAL-based filtering with bcftools, and when NOT to filter."
     date_added: "2026-03-31"
 
@@ -1534,7 +1534,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/bakta-genome-annotation/SKILL.md"
+    path: "skills/genomics-bioinformatics/annotation/bakta-genome-annotation/SKILL.md"
     description: "Annotate bacterial and archaeal genomes and plasmids with Bakta's Prodigal/HMM/DIAMOND pipeline against a curated UniRef-derived database. Identifies CDS, ncRNA, tRNA, rRNA, tmRNA, sORFs, CRISPR arrays, and replication origins. Produces NCBI-compatible GFF3, GenBank, EMBL, FASTA, JSON, TSV, and a circular Circos plot. Use Prokka for legacy pipelines or non-bacterial kingdoms; PGAP for NCBI GenBank submission; Bakta for faster, regularly updated annotation."
     date_added: "2026-05-08"
 
@@ -1542,7 +1542,7 @@ entries:
     type: skill
     sub_type: pipeline
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/roary-pangenome/SKILL.md"
+    path: "skills/genomics-bioinformatics/annotation/roary-pangenome/SKILL.md"
     description: "Compute the bacterial pan-genome from Prokka/Bakta GFF3 annotations with Roary's CD-HIT + BLASTP + MCL clustering pipeline. Outputs the gene presence/absence matrix, core/soft-core/shell/cloud partitions, a non-redundant pan-genome reference FASTA, and an optional concatenated core-gene alignment for phylogenetics. Use Panaroo for fragmented assemblies or noisy annotations; PIRATE for paralog-aware multi-threshold clustering; PPanGGOLiN for graph-based statistical partitioning."
     date_added: "2026-05-08"
 
