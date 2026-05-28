@@ -1,6 +1,20 @@
 ---
 name: sciagent-skill-creator
-description: Scaffold a new SciAgent-Skills entry — picks the correct template (pipeline/toolkit/database/guide), creates skills/{category}/{name}/SKILL.md with valid frontmatter, appends the registry.yaml entry, and runs validation. Use when adding a new SKILL.md to this repo instead of authoring every field by hand. Enforces name uniqueness, kebab-case, description keyword rules, and the schema rules documented in CLAUDE.md.
+description: |
+  Scaffold a new SciAgent-Skills entry. Picks pipeline/toolkit/database/guide template,
+  creates skills/{category}/{name}/SKILL.md with valid frontmatter, appends the
+  registry.yaml entry, runs validation. Enforces name uniqueness, kebab-case,
+  description keyword rules, schema rules from CLAUDE.md.
+
+  TRIGGER when user says (any language): "add a SciAgent skill", "add a skill for <X>",
+  "create new skill", "create a SKILL.md for <X>", "scaffold a skill", "new skill entry",
+  "register a skill", "신규 skill 추가", "스킬 만들어줘", "스킬 생성", "skill 만들어",
+  or any request to add a new SKILL.md to this repo. ALWAYS invoke this skill BEFORE
+  writing to skills/ or registry.yaml.
+
+  DO NOT TRIGGER when: editing existing entry's content (just edit the file directly);
+  migrating an existing entry (read CLAUDE.md "Migrating from Existing Entries" first);
+  only updating registry.yaml without creating a new SKILL.md.
 ---
 
 # SciAgent Skill Creator
