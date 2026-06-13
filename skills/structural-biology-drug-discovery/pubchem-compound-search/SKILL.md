@@ -253,7 +253,8 @@ A small fraction of fast searches return `IdentifierList` directly on the first 
 | --------------------- | ----------------------------------------- |
 | `MolecularWeight`     | Molecular weight (g/mol, string)          |
 | `MolecularFormula`    | Hill-system formula                       |
-| `SMILES`              | Canonical SMILES (the 2025+ name; the old `CanonicalSMILES` may still work) |
+| `SMILES`              | Isomeric SMILES, with stereochemistry (2025+ name; was `IsomericSMILES`) |
+| `ConnectivitySMILES`  | Connectivity-only SMILES, no stereo (2025+ name; was `CanonicalSMILES`) |
 | `IUPACName`           | Curated IUPAC name                        |
 | `InChI` / `InChIKey`  | IUPAC InChI / InChIKey                    |
 | `XLogP`               | Computed logP (octanol/water)             |
@@ -417,7 +418,7 @@ for cid in cids[:3]:
 
 7. **For 100+ CIDs use POST.** GET URLs over ~2000 chars get truncated by some HTTP proxies. PubChem also accepts `POST` with `cid` in the form body: `requests.post(f"{BASE}/compound/cid/property/MolecularWeight/JSON", data={"cid": cid_csv})`.
 
-8. **`SMILES` vs `CanonicalSMILES`.** PubChem renamed the canonical SMILES property to plain `SMILES` in the 2025 PUG-REST schema. Use `SMILES` in new code; the response field is also keyed `SMILES`.
+8. **2025 SMILES property rename.** PubChem renamed two SMILES properties in the 2025 PUG-REST schema: old `IsomericSMILES` (with stereo) → `SMILES`, and old `CanonicalSMILES` (connectivity only, no stereo) → `ConnectivitySMILES`. The URL path still accepts the legacy names as *input* (e.g. `/property/CanonicalSMILES/JSON` returns 200), but the response JSON is keyed with the **new** names. So a request succeeds and only the parse step breaks with `KeyError`. Use `SMILES` / `ConnectivitySMILES` in new code and read those keys.
 
 ## Common Recipes
 
@@ -513,7 +514,7 @@ print(r.json()["PropertyTable"]["Properties"][0]["MolecularWeight"])
 | HTTP 202 stuck in `{"Waiting":...}` for a similarity/substructure call           | Async job still running                                                            | Poll `/compound/listkey/{key}/cids/JSON` every 2s up to ~30s; reduce `MaxRecords` if it never completes                              |
 | HTTP 503 `PUGREST.ServerBusy`                                                   | Tripped the 5-req/s or 400-req/min rate limit                                      | Insert `time.sleep(0.25)` in loops; use the Retry session in Recipe 4; reduce concurrency                                            |
 | HTTP 400 on a SMILES URL                                                        | SMILES wasn't URL-encoded                                                          | Wrap in `urllib.parse.quote(smi, safe="")` — `#`, `+`, `/` and `\` all break path parsing                                            |
-| `KeyError: 'SMILES'`                                                            | Asked for `CanonicalSMILES` (old name); 2025 PUG-REST returns just `SMILES`        | Use `SMILES` in the property CSV and read `p["SMILES"]`                                                                              |
+| `KeyError: 'CanonicalSMILES'` / `KeyError: 'IsomericSMILES'`                    | Requested old name; URL returns 200 but 2025 JSON is keyed `ConnectivitySMILES` / `SMILES` | Read `p["ConnectivitySMILES"]` (connectivity, no stereo) or `p["SMILES"]` (with stereo); update the property CSV to the new names    |
 | `TypeError: '>' not supported between instances of 'str' and 'int'`             | `MolecularWeight` is a string                                                      | `float(p["MolecularWeight"])` before any arithmetic comparison                                                                       |
 | Batch `cid/2244,3672,...` returns only some rows                                | URL exceeded server limit                                                          | Switch to `requests.post(url, data={"cid": "2244,3672,..."})`; same URL minus the value, body carries the CSV                        |
 | Empty `assaysummary` Table                                                      | CID has no bioassay records                                                        | Not all compounds are assayed; verify on the PubChem web page                                                                        |
