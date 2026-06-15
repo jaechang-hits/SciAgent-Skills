@@ -243,6 +243,8 @@ write.csv(sig_genes, "deseq2_significant.csv")
 
 ### Step 7: Visualize — MA Plot, Volcano Plot, and Heatmap
 
+> **Compute/viz separation (required):** Do not combine DESeq2 computation and plotting in the same code block. Step 6 (or Step 5) saves the results CSV; this step loads that CSV and produces plots only. This way plots can be regenerated or restyled without re-running the expensive computation.
+
 ```r
 library(EnhancedVolcano)
 library(pheatmap)
