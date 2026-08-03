@@ -65,8 +65,29 @@ def profile_maxima(trj, prominence_kj=2.0):
 
 
 def barrier_kj(log):
+    """Fallback: barrier of the TS above the first COS image (not endpoint-referenced)."""
     m = re.findall(r"Barrier between TS and first COS image:\s*(-?\d+\.?\d*)", log)
     return float(m[-1]) if m else None
+
+
+def endpoint_barriers_kj(log):
+    """Parse pysisyphus's final BARRIERS block (Left / TS / Right, relative to the
+    global minimum). Returns (dE_forward, dE_reaction) in kJ/mol, both referenced to
+    the reactant endpoint — the numbers to actually report. None if the block is absent.
+
+    Preferred over barrier_kj(): "TS vs first COS image" ignores the endpoint
+    reoptimization and typically understates the true dE-double-dagger.
+    """
+    def _val(label):
+        m = re.findall(rf"\b{label}:\s*(-?\d+\.\d+)\s*kJ", log)
+        return float(m[-1]) if m else None
+
+    left, ts, right = _val("Left"), _val("TS"), _val("Right")
+    if left is None or ts is None:
+        return None
+    d_fwd = ts - left
+    d_rxn = (right - left) if right is not None else None
+    return d_fwd, d_rxn
 
 
 def main():
@@ -133,9 +154,18 @@ def main():
     for status, name, detail in rows:
         print(f"  [{status}] {name:<{width}}  {detail}")
 
-    b = barrier_kj(log)
-    if b is not None:
-        print(f"\n  electronic barrier (GFN2-xTB): {b:.1f} kJ/mol = {b / 4.184:.2f} kcal/mol")
+    eb = endpoint_barriers_kj(log)
+    if eb is not None:
+        d_fwd, d_rxn = eb
+        print(f"\n  electronic barrier dE‡ (GFN2-xTB): {d_fwd:.1f} kJ/mol = {d_fwd / 4.184:.2f} kcal/mol")
+        if d_rxn is not None:
+            print(f"  reaction energy dE_rxn:            {d_rxn:.1f} kJ/mol = {d_rxn / 4.184:.2f} kcal/mol")
+        print("  (referenced to the reactant endpoint; add Hessian thermal corrections for dG‡)")
+    else:
+        b = barrier_kj(log)
+        if b is not None:
+            print(f"\n  barrier vs first COS image (GFN2-xTB): {b:.1f} kJ/mol = {b / 4.184:.2f} kcal/mol")
+            print("  (no endpoint BARRIERS block found; this understates dE‡ if endopt ran)")
     print(f"\n  => {'all gates passed' if ok else 'VERIFICATION FAILED, do not report this barrier'}\n")
     return 0 if ok else 1
 

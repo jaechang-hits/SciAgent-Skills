@@ -21,14 +21,21 @@ barrier by tens of kJ/mol relative to ΔH‡.
 ## Getting the corrections
 
 The pipeline's TS Hessian, plus Hessians on the reactant and product, supply everything needed.
-With pysisyphus these come from the `do_hess` output; with xtb directly:
+With pysisyphus these come from the `do_hess` output; with xtb directly, **using the same
+charge, spin, and solvent as the pipeline, on the optimized endpoint geometry**:
 
 ```bash
-xtb reactant.xyz --hess --gfn 2 --etemp 300
+xtb forward_end_final_geometry.xyz --hess --gfn 2 --alpb water --chrg -1 --uhf 0
 ```
 
 The thermochemistry block reports ZPE, H(T) − H(0), entropy, and G. Take the differences
 between TS and reactant.
+
+**Consistency is not optional.** ΔG‡ = G(TS) − G(reactant) is only meaningful if both Hessians
+share the level of theory, charge, spin, and solvent used to locate the TS, and if the reactant
+Hessian is on the *relaxed* endpoint the barrier is referenced to — not the raw input geometry.
+A gas-phase Hessian differenced against a solvated barrier, or a Hessian with the wrong
+`--chrg`, is the most common way to produce a physically impossible (often negative) ΔG‡.
 
 Two standard caveats apply to the rigid-rotor harmonic-oscillator treatment every one of these
 codes uses. Low-frequency modes below ~50–100 cm⁻¹ contribute spuriously large entropies, so a
@@ -47,6 +54,15 @@ The barrier depends on what the reactant is taken to be:
 Neither is wrong, but they are not interchangeable. Record which was used. NEB converges far
 more reliably from the pre-reaction complex, so that is normally what the pipeline produces by
 default — which makes the distinction easy to lose track of.
+
+For an ion reacting with a neutral (e.g. anionic SN2, F⁻ + CH₃Cl), the gas-phase ion–dipole
+pre-reaction complex is deep enough that the TS lies *below* the separated reactants — a
+**submerged barrier**. Against separated reactants ΔE‡ is then negative; against the
+pre-reaction complex it is positive. Report the pre-complex-referenced value (what the pipeline
+gives), and add implicit solvation, which screens the ion–dipole attraction and lifts the
+barrier to a positive, experiment-comparable number. A negative barrier here is a reference-state
+artifact, not an error — but a negative barrier *after* solvation usually means the Hessian and
+the path used different settings (see the consistency note above).
 
 ## Refining the electronic energy
 
