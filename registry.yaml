@@ -1578,3 +1578,10 @@ entries:
     description: "3Dmol.js WebGL molecular visualization emitted as self-contained HTML. Render structures (PDB/SDF/XYZ/MOL2/cube) with stick, sphere, cartoon, line, and surface styles; animate trajectories with a frame-delay (interval, ms) control; and animate vibrational normal modes via vibrate() from per-atom dx/dy/dz displacements or from precomputed frames. Output standalone HTML that loads 3Dmol from a CDN, with optional play/pause and speed controls. Use for transition-state imaginary-mode animations, MD or reaction-path playback, docking poses, and orbital/density isosurfaces. For static 2D chemical structure drawings use rdkit-chemdraw-cdxml; for 2D statistical plots use matplotlib or plotly."
     date_added: "2026-08-15"
     tags: ["molecular-visualization"]
+  - name: "neb-irc-activation-energy"
+    type: skill
+    sub_type: pipeline
+    category: "scientific-computing"
+    path: "skills/scientific-computing/neb-irc-activation-energy/SKILL.md"
+    description: "NEB-IRC activation energy pipeline for reaction barriers using GFN2-xTB and pysisyphus. Optimize reactant and product geometries, run CI-NEB path search, optimize the transition state with a Hessian, verify with IRC (one imaginary mode, endpoints matching reactant/product, single NEB maximum), and report the electronic and Gibbs barriers. Use when you need a transition state, reaction barrier, activation energy, minimum energy path, or intrinsic reaction coordinate. Covers reactant/product atom-ordering pitfalls, feasibility sizing for single-core runs, and thermochemistry corrections. For 2D reaction scheme drawing use rdkit-chemdraw-cdxml."
+    date_added: "2026-08-03"
