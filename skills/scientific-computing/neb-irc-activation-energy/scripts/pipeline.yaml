@@ -1,0 +1,43 @@
+# Full reaction-path pipeline: preopt -> IDPP -> CI-NEB -> TS opt -> IRC -> endpoint check.
+# Place alongside reactant.xyz and product.xyz, then:  pysis pipeline.yaml > pipeline.log 2>&1
+#
+# reactant.xyz and product.xyz MUST share an identical atom ordering. Build the product by
+# editing a copy of the reactant, never independently.
+
+geom:
+ type: cart
+ fn: [reactant.xyz, product.xyz]
+
+preopt:                    # relax both endpoints before interpolating
+
+interpol:
+ type: idpp               # linear interpolation causes atom clashes the NEB must then undo
+ between: 8               # 8 intermediate images -> 10 total
+
+calc:
+ type: xtb
+ pal: 1                   # match to physical cores; xtb parallel efficiency is modest
+ gfn: 2
+ charge: 0                # set explicitly, do not rely on the default
+ mult: 1
+ # alpb: water            # uncomment for implicit solvation (any xtb solvent name)
+
+cos:
+ type: neb
+ climb: True              # climbing image, gives a usable TS guess
+
+opt:
+ type: lbfgs             # 'qm' (QuickMin) can crash on the first cycle; lbfgs is robust
+ align: True
+ max_cycles: 80           # raise to 150-200 above ~50 atoms
+
+tsopt:
+ type: rsirfo             # eigenvector-following saddle point search
+ do_hess: True            # required: the imaginary frequency check depends on it
+ thresh: gau
+
+irc:
+ type: eulerpc
+ rms_grad_thresh: 0.001
+
+endopt:                    # relaxes IRC endpoints and compares them back to the inputs
