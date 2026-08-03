@@ -1,6 +1,6 @@
 ---
 name: "neb-irc-activation-energy"
-description: "NEB-IRC activation energy pipeline for reaction barriers using GFN2-xTB and pysisyphus. Optimize reactant and product geometries, run CI-NEB path search, optimize the transition state with a Hessian, verify with IRC (one imaginary mode, endpoints matching reactant/product, single NEB maximum), and report the electronic and Gibbs barriers. Use when you need a transition state, reaction barrier, activation energy, minimum energy path, or intrinsic reaction coordinate. Covers reactant/product atom-ordering pitfalls, feasibility sizing for single-core runs, and thermochemistry corrections. For 2D reaction scheme drawing use rdkit-chemdraw-cdxml."
+description: "NEB-IRC activation energy pipeline for reaction barriers using GFN2-xTB and pysisyphus. Optimize reactant and product geometries, run CI-NEB path search, optimize the transition state with a Hessian, verify with IRC (one imaginary mode, endpoints matching reactant/product, single NEB maximum), and report the electronic and Gibbs barriers. Use when you need a transition state, reaction barrier, activation energy, minimum energy path, or intrinsic reaction coordinate. Covers reactant/product atom-ordering pitfalls, feasibility sizing for single-core runs, and thermochemistry corrections. Renders an IRC energy-profile plot and an animated TS imaginary-mode HTML viewer. For 2D reaction scheme drawing use rdkit-chemdraw-cdxml."
 license: "CC-BY-4.0"
 ---
 
@@ -11,10 +11,11 @@ license: "CC-BY-4.0"
 Computes a reaction activation energy end to end: optimize reactant and product, find the
 minimum energy path with climbing-image NEB, refine the transition state with a Hessian, and
 confirm it with IRC. The engine is GFN2-xTB through pysisyphus, which needs no conda and no
-Fortran compiler. Output is a verified transition state geometry and a barrier (ΔE‡, and ΔG‡
-once thermal corrections are applied). A converged TS optimization means nothing until the
-imaginary mode and the IRC endpoints are checked, so verification is a required stage, not an
-optional one.
+Fortran compiler. Output is a verified transition state geometry, a barrier (ΔE‡, and ΔG‡ once
+thermal corrections are applied), and two standard visual deliverables — an **IRC energy
+profile** (`irc_energy_profile.png`) and an animated **TS imaginary-mode** viewer
+(`ts_imaginary_mode.html`). A converged TS optimization means nothing until the imaginary mode
+and the IRC endpoints are checked, so verification is a required stage, not an optional one.
 
 ## When to Use
 
@@ -32,6 +33,7 @@ drawing the reaction as a 2D scheme figure, use the `rdkit-chemdraw-cdxml` skill
 ## Prerequisites
 
 - **Tools**: `xtb` (GFN2-xTB engine), `pysisyphus` (`pysis` CLI for the path pipeline)
+- **Python**: `matplotlib` for the IRC energy plot (the TS animation HTML needs no packages)
 - **Input**: `reactant.xyz` and `product.xyz` with **identical atom ordering** (see Step 2)
 - **Environment**: single core is enough; set `OMP_NUM_THREADS` to match physical cores
 
@@ -51,7 +53,7 @@ locally:
 import os
 os.makedirs("/tmp/rxn", exist_ok=True); os.chdir("/tmp/rxn")
 _SKILL = "/SciAgent-Skills/skills/scientific-computing/neb-irc-activation-energy/scripts"
-for name in ("setup_env.sh", "pipeline.yaml", "check_result.py"):
+for name in ("setup_env.sh", "pipeline.yaml", "check_result.py", "make_visuals.py"):
     open(name, "w").write(read_file(f"{_SKILL}/{name}"))   # read_file = your file tool
 ```
 
@@ -189,6 +191,25 @@ xtb ts_final_geometry.xyz          --hess --gfn 2 --alpb water --chrg -1 --uhf 0
 grep -i "TOTAL FREE ENERGY" r_hess.log ts_hess.log
 ```
 
+### Step 7: Generate the two visual deliverables
+
+Always deliver both, alongside the numbers. `make_visuals.py` produces them in one call: the
+IRC energy profile (`irc_energy_profile.png`) and the animated TS imaginary-mode viewer
+(`ts_imaginary_mode.html`). It reads gfn/charge/mult/solvent straight from `pipeline.yaml`, so
+the IRC single-point energies are recomputed at the pipeline's exact level — no need to
+re-specify them (override with `--charge/--mult/--alpb/--gfn` only if the pipeline was edited
+after running).
+
+```bash
+python3 make_visuals.py            # -> irc_energy_profile.png + ts_imaginary_mode.html
+# recomputes ~2N single points along the IRC (N = images per direction); cheap at xTB level
+```
+
+The IRC energies are recomputed per frame because pysisyphus writes `forward_irc.trj` /
+`backward_irc.trj` with bare `step N` comment lines that carry no energy. The animation reuses
+`ts_imaginary_mode_000.trj`, which `tsopt: do_hess: True` already wrote — open the HTML in a
+browser (it pulls 3Dmol.js from a CDN) to see the mode play back and forth.
+
 ## Key Parameters
 
 Set in `pipeline.yaml` unless noted.
@@ -280,6 +301,9 @@ print(f"DFT dE‡ = {(e_ts - e_r) * 2625.4996:.1f} kJ/mol (add xTB G_corr for dG
 - `ts_final_geometry.xyz` — the optimized transition state
 - `final_geometries.trj` — the converged NEB path (per-image energies in comment lines)
 - `left_ts_right_geoms.trj` — IRC endpoints plus TS, for the connectivity check
+- `ts_imaginary_mode_000.trj` — TS displaced along the imaginary mode (input to the animation)
+- `irc_energy_profile.png` — IRC step vs relative energy, TS marked (Step 7)
+- `ts_imaginary_mode.html` — animated 3D viewer of the imaginary vibrational mode (Step 7)
 - A barrier: ΔE‡ from the log, ΔG‡ after applying Hessian thermal corrections
 
 ## Troubleshooting
@@ -299,12 +323,16 @@ print(f"DFT dE‡ = {(e_ts - e_r) * 2625.4996:.1f} kJ/mol (add xTB G_corr for dG
 | IRC endpoints don't match inputs | TS connects different species | Do not report; find the TS for the intended reaction |
 | Job killed / never finishes | System too large for the budget | Check `references/feasibility.md`; split stages or shrink the model |
 | `qm` optimizer crashes on cycle 1 | QuickMin instability | Use `type: lbfgs` under `opt` (the template default) |
+| IRC plot flat / all-zero energies | Read `*_irc.trj` comment lines (no energy there) | `make_visuals.py` recomputes per-frame single points — use it instead of parsing the trj |
+| `No imaginary-mode trajectory found` | `ts_imaginary_mode_000.trj` absent | Ensure `tsopt: do_hess: True` ran; re-run tsopt so the Hessian/mode is written |
+| Animation HTML blank | 3Dmol.js blocked (offline / strict CSP) | Open with network access; the viewer loads 3Dmol from a CDN |
 
 ## Bundled Resources
 
 - `scripts/setup_env.sh` — installs xtb (GitHub release) + pysisyphus (PyPI), writes `env.sh`
 - `scripts/pipeline.yaml` — full preopt→NEB→TSopt→IRC→endopt template with inline comments
 - `scripts/check_result.py` — automated verification of the three gates (exit 0 = all pass)
+- `scripts/make_visuals.py` — builds `irc_energy_profile.png` + `ts_imaginary_mode.html` in one call
 - `references/feasibility.md` — measured timings, atom-count sizing, what DFT can/can't do here
 - `references/energetics.md` — ΔE‡/ΔH‡/ΔG‡ definitions, thermochemistry, reporting conventions
 
