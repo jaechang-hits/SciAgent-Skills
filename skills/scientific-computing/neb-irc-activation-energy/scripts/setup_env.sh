@@ -8,8 +8,11 @@
 # Runs in 2-3 minutes. Re-run per session if the filesystem does not persist.
 set -euo pipefail
 
-ROOT=${ROOT:-$HOME/xtbenv}          # override with ROOT=/path bash setup_env.sh
-XTB_VERSION=${XTB_VERSION:-6.7.1}
+# Some sandboxes leave HOME unset; guard it so `set -u` does not abort here, and
+# so pip has a cache dir to write to.
+export HOME="${HOME:-/tmp}"
+ROOT="${ROOT:-$HOME/xtbenv}"        # override with ROOT=/path bash setup_env.sh
+XTB_VERSION="${XTB_VERSION:-6.7.1}"
 mkdir -p "$ROOT" && cd "$ROOT"
 
 if [ ! -d xtb-dist ]; then
@@ -38,6 +41,6 @@ EOF
 # shellcheck disable=SC1091
 source "$ROOT/env.sh"
 echo "xtb: $(xtb --version 2>&1 | grep -ioP 'version \S+' | head -1)"
-echo "pysisyphus: $(python3 -c 'import pysisyphus; print(pysisyphus.__version__)')"
+echo "pysisyphus: $(python3 -c 'from importlib.metadata import version; print(version("pysisyphus"))')"
 echo
 echo "run 'source $ROOT/env.sh' in every new shell"

@@ -35,22 +35,44 @@ drawing the reaction as a 2D scheme figure, use the `rdkit-chemdraw-cdxml` skill
 - **Input**: `reactant.xyz` and `product.xyz` with **identical atom ordering** (see Step 2)
 - **Environment**: single core is enough; set `OMP_NUM_THREADS` to match physical cores
 
-Check first, install only if missing. Inside a pixi/conda project, invoke tools via the
-project runner (e.g. `pixi run xtb`) rather than a global install.
+**Run on a local filesystem, not a mounted/networked workspace.** pysisyphus creates and
+deletes symlinks as it runs; on s3fs/FUSE-mounted directories that throws a `PermissionError`
+mid-run and the whole pipeline dies. Work in a local scratch dir (e.g. `/tmp/rxn/`) and copy
+results back out at the end.
+
+**Materialize the bundled scripts into the scratch dir first.** The `scripts/` files can be
+*read* from the skill path but are not on the execution sandbox's path — `bash scripts/setup_env.sh`
+from the wrong directory gives "No such file or directory", and they are **not** fetchable from
+GitHub. Read each with your file tool using the **leading-slash** skill path (a path without the
+leading `/` is looked up in the sandbox workdir, where the file does not exist) and write it
+locally:
+
+```python
+import os
+os.makedirs("/tmp/rxn", exist_ok=True); os.chdir("/tmp/rxn")
+_SKILL = "/SciAgent-Skills/skills/scientific-computing/neb-irc-activation-energy/scripts"
+for name in ("setup_env.sh", "pipeline.yaml", "check_result.py"):
+    open(name, "w").write(read_file(f"{_SKILL}/{name}"))   # read_file = your file tool
+```
+
+Then check for the tools, installing only if missing. Inside a pixi/conda project, invoke via
+the project runner (e.g. `pixi run xtb`) instead.
 
 ```bash
+cd /tmp/rxn
 command -v xtb && command -v pysis && echo "already installed" || \
-  bash scripts/setup_env.sh   # fetches xtb binary + pip-installs pysisyphus, ~2-3 min
-source "${ROOT:-$HOME/xtbenv}/env.sh"
+  bash setup_env.sh           # fetches xtb binary + pip-installs pysisyphus, ~2-3 min
+source "${ROOT:-${HOME:-/tmp}/xtbenv}/env.sh"
 ```
 
 ## Quick Start
 
 ```bash
-# reactant.xyz and product.xyz already prepared with identical atom ordering
-cp scripts/pipeline.yaml .
+# in the local scratch dir, scripts materialized, env sourced (see Prerequisites)
+# reactant.xyz and product.xyz prepared with identical atom ordering
+# edit pipeline.yaml: set charge/mult (and alpb solvent) for YOUR system before running
 pysis pipeline.yaml > pipeline.log 2>&1          # preopt -> NEB -> TS opt -> IRC
-python3 scripts/check_result.py pipeline.log     # three verification gates
+python3 check_result.py pipeline.log             # three verification gates + dE‡, dE_rxn
 # only report the barrier if every gate passes
 ```
 
@@ -62,9 +84,9 @@ python3 scripts/check_result.py pipeline.log     # three verification gates
 neither needs conda-forge. Keep threads matched to physical cores — on one core, `OMP_NUM_THREADS=1`.
 
 ```bash
-bash scripts/setup_env.sh
-source "${ROOT:-$HOME/xtbenv}/env.sh"
-xtb --version && python3 -c "import pysisyphus; print(pysisyphus.__version__)"
+bash setup_env.sh
+source "${ROOT:-${HOME:-/tmp}/xtbenv}/env.sh"
+xtb --version && python3 -c "from importlib.metadata import version; print('pysisyphus', version('pysisyphus'))"
 ```
 
 ### Step 2: Prepare reactant and product geometries
@@ -115,13 +137,24 @@ assert abs(dr - dp) > 0.3, "endpoints nearly identical: move the reacting fragme
 
 The template chains preopt → IDPP interpolation → CI-NEB → RS-I-RFO TS optimization with
 Hessian → IRC both directions → endpoint reoptimization. Use IDPP, not linear interpolation,
-which produces atom clashes the NEB then wastes cycles undoing. Set `charge` and `mult`
-explicitly in the YAML; raise `max_cycles` to 150–200 above ~50 atoms.
+which produces atom clashes the NEB then wastes cycles undoing. **Set `charge` and `mult` in
+`pipeline.yaml` before running** — the default `charge: 0` is wrong for any ion, and a wrong
+charge converges silently to a meaningless TS. Add `alpb: <solvent>` for solution reactions.
+Whatever you set here must match every standalone `xtb` call in Step 6. Raise `max_cycles` to
+150–200 above ~50 atoms.
 
 ```bash
-cp scripts/pipeline.yaml .
 pysis pipeline.yaml > pipeline.log 2>&1
-tail -20 pipeline.log            # confirm it reached the endopt / IRC stage
+tail -40 pipeline.log            # confirm it reached endopt/IRC and printed the BARRIERS block
+```
+
+Read ΔE‡ and the reaction energy from the pipeline's own **`| BARRIERS |`** block (referenced
+to the reactant endpoint), not from a NEB-image estimate:
+
+```
+  Left:     0.00 kJ mol-1      # reactant endpoint
+    TS:   107.84 kJ mol-1      # dE‡ = 107.84 kJ/mol (TS - Left)
+ Right:    10.19 kJ mol-1      # dE_rxn = 10.19 kJ/mol (Right - Left)
 ```
 
 ### Step 5: Verify the transition state (three gates)
@@ -130,23 +163,30 @@ Never report a barrier before this passes. The checker parses the log and applie
 gates, returning exit code 0 only if every one passes.
 
 ```bash
-python3 scripts/check_result.py pipeline.log
-# [PASS] imaginary frequencies  exactly 1 at -1243.5 cm-1
+python3 check_result.py pipeline.log
+# [PASS] imaginary frequencies  exactly 1 at -621.8 cm-1
 # [PASS] IRC endpoints          forward and backward matched distinct inputs
-# [PASS] NEB profile            elementary, single barrier, span 62.4 kJ/mol
+# [PASS] NEB profile            elementary, single barrier, span 107.5 kJ/mol
+#   electronic barrier dE‡ (GFN2-xTB): 107.8 kJ/mol = 25.77 kcal/mol
 ```
 
 ### Step 6: Compute thermochemistry and report the barrier
 
 At minimum report ΔE‡ and the level of theory. For comparison against experimental rates the
-user needs ΔG‡, which requires thermal corrections from Hessians on the TS and reactant. State
-which quantity is being reported — several differ by tens of kJ/mol (see
-`references/energetics.md`).
+user needs ΔG‡, which requires thermal corrections from Hessians on the TS and reactant.
+
+**Every standalone `xtb` call must use the same `--chrg`, `--uhf`, and solvent as `pipeline.yaml`,
+and run on the pipeline's optimized endpoint/TS geometries — not the raw input.** A gas-phase
+Hessian against a solvated barrier (or a missing `--chrg`) produces a nonsensical ΔG‡ — a
+negative value is the usual symptom. Use `forward_end_final_geometry.xyz` (the relaxed reactant
+endpoint) and `ts_final_geometry.xyz`.
 
 ```bash
-xtb reactant.xyz --hess --gfn 2 --etemp 300 > reactant_hess.log 2>&1
-# read ZPE, H(T)-H(0), entropy, G from the thermochemistry block; take TS - reactant deltas
-grep -iE "zero point|total free energy|G\(RRHO\)" reactant_hess.log
+# charge -1, aqueous, matching a pipeline.yaml with `charge: -1` and `alpb: water`
+xtb forward_end_final_geometry.xyz --hess --gfn 2 --alpb water --chrg -1 --uhf 0 > r_hess.log 2>&1
+xtb ts_final_geometry.xyz          --hess --gfn 2 --alpb water --chrg -1 --uhf 0 > ts_hess.log 2>&1
+# dG‡ = G(TS) - G(reactant); take the difference of "TOTAL FREE ENERGY"
+grep -i "TOTAL FREE ENERGY" r_hess.log ts_hess.log
 ```
 
 ## Key Parameters
@@ -180,6 +220,14 @@ Set in `pipeline.yaml` unless noted.
 ΔE‡+ZPE, ΔH‡, ΔG‡ (for kinetics). For bimolecular reactions the reference state (separated
 reactants vs pre-reaction complex) shifts the number — record which was used. Full table in
 `references/energetics.md`.
+
+**Submerged barriers.** For an ion + neutral in the gas phase (e.g. an anionic SN2), the TS
+often sits *below* the separated reactants because the ion–dipole pre-reaction complex is deep.
+A negative ΔE‡/ΔG‡ measured against separated reactants is then physically real, not a bug —
+but it means the reference state must be the pre-reaction complex, and/or you should add
+solvation (`alpb`), which raises the barrier back to a positive, experiment-comparable value.
+This is exactly why the pipeline references the barrier to the reactant *endpoint*, and why the
+thermochemistry Hessians must use the same solvent as the pipeline.
 
 ## Common Recipes
 
@@ -238,7 +286,12 @@ print(f"DFT dE‡ = {(e_ts - e_r) * 2625.4996:.1f} kJ/mol (add xTB G_corr for dG
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| `xtb: command not found` | Env not sourced | `source "${ROOT:-$HOME/xtbenv}/env.sh"` in every new shell |
+| `xtb: command not found` | Env not sourced | `source "${ROOT:-${HOME:-/tmp}/xtbenv}/env.sh"` in every new shell |
+| `scripts/…: No such file or directory` / GitHub 404 | Bundled scripts not on sandbox path | Materialize them via the leading-slash skill path + `read_file` (Prerequisites); don't fetch from GitHub |
+| `setup_env.sh: HOME: unbound variable` | `HOME` unset under `set -u` | Fixed in the shipped script; if patching, `export HOME="${HOME:-/tmp}"` first |
+| `PermissionError` on a symlink mid-run | pysisyphus symlinks on a mounted/s3fs dir | Run in a local dir (`/tmp/rxn/`), copy results back (Prerequisites) |
+| ΔG‡ negative or absurd | Hessian charge/solvent ≠ pipeline, or raw input geometry used | Match `--chrg`/`--uhf`/`alpb` to `pipeline.yaml`; use the optimized endpoint geometry (Step 6) |
+| Barrier below separated reactants | Submerged barrier for ion + neutral | Expected in gas phase; reference to the pre-reaction complex and/or add `alpb` solvation |
 | NEB profile nearly flat, TS search aborts | Endpoints in the same basin | Move the reacting fragment further out (Step 3) |
 | Path is chemically nonsensical | Permuted atom order between endpoints | Rebuild product from a copy of the reactant (Step 2) |
 | Zero imaginary frequencies | Optimizer landed on a minimum | Perturb along the NEB tangent, rerun tsopt |
