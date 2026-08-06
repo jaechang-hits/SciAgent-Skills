@@ -166,7 +166,8 @@ python3 make_visuals.py            # -> irc_energy_profile.png + ts_imaginary_mo
 
 Per-frame single points are recomputed because `forward_irc.trj` / `backward_irc.trj` carry no
 energy in their comment lines. The animation reuses `ts_imaginary_mode_000.trj` (written by
-`tsopt: do_hess: True`); open the HTML in a browser (it loads 3Dmol.js from a CDN).
+`tsopt: do_hess: True`); open the HTML in a browser (it loads 3Dmol.js from a CDN) — it plays
+the mode back and forth with a play/pause button and a speed slider.
 
 ## Key Parameters
 
