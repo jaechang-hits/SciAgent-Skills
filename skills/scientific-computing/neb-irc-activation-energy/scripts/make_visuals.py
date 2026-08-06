@@ -225,10 +225,19 @@ _HTML = """<!DOCTYPE html>
     text-align:center;background:rgba(255,255,255,.9);padding:8px 16px;border-radius:8px}
  #h b{font-size:1rem}#h span{color:#c0392b;font-weight:bold}
  #v{width:100vw;height:100vh;position:relative}
+ #c{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:9;
+    display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.92);
+    padding:8px 14px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+ #c button{cursor:pointer;border:1px solid #ccc;border-radius:5px;padding:4px 10px;background:#fff}
+ #c label{font-size:.85rem;color:#555;display:flex;gap:6px;align-items:center}
 </style></head>
 <body>
  <div id="h"><b>Transition-state vibrational mode</b><br><span>__SUB__</span></div>
  <div id="v"></div>
+ <div id="c">
+  <button id="pp">⏸ Pause</button>
+  <label>Fast <input id="spd" type="range" min="40" max="400" step="10" value="140"> Slow</label>
+ </div>
  <script>
   const xyz = `__XYZ__`;
   const viewer = $3Dmol.createViewer("v", {backgroundColor: "white"});
@@ -236,7 +245,17 @@ _HTML = """<!DOCTYPE html>
   viewer.setStyle({}, {stick: {radius: 0.14}, sphere: {scale: 0.28}});
   viewer.zoomTo();
   viewer.render();
-  viewer.animate({loop: "backAndForth", interval: 70});
+  // interval = ms between frames; larger = slower. Default 140; slider spans 40 (fast)..400 (slow).
+  let interval = 140, playing = true;
+  const spd = document.getElementById("spd"), pp = document.getElementById("pp");
+  const play = () => viewer.animate({loop: "backAndForth", interval: interval});
+  play();
+  spd.oninput = e => { interval = +e.target.value; if (playing) { viewer.stopAnimate(); play(); } };
+  pp.onclick = () => {
+    playing = !playing;
+    if (playing) { play(); pp.textContent = "⏸ Pause"; }
+    else { viewer.stopAnimate(); pp.textContent = "▶ Play"; }
+  };
  </script>
 </body></html>
 """
