@@ -1591,13 +1591,13 @@ entries:
     sub_type: guide
     category: "data-visualization"
     path: "skills/data-visualization/hitsplot/SKILL.md"
-    description: "hitsplot publication-style figure authoring for omics/bioinformatics results with matplotlib/seaborn. Draws a single plot from analysis results or a data table — volcano, MA, expression/correlation heatmap, GSEA bar/dot plot, box/violin/bar/ridgeline, PCA/UMAP/t-SNE, Kaplan-Meier. Supplies a shared journal-ready style and copy-paste recipes so every figure looks like one consistent system. For combining several plots into ONE multi-panel composite figure use hitsplot-hitsmultipanel."
+    description: "hitsplot publication-style figure authoring for omics/bioinformatics results with matplotlib/seaborn. Draws a single plot from analysis results or a data table — volcano, MA, expression/correlation heatmap, GSEA bar/dot plot, box/violin/bar/ridgeline, PCA/UMAP/t-SNE, Kaplan-Meier. Supplies a shared journal-ready style and copy-paste recipes so every figure looks like one consistent system. For combining several plots into ONE multi-panel composite figure use multipanel."
     date_added: "2026-08-13"
 
-  - name: "hitsplot-hitsmultipanel"
+  - name: "multipanel"
     type: skill
     sub_type: guide
     category: "data-visualization"
-    path: "skills/data-visualization/hitsplot-hitsmultipanel/SKILL.md"
-    description: "hitsplot-hitsmultipanel assembles multiple plots into ONE publication-ready multi-panel journal figure (e.g. Figure 1 with panels A, B, C). Two approaches: (1) draw all data panels as independent subfigures with consistent style, tightly packed, correct panel letters, and per-panel legends/colorbars; (2) composite already-rendered PNG/PDF panels onto a mosaic canvas with panel letters. Exports PDF + PNG. For a single plot from a data table use hitsplot."
+    path: "skills/data-visualization/multipanel/SKILL.md"
+    description: "multipanel assembles multiple plots into ONE publication-ready multi-panel journal figure (e.g. Figure 1 with panels A, B, C). Two approaches: (1) draw all data panels as independent subfigures with consistent style, tightly packed, correct panel letters, and per-panel legends/colorbars; (2) composite already-rendered PNG/PDF panels onto a mosaic canvas with panel letters. Exports PDF + PNG. For a single plot from a data table use hitsplot."
     date_added: "2026-08-13"

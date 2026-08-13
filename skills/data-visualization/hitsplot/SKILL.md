@@ -8,7 +8,7 @@ description: >
   The figures are drawn with matplotlib / seaborn via `python_execute`; this skill
   supplies the shared style and copy-paste recipes so every figure looks like one
   consistent, journal-ready system. To combine several plots into ONE multi-panel
-  composite figure, use the sibling `hitsplot-hitsmultipanel` skill.
+  composite figure, use the sibling `multipanel` skill.
 license: Proprietary (HITS Inc.)
 ---
 
@@ -34,7 +34,7 @@ in this document.
   want a consistent publication style.
 
 > Combining several plots into one multi-panel composite, or assembling
-> user-supplied PNG/PDF panels, is handled by the sibling `hitsplot-hitsmultipanel`
+> user-supplied PNG/PDF panels, is handled by the sibling `multipanel`
 > skill — use this skill to draw each individual panel.
 
 ## Do NOT use for
@@ -153,12 +153,12 @@ SEQUENTIAL_CMAP = "viridis"  # magnitude / -log10 p / density
 
 For combining several plots into **one** multi-panel journal figure (panels A,
 B, C…), or assembling already-rendered PNG/PDF panels the user supplies, use the
-sibling **`hitsplot-hitsmultipanel`** skill — it owns the composition discipline
+sibling **`multipanel`** skill — it owns the composition discipline
 (one `subplot_mosaic` canvas, per-panel legends, correctly placed panel letters,
 text-legibility rules, image assembly). Draw each panel with the single-panel
 recipes below, then compose per that skill. The recipes here each build their
 *own* figure, so do not call them directly for a composite — copy the recipe
-**body** onto a mosaic axis as `hitsplot-hitsmultipanel` describes.
+**body** onto a mosaic axis as `multipanel` describes.
 
 ## Plot catalogue
 
@@ -378,7 +378,7 @@ ax.set_title("Kaplan–Meier"); fig.tight_layout(); fig.savefig("plots/km.png")
   are numeric and that thresholds match the data scale (adjusted vs raw p).
 
 For multi-panel composition issues (panel letters misplaced, legends floating in
-margins, panels colliding), see the `hitsplot-hitsmultipanel` skill.
+margins, panels colliding), see the `multipanel` skill.
 
 ## Further Reading
 

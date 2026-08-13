@@ -1,5 +1,5 @@
 ---
-name: hitsplot-hitsmultipanel
+name: multipanel
 description: >
   Assemble multiple plots into ONE publication-ready multi-panel journal figure
   (e.g. Figure 1 with panels A, B, C). Use whenever the user asks to combine,
@@ -15,7 +15,7 @@ description: >
 license: Proprietary (HITS Inc.)
 ---
 
-# hitsplot-hitsmultipanel
+# multipanel
 
 ## Overview
 
