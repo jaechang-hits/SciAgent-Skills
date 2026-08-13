@@ -28,11 +28,11 @@
 
 Simply equipping Claude Code with these domain-specific skills yields a **+26.7 percentage point improvement** — no fine-tuning, no custom model, just structured scientific knowledge.
 
-## Try It Now — OmicsHorizon
+## Try It Now — HyperLab
 
-Want to try these skills without any setup? **[OmicsHorizon](https://omicshorizon.ai/en/)** (오믹스 호라이즌) is the web platform powered by SciAgent-Skills. Sign up and start analyzing your bioinformatics data directly in your browser — RNA-seq, proteomics, drug screening, and more.
+Want to try these skills without any setup? **[HyperLab](https://hyperlab.ai/en/)** (하이퍼랩) is the web platform powered by SciAgent-Skills. Sign up and start analyzing your bioinformatics data directly in your browser — RNA-seq, proteomics, drug screening, and more.
 
-[![Try OmicsHorizon](https://img.shields.io/badge/Try-OmicsHorizon.ai-blue?style=for-the-badge)](https://omicshorizon.ai/en/)
+[![Try HyperLab](https://img.shields.io/badge/Try-HyperLab-blue?style=for-the-badge)](https://hyperlab.ai/en/)
 
 ---
 
@@ -296,7 +296,7 @@ Uses: `lamindb-data-management` → `reactome-pathway-analysis` → `string-prot
 | Skill types | Pipeline, Toolkit, Database, Guide | Pipeline | Pipeline |
 | Multi-agent support | Claude Code, Codex, Cursor, Windsurf | Claude Code | Claude Code |
 | Claude Code plugin | Yes | No | No |
-| Web platform | [OmicsHorizon](https://omicshorizon.ai/en/) | No | No |
+| Web platform | [HyperLab](https://hyperlab.ai/en/) | No | No |
 
 ## License
 
