@@ -39,17 +39,14 @@ scheme figure of the reaction, use the `rdkit-chemdraw-cdxml` skill instead.
 pysisyphus creates and deletes symlinks and throws `PermissionError` mid-run on s3fs/FUSE.
 Copy results out at the end.
 
-**Materialize the bundled scripts there first.** They can be read from the skill path but are
-not on the sandbox's path, and are not on GitHub. Read each with the **leading-slash** skill
-path (without the leading `/` the read hits the empty workdir) and write it locally:
+**Materialize the bundled scripts into the scratch dir first.** They can't be run in place from
+the skill directory, so use your file tools to read each one and save it into your working dir
+before running it. The scripts live in this skill's `scripts/` folder (next to this SKILL.md):
 
-```python
-import os
-os.makedirs("/tmp/rxn", exist_ok=True); os.chdir("/tmp/rxn")
-_SKILL = "/SciAgent-Skills/skills/scientific-computing/neb-irc-activation-energy/scripts"
-for name in ("setup_env.sh", "pipeline.yaml", "check_result.py", "plot_irc.py"):
-    open(name, "w").write(read_file(f"{_SKILL}/{name}"))   # read_file = your file tool
-```
+- `scripts/setup_env.sh`
+- `scripts/pipeline.yaml`
+- `scripts/check_result.py`
+- `scripts/plot_irc.py`
 
 The TS imaginary-mode animation is **not** produced here — read the
 **molecular-visualization-3dmol** skill and use its `mol_viewer.py` (Step 6).
@@ -261,7 +258,7 @@ print(f"DFT dE‡ = {dE:.1f} kJ/mol (add xTB G_corr for dG‡)")
 | Problem | Cause | Solution |
 |---------|-------|----------|
 | `xtb: command not found` | Env not sourced | `source "${ROOT:-${HOME:-/tmp}/xtbenv}/env.sh"` in every new shell |
-| `scripts/…: No such file` / GitHub 404 | Bundled scripts not on sandbox path | Materialize via the leading-slash skill path + `read_file` (Prerequisites); not on GitHub |
+| `scripts/…: No such file` / GitHub 404 | Bundled scripts not copied into the workdir | Read them from this skill's `scripts/` folder with your file tools and save locally (Prerequisites); not on GitHub |
 | `setup_env.sh: HOME: unbound variable` | `HOME` unset under `set -u` | Fixed in the shipped script; if patching, `export HOME="${HOME:-/tmp}"` first |
 | `PermissionError` on a symlink mid-run | pysisyphus symlinks on a mounted/s3fs dir | Run in a local dir (`/tmp/rxn/`), copy results back |
 | ΔG‡ negative or absurd | Hessian charge/solvent ≠ pipeline, or raw input geometry used | Match `--chrg`/`--uhf`/`alpb` to `pipeline.yaml`; use the optimized endpoint geometry (Step 5) |
