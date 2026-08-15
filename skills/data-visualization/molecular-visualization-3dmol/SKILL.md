@@ -32,13 +32,9 @@ viewer.
 - **Generator script**: `scripts/mol_viewer.py` — Python 3 standard library only, no install
 - **Optional**: `pip install py3Dmol` for notebook use (wraps the same library)
 
-No package is needed to produce or open the HTML. To fetch the scripts in a sandbox, read them
-from the skill path and write them locally (they are not on the execution sandbox's path):
-
-```python
-_SKILL = "/SciAgent-Skills/skills/data-visualization/molecular-visualization-3dmol/scripts"
-open("mol_viewer.py", "w").write(read_file(f"{_SKILL}/mol_viewer.py"))   # read_file = your file tool
-```
+No package is needed to produce or open the HTML. The generator lives in this skill's `scripts/`
+folder (next to this SKILL.md). It can't be run in place from the skill directory, so use your
+file tools to read `scripts/mol_viewer.py` and save it into your working directory before running.
 
 ## Quick Start
 
