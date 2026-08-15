@@ -4,8 +4,8 @@ description: >
   Publication-style figure authoring for omics / bioinformatics results. Use
   whenever the user asks for a (single) plot, figure, or chart from analysis
   results or a data table — volcano, MA, expression / correlation heatmap,
-  GSEA bar / dot plot, box / violin / bar / ridgeline, PCA / UMAP / t-SNE, Kaplan–Meier. 
-  The figures are drawn with matplotlib / seaborn via `python_execute`; this skill
+  GSEA bar / dot plot, box / violin / bar / ridgeline, PCA / UMAP / t-SNE, Kaplan–Meier.
+  The figures are drawn with matplotlib / seaborn; this skill
   supplies the shared style and copy-paste recipes so every figure looks like one
   consistent, journal-ready system. To combine several plots into ONE multi-panel
   composite figure, use the sibling `multipanel` skill.
@@ -16,8 +16,8 @@ license: Proprietary (HITS Inc.)
 
 ## Overview
 
-When the user wants a figure, **generate it with matplotlib / seaborn through
-`python_execute`**, applying the shared style block below. The user can hand-tune
+When the user wants a figure, **generate it with matplotlib / seaborn**,
+applying the shared style block below. The user can hand-tune
 colors, fonts, or spines per plot, but unless they ask for something specific,
 paste the style block and reuse the palette so a whole analysis reads as one
 figure system at a glance.
@@ -30,7 +30,7 @@ in this document.
 - The user asks for a plot / figure / chart / visualization from a results table
   or an in-memory DataFrame (DEG table, enrichment result, expression matrix,
   long-form measurements, survival table…).
-- You are preparing figures for a report, a paper submission or presentation and 
+- You are preparing figures for a report, a paper submission or presentation and
   want a consistent publication style.
 
 > Combining several plots into one multi-panel composite, or assembling
@@ -41,7 +41,6 @@ in this document.
 
 - Interactive dashboards or web charts (this is static matplotlib output).
 - 3D molecular structure rendering (that is the structure viewer, not a plot).
-- Simply reading / inspecting a file — see the `file-reading` skill.
 
 ## Key Concepts
 
@@ -112,7 +111,7 @@ What does the table hold?
 1. **Identify the data source** — a workspace-relative CSV/TSV path or a
    DataFrame already in memory — and the **figure type** (pick from the table
    below). If the required columns are unclear, inspect the table's header first.
-2. **Write one `python_execute` script**: paste the style block, load the data,
+2. **Write one python script**: paste the style block, load the data,
    draw the plot with the matching recipe, and save to a **workspace-relative**
    path under `plots/`.
 3. **Report the saved path** back to the user (and reference it in any report /
@@ -127,8 +126,6 @@ import matplotlib.pyplot as plt
 PUB_STYLE = {
     "figure.dpi": 110, "savefig.dpi": 300, "savefig.bbox": "tight",
     "font.family": "sans-serif",
-    # Arial if present, else an Arial-metric substitute; DejaVu Sans is bundled
-    # with matplotlib so it is ALWAYS available (prevents "Arial not found").
     "font.sans-serif": ["Arial", "Liberation Sans", "Nimbus Sans", "Helvetica", "DejaVu Sans"],
     "font.size": 11, "axes.titlesize": 13, "axes.titleweight": "bold",
     "figure.titlesize": 13, "figure.titleweight": "bold",
@@ -180,7 +177,7 @@ the column-name variables to match the actual table.
 
 ## Recipes
 
-Each is a full `python_execute` body. Adjust column names, thresholds, and the
+Each is a full python script body. Adjust column names, thresholds, and the
 save path. All save under `plots/`.
 
 **Volcano** (`-log10 p` vs `log2` fold change):
@@ -342,7 +339,7 @@ ax.set_title("Kaplan–Meier"); fig.tight_layout(); fig.savefig("plots/km.png")
   never write to absolute paths like `/tmp` or `/home/...`.
 - **Reuse the palette across a figure set** so related panels share colors for
   the same group / direction. Use the diverging colormap (centered at 0) for
-  z-scores and log2FC; the sequential colormap for magnitudes and `-log10 p`. 
+  z-scores and log2FC; the sequential colormap for magnitudes and `-log10 p`.
   However, if the user explicitly requests a different color, use it.
 - **Label axes and give a real title.** Include units, group `n`, and thresholds
   where relevant (e.g. volcano cutoff lines).
