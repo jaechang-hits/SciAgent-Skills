@@ -47,12 +47,12 @@ path (without the leading `/` the read hits the empty workdir) and write it loca
 import os
 os.makedirs("/tmp/rxn", exist_ok=True); os.chdir("/tmp/rxn")
 _SKILL = "/SciAgent-Skills/skills/scientific-computing/neb-irc-activation-energy/scripts"
-for name in ("setup_env.sh", "pipeline.yaml", "check_result.py", "make_visuals.py"):
+for name in ("setup_env.sh", "pipeline.yaml", "check_result.py", "plot_irc.py"):
     open(name, "w").write(read_file(f"{_SKILL}/{name}"))   # read_file = your file tool
-# the TS-mode animation is delegated to the molecular-visualization-3dmol skill:
-_VIZ = "/SciAgent-Skills/skills/data-visualization/molecular-visualization-3dmol/scripts"
-open("mol_viewer.py", "w").write(read_file(f"{_VIZ}/mol_viewer.py"))
 ```
+
+The TS imaginary-mode animation is **not** produced here — read the
+**molecular-visualization-3dmol** skill and use its `mol_viewer.py` (Step 6).
 
 Check for the tools; install only if missing (inside pixi/conda, invoke via `pixi run xtb`):
 
@@ -156,23 +156,25 @@ xtb ts_final_geometry.xyz          --hess --gfn 2 --alpb water --chrg -1 --uhf 0
 grep -i "TOTAL FREE ENERGY" r_hess.log ts_hess.log
 ```
 
-### Step 6: Generate the two visual deliverables
+### Step 6: Deliver the two visuals
 
-Deliver both, alongside the numbers. `make_visuals.py` builds them in one call and reads
-gfn/charge/mult/solvent from `pipeline.yaml`, so the IRC energies are recomputed at the
-pipeline's exact level (override with `--charge/--mult/--alpb/--gfn` only if you edited the
-pipeline after running).
+**IRC energy profile** — `plot_irc.py` reads gfn/charge/mult/solvent from `pipeline.yaml` and
+recomputes each IRC frame's energy at that exact level (the `*_irc.trj` comment lines carry
+none). Override with `--charge/--mult/--alpb/--gfn` only if you edited the pipeline after running.
 
 ```bash
-python3 make_visuals.py            # -> irc_energy_profile.png + ts_imaginary_mode.html
+python3 plot_irc.py               # -> irc_energy_profile.png
 ```
 
-The PNG is matplotlib; the IRC energies are recomputed per frame because
-`forward_irc.trj` / `backward_irc.trj` carry none in their comment lines. The HTML animation is
-delegated to the **molecular-visualization-3dmol** skill's `mol_viewer.py` (materialized in the
-Prerequisites step) fed `ts_imaginary_mode_000.trj` (written by `tsopt: do_hess: True`); open it
-in a browser (it loads 3Dmol.js from a CDN) — it plays the mode back and forth with a play/pause
-button and a speed slider.
+**TS imaginary-mode animation** — produced by the **molecular-visualization-3dmol** skill, not
+here. Read that skill and run its `mol_viewer.py` on the `ts_imaginary_mode_000.trj` that
+`tsopt: do_hess: True` wrote (grab the frequency from `check_result.py` for the label):
+
+```bash
+# after materializing mol_viewer.py per the molecular-visualization-3dmol skill
+python3 mol_viewer.py ts_imaginary_mode_000.trj --mode trajectory \
+    --title "Transition-state mode" --subtitle "imaginary mode -621.8 cm-1" --out ts_imaginary_mode.html
+```
 
 ## Key Parameters
 
@@ -251,7 +253,7 @@ print(f"DFT dE‡ = {dE:.1f} kJ/mol (add xTB G_corr for dG‡)")
 - `ts_final_geometry.xyz` — the optimized transition state
 - `final_geometries.trj` — the converged NEB path (per-image energies in comment lines)
 - `ts_imaginary_mode_000.trj` — TS displaced along the imaginary mode (input to the animation)
-- `irc_energy_profile.png`, `ts_imaginary_mode.html` — the two deliverables (Step 6)
+- `irc_energy_profile.png` — from `plot_irc.py`; `ts_imaginary_mode.html` — from the molecular-visualization-3dmol skill (Step 6)
 - A barrier: ΔE‡ from the BARRIERS block, ΔG‡ after Hessian thermal corrections
 
 ## Troubleshooting
@@ -276,7 +278,7 @@ print(f"DFT dE‡ = {dE:.1f} kJ/mol (add xTB G_corr for dG‡)")
 - `scripts/setup_env.sh` — installs xtb (GitHub release) + pysisyphus (PyPI), writes `env.sh`
 - `scripts/pipeline.yaml` — full preopt→NEB→TSopt→IRC→endopt template with inline comments
 - `scripts/check_result.py` — verification of the three gates (exit 0 = all pass); prints ΔE‡
-- `scripts/make_visuals.py` — builds `irc_energy_profile.png`; delegates the `.html` to `mol_viewer.py`
+- `scripts/plot_irc.py` — builds `irc_energy_profile.png` (recomputes IRC-frame energies at the pipeline level)
 - `references/feasibility.md` — measured timings, atom-count sizing, what DFT can/can't do here
 - `references/energetics.md` — ΔE‡/ΔH‡/ΔG‡ definitions, thermochemistry, reporting conventions
 
