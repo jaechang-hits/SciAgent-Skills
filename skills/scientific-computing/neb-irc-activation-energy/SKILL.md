@@ -49,6 +49,9 @@ os.makedirs("/tmp/rxn", exist_ok=True); os.chdir("/tmp/rxn")
 _SKILL = "/SciAgent-Skills/skills/scientific-computing/neb-irc-activation-energy/scripts"
 for name in ("setup_env.sh", "pipeline.yaml", "check_result.py", "make_visuals.py"):
     open(name, "w").write(read_file(f"{_SKILL}/{name}"))   # read_file = your file tool
+# the TS-mode animation is delegated to the molecular-visualization-3dmol skill:
+_VIZ = "/SciAgent-Skills/skills/data-visualization/molecular-visualization-3dmol/scripts"
+open("mol_viewer.py", "w").write(read_file(f"{_VIZ}/mol_viewer.py"))
 ```
 
 Check for the tools; install only if missing (inside pixi/conda, invoke via `pixi run xtb`):
@@ -164,10 +167,12 @@ pipeline after running).
 python3 make_visuals.py            # -> irc_energy_profile.png + ts_imaginary_mode.html
 ```
 
-Per-frame single points are recomputed because `forward_irc.trj` / `backward_irc.trj` carry no
-energy in their comment lines. The animation reuses `ts_imaginary_mode_000.trj` (written by
-`tsopt: do_hess: True`); open the HTML in a browser (it loads 3Dmol.js from a CDN) — it plays
-the mode back and forth with a play/pause button and a speed slider.
+The PNG is matplotlib; the IRC energies are recomputed per frame because
+`forward_irc.trj` / `backward_irc.trj` carry none in their comment lines. The HTML animation is
+delegated to the **molecular-visualization-3dmol** skill's `mol_viewer.py` (materialized in the
+Prerequisites step) fed `ts_imaginary_mode_000.trj` (written by `tsopt: do_hess: True`); open it
+in a browser (it loads 3Dmol.js from a CDN) — it plays the mode back and forth with a play/pause
+button and a speed slider.
 
 ## Key Parameters
 
@@ -271,9 +276,14 @@ print(f"DFT dE‡ = {dE:.1f} kJ/mol (add xTB G_corr for dG‡)")
 - `scripts/setup_env.sh` — installs xtb (GitHub release) + pysisyphus (PyPI), writes `env.sh`
 - `scripts/pipeline.yaml` — full preopt→NEB→TSopt→IRC→endopt template with inline comments
 - `scripts/check_result.py` — verification of the three gates (exit 0 = all pass); prints ΔE‡
-- `scripts/make_visuals.py` — builds `irc_energy_profile.png` + `ts_imaginary_mode.html`
+- `scripts/make_visuals.py` — builds `irc_energy_profile.png`; delegates the `.html` to `mol_viewer.py`
 - `references/feasibility.md` — measured timings, atom-count sizing, what DFT can/can't do here
 - `references/energetics.md` — ΔE‡/ΔH‡/ΔG‡ definitions, thermochemistry, reporting conventions
+
+## Related Skills
+
+- **molecular-visualization-3dmol** — supplies `mol_viewer.py`, which renders the TS imaginary-mode animation and can play back the IRC/NEB path; materialize it alongside this skill's scripts
+- **rdkit-chemdraw-cdxml** — draw the reaction as a 2D scheme figure
 
 ## References
 

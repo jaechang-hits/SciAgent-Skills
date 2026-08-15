@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Generate the two standard deliverables from a finished pysisyphus reaction-path run:
 
-  1. irc_energy_profile.png    — IRC step vs relative energy, TS marked
-  2. ts_imaginary_mode.html    — 3Dmol.js animation of the TS imaginary vibrational mode
+  1. irc_energy_profile.png    — IRC step vs relative energy, TS marked (matplotlib)
+  2. ts_imaginary_mode.html    — 3Dmol animation, delegated to the molecular-visualization-3dmol
+                                 skill's mol_viewer.py (must be materialized in the same dir)
 
 Run it in the same directory as the pipeline output, after `pysis pipeline.yaml` and
 `check_result.py` have passed. The gfn/charge/mult/solvent are read from pipeline.yaml so the
@@ -29,7 +30,6 @@ from pathlib import Path
 
 HARTREE_KCAL = 627.5094740631
 HARTREE_KJ = 2625.4996
-CDN = "https://3Dmol.org/build/3Dmol-min.js"
 
 
 # ---------------------------------------------------------------- pipeline settings
@@ -181,19 +181,25 @@ def build_irc_profile(calc, outdir):
 # ---------------------------------------------------------------- deliverable 2: mode animation
 
 def build_mode_html(outdir):
+    """Delegate the TS-mode animation to the molecular-visualization-3dmol skill's
+    mol_viewer.py (trajectory mode), so the 3Dmol HTML lives in one place."""
     trj = _first(["ts_imaginary_mode_000.trj", "*imaginary_mode*.trj", "*imag_mode*.trj"])
     if not trj:
         raise FileNotFoundError("No imaginary-mode trajectory found (expected "
                                 "ts_imaginary_mode_000.trj from tsopt do_hess). "
                                 "Re-run with `do_hess: True` under tsopt.")
-    xyz = Path(trj).read_text()
+    if not Path("mol_viewer.py").exists():
+        raise FileNotFoundError(
+            "mol_viewer.py not found. Materialize it from the molecular-visualization-3dmol "
+            "skill: read /SciAgent-Skills/skills/data-visualization/molecular-visualization-3dmol"
+            "/scripts/mol_viewer.py and write it into this directory, then re-run.")
     freq = _imag_freq("pipeline.log")
-    subtitle = f"imaginary mode {freq:.1f} cm⁻¹" if freq else "imaginary mode"
-    html = _HTML.replace("__XYZ__", xyz.replace("\\", "\\\\").replace("`", "\\`")) \
-                .replace("__SUB__", subtitle).replace("__CDN__", CDN)
+    subtitle = f"imaginary mode {freq:.1f} cm-1" if freq else "imaginary mode"
     out = Path(outdir) / "ts_imaginary_mode.html"
-    out.write_text(html)
-    print(f"wrote {out}  ({len(read_frames(trj))} frames, {subtitle})")
+    subprocess.run([sys.executable, "mol_viewer.py", trj, "--mode", "trajectory",
+                    "--title", "Transition-state vibrational mode",
+                    "--subtitle", subtitle, "--out", str(out)], check=True)
+    print(f"wrote {out}  (via mol_viewer.py, {subtitle})")
     return out
 
 
@@ -214,51 +220,6 @@ def _first(patterns):
         if hits:
             return hits[0]
     return None
-
-
-_HTML = """<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>TS imaginary mode</title>
-<script src="__CDN__"></script>
-<style>
- body{margin:0;font-family:system-ui,sans-serif;background:#fff}
- #h{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:9;
-    text-align:center;background:rgba(255,255,255,.9);padding:8px 16px;border-radius:8px}
- #h b{font-size:1rem}#h span{color:#c0392b;font-weight:bold}
- #v{width:100vw;height:100vh;position:relative}
- #c{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:9;
-    display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.92);
-    padding:8px 14px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.15)}
- #c button{cursor:pointer;border:1px solid #ccc;border-radius:5px;padding:4px 10px;background:#fff}
- #c label{font-size:.85rem;color:#555;display:flex;gap:6px;align-items:center}
-</style></head>
-<body>
- <div id="h"><b>Transition-state vibrational mode</b><br><span>__SUB__</span></div>
- <div id="v"></div>
- <div id="c">
-  <button id="pp">⏸ Pause</button>
-  <label>Fast <input id="spd" type="range" min="40" max="400" step="10" value="140"> Slow</label>
- </div>
- <script>
-  const xyz = `__XYZ__`;
-  const viewer = $3Dmol.createViewer("v", {backgroundColor: "white"});
-  viewer.addModelsAsFrames(xyz, "xyz");
-  viewer.setStyle({}, {stick: {radius: 0.14}, sphere: {scale: 0.28}});
-  viewer.zoomTo();
-  viewer.render();
-  // interval = ms between frames; larger = slower. Default 140; slider spans 40 (fast)..400 (slow).
-  let interval = 140, playing = true;
-  const spd = document.getElementById("spd"), pp = document.getElementById("pp");
-  const play = () => viewer.animate({loop: "backAndForth", interval: interval});
-  play();
-  spd.oninput = e => { interval = +e.target.value; if (playing) { viewer.stopAnimate(); play(); } };
-  pp.onclick = () => {
-    playing = !playing;
-    if (playing) { play(); pp.textContent = "⏸ Pause"; }
-    else { viewer.stopAnimate(); pp.textContent = "▶ Play"; }
-  };
- </script>
-</body></html>
-"""
 
 
 def main():
