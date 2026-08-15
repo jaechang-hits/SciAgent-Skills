@@ -4,9 +4,9 @@ description: >
   Assemble multiple plots into ONE publication-ready multi-panel journal figure
   (e.g. Figure 1 with panels A, B, C). Use whenever the user asks to combine,
   compose, or lay out several plots as a single composite figure — newly plotted
-  from data or from already-rendered panels the user supplies (PNG/PDF). Call the
-  `ask_user` tool first so the user picks one of two approaches: (1) redraw every
-  panel into one unified figure via `python_execute` using independent, tightly
+  from data or from already-rendered panels the user supplies (PNG/PDF). Ask the
+  user to pick one of two approaches: (1) redraw every
+  panel into one unified figure using independent, tightly
   packed `subfigures` (each sized to its own labels, so axes need NOT align),
   consistent style, correctly placed panel letters, and per-panel legends/colorbars;
   (2) composite already-rendered PNG/PDF panels onto a mosaic canvas and add panel
@@ -20,10 +20,10 @@ license: Proprietary (HITS Inc.)
 ## Overview
 
 A multi-panel figure is **one** figure, built one of two ways depending on what
-you have (the user chooses via `ask_user`):
+you have:
 
-- **Option 1 — redraw every panel** (you have the data or plotting code): build it
-  with `python_execute`, giving each data panel its **own `subfigure`** so it packs
+- **Option 1 — redraw every panel** (you have the data or plotting code): draw
+  each data panel with a python script into its **own `subfigure`** so it packs
   to its own labels — no empty bands, and axes need NOT align across the grid.
   Follow the discipline below so legends stay inside their panels, panel letters
   sit at each panel's own top-left, and text never overlaps.
@@ -35,6 +35,15 @@ A mix is allowed: if one or two panels are image-only (no data/code), `imshow`
 them onto their own subfigure axes and redraw the rest into the same figure. Both
 modes export a vector PDF and a high-DPI PNG.
 
+**Always export the individual panels AND the composite.** Every run outputs both:
+one standalone figure per panel (`figure1A.png`, `figure1B.png`, …) and the combined
+figure (`combined_figure1.pdf` + `.png`) — not just the composite. Because a
+matplotlib `subfigure` cannot be saved on its own, factor every data panel's plotting
+body into a `draw_<letter>(ax)` function (option 1); the same function then draws onto
+the composite's subfigure axis AND onto a fresh standalone figure, so the panels stay
+identical across both outputs with no duplicated drawing code. See "Exporting
+individual panels" below.
+
 This skill covers **composition**. For how to draw each individual plot type
 (volcano, GSEA bar, heatmap, box/violin, PCA, Kaplan–Meier, …), use the sibling
 `hitsplot` skill — copy each recipe's **body** onto a subfigure's axis rather than
@@ -45,7 +54,7 @@ composite recipe, panel-label helper) is in this document.
 
 - The user asks for a **multi-panel / composite / journal figure** (panels A, B,
   C…) combining two or more plots into one page of image.
-- The user hands you or points out **already-rendered panels (PNG/PDF)** and wants them combined 
+- The user hands you or points out **already-rendered panels (PNG/PDF)** and wants them combined
   into one figure (image assembly — see "Assembling user-provided panels").
 - You are assembling a figure for a report, a paper submission, or a presentation
   and want all panels to read as one consistent system.
@@ -55,14 +64,13 @@ composite recipe, panel-label helper) is in this document.
 - A **single** plot from a data table — use the sibling `hitsplot` skill.
 - Interactive dashboards or web charts (this is static matplotlib output).
 - 3D molecular structure rendering (that is the structure viewer, not a plot).
-- Simply reading / inspecting a file — see the `file-reading` skill.
 
 ## Key Concepts
 
 ### Redraw vs composite — two composition modes
 
 There are two fundamentally different ways to build a composite, and the user
-chooses (via `ask_user`). **Redraw (option 1)** rebuilds every panel from data or
+chooses. **Redraw (option 1)** rebuilds every panel from data or
 code in one script, giving uniform style, fonts, colors, and panel letters — best
 when you hold the underlying data/DataFrame or the plotting code. **Composite
 (option 2)** pastes already-rendered PNG/PDF panels onto a canvas and only adds
@@ -118,11 +126,9 @@ Layout: sketch the grid [[...]], nest subfigures for spanning panels, fill every
 
 ## Workflow
 
-1. **Ask which approach first — call the `ask_user` tool, then wait.** Both approaches
+1. **Ask which approach first — ask the user, then wait.** Both approaches
    below are usually viable and the choice is the user's, so **before drawing or writing any
-   script, call the `ask_user` tool** with a single question offering these two concrete
-   options, and do not proceed until the user answers. The `ask_user` call must ride in the
-   same turn — do NOT just end a turn saying you will ask (announce ≠ act):
+   script, ask the user to choose between these two concrete options**:
    - **Option 1 — Redraw every panel into one unified figure** (from data/code): consistent
      style, fonts, colors, and panel letters across all panels. Best when you have the
      underlying data (CSV/TSV/DataFrame) or the plotting code.
@@ -132,8 +138,8 @@ Layout: sketch the grid [[...]], nest subfigures for spanning panels, fill every
 
    Skip the question only when one option is impossible (e.g. only images and no data/code →
    option 2 is forced; or a data table with no rendered images → option 1) and say why. If a
-   mix (some panels have data, one or two are images-only), tell the user in the `ask_user`
-   preamble that the image-only panels will be pasted regardless (discipline in the intro).
+   mix (some panels have data, one or two are images-only), tell the user
+   that the image-only panels will be pasted regardless (discipline in the intro).
 2. **Decide the layout** (the grid `[[...]]` sketch is just to plan the tiling; you build
    it with nested `subfigures`, not `subplot_mosaic` — see discipline #1). Fill every cell.
   — e.g. two on top, one spanning the bottom → `[["A", "B"], ["C", "C"]]` →
@@ -143,12 +149,18 @@ Layout: sketch the grid [[...]], nest subfigures for spanning panels, fill every
     `lr = fig.subfigures(1, 2); A = lr[0]; rr = lr[1].subfigures(2, 1)`.
 3. **Gather each panel's source** — a workspace-relative CSV/TSV (or DataFrame)
    for data panels, or a user-supplied PNG/PDF for image panels.
-4. **Write one `python_execute` script**: paste the style block, build the
-   subfigures (nest for spanning panels), draw each panel body onto its axis
-   (data) or `imshow` it (image), collect the subfigures into a `panels` dict,
-   add panel letters with the helper, and save to a **workspace-relative** path
-   under `plots/` (both PDF and PNG).
-5. **Report the saved path** back to the user.
+4. **Write one python script**: paste the style block, **factor each data panel's
+   plotting body into a `draw_<letter>(ax)` function** (so it can render onto both a
+   subfigure axis and a standalone figure), build the subfigures (nest for spanning
+   panels), call each `draw_<letter>` onto its axis (data) or `imshow` the image,
+   collect the subfigures into a `panels` dict, and add panel letters with the helper.
+   Then **always save both outputs** to **workspace-relative** paths under `plots/`:
+   - the **composite** as `plots/combined_figure1.pdf` + `plots/combined_figure1.png`, and
+   - **each individual panel** as `plots/figure1A.png`, `plots/figure1B.png`, … (plus
+     matching `.pdf`) by rendering every `draw_<letter>` onto a fresh standalone figure.
+   See "Exporting individual panels" for the exact loop.
+5. **Report the saved paths** back to the user — the combined figure and every
+   individual panel file.
 
 ## Shared style — paste at the top of the script
 
@@ -280,6 +292,72 @@ def add_panel_labels(panels, size=11):
 
 Usage: collect the subfigures as you create them, e.g. `panels = {"A": sfs[0, 0],
 "B": sfs[0, 1], "C": top[1]}`, then call `add_panel_labels(panels)`.
+
+## Exporting individual panels
+
+Every run produces **both** the individual panels (`figure1A.png`, `figure1B.png`, …)
+**and** the composite (`combined_figure1.pdf` + `.png`) — this is the default output,
+not an extra. A matplotlib `subfigure` cannot be saved on its own, so put each panel's
+plotting body in a `draw_<letter>(ax)` function and call it twice: once onto the
+composite's subfigure axis, and once onto a fresh standalone figure. One source of
+truth per panel — the panels stay identical across both outputs.
+
+```python
+import os
+
+os.makedirs("plots", exist_ok=True)
+
+# 1) Factor each DATA panel's body into a function of a single Axes.
+#    (Copy the hitsplot recipe body here, drawing onto `ax` instead of a new figure.)
+def draw_A(ax):
+    ax.scatter(df["log2FC"], -np.log10(df["padj"]), s=8, c=NS)  # volcano, etc.
+    ax.set_xlabel("log2 fold change"); ax.set_ylabel("-log10 FDR")
+
+def draw_B(ax):
+    ...   # PCA / box / heatmap body onto ax
+
+def draw_C(ax):
+    ...
+
+DATA_PANELS = {"A": draw_A, "B": draw_B, "C": draw_C}
+# Per-panel standalone figure size (mm) — match each plot's shape (discipline #1).
+PANEL_SIZE_MM = {"A": (88, 75), "B": (88, 75), "C": (180, 70)}
+# Image-only panels stay separate: keep the PNG/PDF the user supplied as their
+# standalone file, and only imshow them onto the composite axis (see intro).
+
+# 2) Composite — draw each function onto its subfigure axis, add letters, save.
+panels = {"A": sfs[0, 0], "B": sfs[0, 1], "C": top[1]}
+for letter, sf in panels.items():
+    DATA_PANELS[letter](sf.subplots())
+add_panel_labels(panels)
+fig.savefig("plots/combined_figure1.pdf")
+fig.savefig("plots/combined_figure1.png", dpi=300)
+
+# 3) Individual panels — same functions onto fresh standalone figures (no letter).
+for letter, draw in DATA_PANELS.items():
+    w_mm, h_mm = PANEL_SIZE_MM[letter]
+    fp = plt.figure(layout="constrained", figsize=(w_mm / 25.4, h_mm / 25.4))
+    draw(fp.subplots())
+    fp.savefig(f"plots/figure1{letter}.pdf")
+    fp.savefig(f"plots/figure1{letter}.png", dpi=300)
+    plt.close(fp)
+```
+
+Output files (Figure 1 with panels A, B, C):
+`plots/combined_figure1.pdf`, `plots/combined_figure1.png`,
+`plots/figure1A.{pdf,png}`, `plots/figure1B.{pdf,png}`, `plots/figure1C.{pdf,png}`.
+
+Notes:
+- **No panel letter on standalones** — the `A/B/C` label belongs to the composite
+  frame only; a lone `figure1A.png` needs no letter baked in.
+- **Size each standalone to its plot's shape** (discipline #1) via `PANEL_SIZE_MM`:
+  scatter/PCA near-square, `barh`/horizontal-box wide, vertical bar/box/hist tall —
+  don't reuse one size for all.
+- **Legends/colorbars still belong to their own axis** (discipline #3) — since the
+  body lives in `draw_<letter>`, attach them inside that function so they appear in
+  both the composite and the standalone.
+- **Image-only panels** are already standalone files (the user's PNG/PDF); don't
+  re-export them — just reference the originals.
 
 ## Best Practices
 
