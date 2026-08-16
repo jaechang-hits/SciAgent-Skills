@@ -11,7 +11,7 @@ description: >
   consistent style, correctly placed panel letters, and per-panel legends/colorbars;
   (2) composite already-rendered PNG/PDF panels onto a mosaic canvas and add panel
   letters (image compositing, not plotting). Both export vector PDF + high-DPI PNG.
-  For a SINGLE plot from a data table, use the sibling `hitsplot` skill instead.
+  For a SINGLE plot from a data table, use the sibling `omics-plotting` skill instead.
 license: Proprietary (HITS Inc.)
 ---
 
@@ -46,7 +46,7 @@ individual panels" below.
 
 This skill covers **composition**. For how to draw each individual plot type
 (volcano, GSEA bar, heatmap, box/violin, PCA, Kaplan–Meier, …), use the sibling
-`hitsplot` skill — copy each recipe's **body** onto a subfigure's axis rather than
+`omics-plotting` skill — copy each recipe's **body** onto a subfigure's axis rather than
 calling it as a standalone figure. Everything you need here (shared style,
 composite recipe, panel-label helper) is in this document.
 
@@ -61,7 +61,7 @@ composite recipe, panel-label helper) is in this document.
 
 ## Do NOT use for
 
-- A **single** plot from a data table — use the sibling `hitsplot` skill.
+- A **single** plot from a data table — use the sibling `omics-plotting` skill.
 - Interactive dashboards or web charts (this is static matplotlib output).
 - 3D molecular structure rendering (that is the structure viewer, not a plot).
 
@@ -308,7 +308,7 @@ import os
 os.makedirs("plots", exist_ok=True)
 
 # 1) Factor each DATA panel's body into a function of a single Axes.
-#    (Copy the hitsplot recipe body here, drawing onto `ax` instead of a new figure.)
+#    (Copy the omics-plotting recipe body here, drawing onto `ax` instead of a new figure.)
 def draw_A(ax):
     ax.scatter(df["log2FC"], -np.log10(df["padj"]), s=8, c=NS)  # volcano, etc.
     ax.set_xlabel("log2 fold change"); ax.set_ylabel("-log10 FDR")

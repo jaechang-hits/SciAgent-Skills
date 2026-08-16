@@ -1586,12 +1586,12 @@ entries:
     description: "NEB-IRC activation energy pipeline for reaction barriers using GFN2-xTB and pysisyphus. Optimize reactant and product geometries, run CI-NEB path search, optimize the transition state with a Hessian, verify with IRC (one imaginary mode, endpoints matching reactant/product, single NEB maximum), and report the electronic and Gibbs barriers. Use when you need a transition state, reaction barrier, activation energy, minimum energy path, or intrinsic reaction coordinate. Covers reactant/product atom-ordering pitfalls, feasibility sizing for single-core runs, and thermochemistry corrections. Renders an IRC energy-profile plot and an animated TS imaginary-mode HTML viewer. For 2D reaction scheme drawing use rdkit-chemdraw-cdxml."
     date_added: "2026-08-03"
 
-  - name: "hitsplot"
+  - name: "omics-plotting"
     type: skill
     sub_type: guide
     category: "data-visualization"
-    path: "skills/data-visualization/hitsplot/SKILL.md"
-    description: "hitsplot publication-style figure authoring for omics/bioinformatics results with matplotlib/seaborn. Draws a single plot from analysis results or a data table — volcano, MA, expression/correlation heatmap, GSEA bar/dot plot, box/violin/bar/ridgeline, PCA/UMAP/t-SNE, Kaplan-Meier. Supplies a shared journal-ready style and copy-paste recipes so every figure looks like one consistent system. For combining several plots into ONE multi-panel composite figure use multipanel."
+    path: "skills/data-visualization/omics-plotting/SKILL.md"
+    description: "omics-plotting publication-style figure authoring for omics/bioinformatics results with matplotlib/seaborn. Draws a single plot from analysis results or a data table — volcano, MA, expression/correlation heatmap, GSEA bar/dot plot, box/violin/bar/ridgeline, PCA/UMAP/t-SNE, Kaplan-Meier. Supplies a shared journal-ready style and copy-paste recipes so every figure looks like one consistent system. For combining several plots into ONE multi-panel composite figure use multipanel."
     date_added: "2026-08-13"
 
   - name: "multipanel"
@@ -1599,5 +1599,5 @@ entries:
     sub_type: guide
     category: "data-visualization"
     path: "skills/data-visualization/multipanel/SKILL.md"
-    description: "multipanel assembles multiple plots into ONE publication-ready multi-panel journal figure (e.g. Figure 1 with panels A, B, C). Two approaches: (1) draw all data panels as independent subfigures with consistent style, tightly packed, correct panel letters, and per-panel legends/colorbars; (2) composite already-rendered PNG/PDF panels onto a mosaic canvas with panel letters. Exports PDF + PNG. For a single plot from a data table use hitsplot."
+    description: "multipanel assembles multiple plots into ONE publication-ready multi-panel journal figure (e.g. Figure 1 with panels A, B, C). Two approaches: (1) draw all data panels as independent subfigures with consistent style, tightly packed, correct panel letters, and per-panel legends/colorbars; (2) composite already-rendered PNG/PDF panels onto a mosaic canvas with panel letters. Exports PDF + PNG. For a single plot from a data table use omics-plotting."
     date_added: "2026-08-13"
