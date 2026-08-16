@@ -1,5 +1,5 @@
 ---
-name: hitsplot
+name: omics-plotting
 description: >
   Publication-style figure authoring for omics / bioinformatics results. Use
   whenever the user asks for a (single) plot, figure, or chart from analysis
@@ -12,7 +12,7 @@ description: >
 license: Proprietary (HITS Inc.)
 ---
 
-# hitsplot
+# omics-plotting
 
 ## Overview
 
