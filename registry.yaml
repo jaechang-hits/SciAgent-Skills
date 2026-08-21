@@ -1601,3 +1601,11 @@ entries:
     path: "skills/data-visualization/multipanel/SKILL.md"
     description: "multipanel assembles multiple plots into ONE publication-ready multi-panel journal figure (e.g. Figure 1 with panels A, B, C). Two approaches: (1) draw all data panels as independent subfigures with consistent style, tightly packed, correct panel letters, and per-panel legends/colorbars; (2) composite already-rendered PNG/PDF panels onto a mosaic canvas with panel letters. Exports PDF + PNG. For a single plot from a data table use omics-plotting."
     date_added: "2026-08-13"
+
+  - name: "aizynthfinder-retrosynthesis"
+    type: skill
+    sub_type: pipeline
+    category: "structural-biology-drug-discovery"
+    path: "skills/structural-biology-drug-discovery/aizynthfinder-retrosynthesis/SKILL.md"
+    description: "AiZynthFinder retrosynthetic route planning (CASP) from AstraZeneca Molecular AI. Monte Carlo tree search guided by a template-based neural expansion policy recursively disconnects a target SMILES until precursors are found in a purchasable stock. Covers config.yml (v4 format), aizynthcli batch screening, the AiZynthFinder/AiZynthExpander Python API, one-step disconnections, custom stocks via smiles2stock, scorers, Retro*/breadth-first/DFPN search alternatives, and reading output.json.gz / trees.json. Use for synthesis route planning, synthesizability screening, and building-block/precursor search. For reaction barriers use neb-irc-activation-energy; for 2D reaction scheme drawing use rdkit-chemdraw-cdxml."
+    date_added: "2026-08-21"
