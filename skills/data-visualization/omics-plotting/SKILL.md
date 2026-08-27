@@ -1,14 +1,16 @@
 ---
 name: omics-plotting
 description: >
-  Publication-style figure authoring for omics / bioinformatics results. Use
-  whenever the user asks for a (single) plot, figure, or chart from analysis
-  results or a data table — volcano, MA, (expression / correlation) heatmap,
-  GSEA bar / dot plot, box / violin / bar / ridgeline, (PCA / UMAP / t-SNE) scatter, Kaplan–Meier.
-  The figures are drawn with matplotlib / seaborn; this skill
-  supplies the shared style and copy-paste recipes so every figure looks like one
-  consistent, journal-ready system. To combine several plots into ONE multi-panel
-  composite figure, use the sibling `multipanel` skill.
+  omics-plotting: publication-style figure authoring for omics / bioinformatics
+  results with matplotlib / seaborn. Read this before writing any plotting or
+  figure code in any omics analysis — RNA-seq, proteomics, single-cell, variant,
+  or database results — not only when a plot is explicitly requested: whenever an
+  analysis will produce a figure, load this first and follow its recipes. Covers
+  volcano, MA, expression / correlation heatmap, GSEA bar / dot plot,
+  box / violin / bar / ridgeline, PCA / UMAP / t-SNE scatter, Kaplan–Meier,
+  Manhattan / QQ / forest. Supplies a shared journal-ready style and copy-paste
+  recipes so every figure looks like one consistent system. To combine several
+  plots into ONE multi-panel composite figure, use the sibling `multipanel` skill.
 license: Proprietary (HITS Inc.)
 ---
 
@@ -142,7 +144,7 @@ plt.rcParams.update(PUB_STYLE)   # or: with plt.rc_context(PUB_STYLE): ...
 UP, DOWN, NS = "#d73721", "#204897", "#d9d9d9"   # up / down / not-significant
 PALETTE = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4",
            "#008300", "#4a3aa7", "#e34948", "#12a4c0", "#a66a2e"]  # categorical (CVD-safe order)
-GROUP_COLORS = {"Group1": "#204897", "Group2": "#1baf7a", "Group3": "#E7B800"}
+GROUP_COLORS = {"Group1": "#204897", "Group2": "#e34948", "Group3": "#E7B800"}
 DIVERGING_CMAP = "RdBu_r"    # z-score / log2FC heatmaps — set center=0, vmin=-vmax
 SEQUENTIAL_CMAP = "viridis"  # magnitude / -log10 p / density
 ```
