@@ -18,6 +18,7 @@ CellTypist is an automated cell type classifier for single-cell RNA-seq data bui
 - Comparing annotation results across multiple tissue-specific models to determine the most biologically relevant reference
 - Training a custom CellTypist model from a labeled reference dataset for a tissue or species not covered by pre-built models
 - Quantifying annotation confidence to flag low-certainty cells (confidence score < 0.5) for manual review or exclusion
+- Use **omics-plotting** SKILL for generic result-table figures; UMAP/dotplot annotation views use scanpy `sc.pl.*`
 - Use **scVI/scANVI** (scvi-tools-single-cell) instead when you need probabilistic label transfer with batch correction and uncertainty quantification via a variational autoencoder
 - Use **popV** (popv-cell-annotation) instead when you want ensemble consensus from 10+ methods including deep learning and KNN-based approaches
 

@@ -19,6 +19,7 @@ muon is a Python framework for multi-modal single-cell data analysis that extend
 - Normalizing surface protein data with centered log-ratio (CLR) normalization
 - Performing cross-modal feature linkage (associating ATAC peaks with nearby gene expression)
 - Applying MOFA+ factor analysis across multiple omics layers within a unified container
+- Use **omics-plotting** SKILL for generic result-table figures; joint embeddings use scanpy/muon `sc.pl.*` / `mu.pl.*`
 - Use **scanpy-scrna-seq** instead when analyzing a single RNA-seq modality without any co-measured omics
 - Use **scvi-tools (MultiVI / totalVI)** when you need probabilistic deep generative batch correction across modalities
 

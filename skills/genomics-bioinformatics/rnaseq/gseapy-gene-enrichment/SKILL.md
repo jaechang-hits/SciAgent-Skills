@@ -19,6 +19,7 @@ GSEApy provides Python implementations of GSEA and over-representation analysis 
 - Generating publication-ready enrichment dot plots and GSEA running-score plots
 - Use **GSEA Java application** for the official GUI-based analysis with full GSEA desktop interface
 - Use **fgsea** (R) as an alternative with fast permutation-based p-values; GSEApy is preferred for Python-native pipelines
+- Use **omics-plotting** SKILL after DE and for publication-quality plots of gsea results
 
 ## Prerequisites
 
@@ -144,40 +145,30 @@ print(sig.sort_values("NES", ascending=False)[["Term", "NES", "NOM p-val", "FDR 
 
 ### Step 4: Plot GSEA Running Score
 
-Visualize the enrichment score curve for a specific gene set.
+The running enrichment-score curve is GSEApy-specific — draw it with `gseaplot`. (omics-plotting covers the GSEA bar/dot summary plots instead, see Step 5.)
 
 ```python
-import gseapy as gp
-from gseapy.plot import gseaplot
-import matplotlib.pyplot as plt
+from gseapy import gseaplot
 
-# Re-use pre_res from Step 3 (or load saved results)
-# Select the top enriched gene set
+# pre_res: prerank result from Step 3
 top_term = pre_res.res2d.sort_values("NES", ascending=False).index[0]
-print(f"Top enriched gene set: {top_term}")
-
-# Plot running enrichment score
-ax = gseaplot(
+gseaplot(
     rank_metric=pre_res.ranking,
     term=top_term,
     **pre_res.results[top_term],
-    ofname="gsea_results/top_geneset_enrichment.pdf",
+    ofname="figures/gsea_running_score.png",
 )
-plt.tight_layout()
-plt.savefig("gsea_enrichment_plot.png", dpi=150)
-print("Saved: gsea_enrichment_plot.png")
+print(f"Saved figures/gsea_running_score.png ({top_term})")
 ```
 
 ### Step 5: Enrichment Dot Plot for Multiple Terms
 
-Generate a dot plot showing enrichment significance and gene ratio across top pathways.
+Run ORA, then **read `skills/data-visualization/omics-plotting/SKILL.md` and follow its "GSEA dot plot" recipe** on the exported table (→ `figures/enrichment_dotplot.png`). Map GSEApy's `Overlap` column to the recipe's `GeneRatio`.
 
 ```python
 import gseapy as gp
-import matplotlib.pyplot as plt
-from gseapy.plot import dotplot
 
-# Run ORA and plot results
+# enr.results is the enrichment table: Term, Overlap, Adjusted P-value, Genes, ...
 enr = gp.enrichr(
     gene_list=["TP53", "BRCA1", "CDK2", "CCND1", "MYC", "EGFR",
                "KRAS", "PTEN", "RB1", "AKT1", "PIK3CA", "MDM2",
@@ -187,22 +178,9 @@ enr = gp.enrichr(
     outdir=None,
     cutoff=0.05,
 )
-
-# Dot plot: x=gene ratio, size=-log10(p), color=adjusted p-value
-ax = dotplot(
-    enr.results,
-    column="Adjusted P-value",
-    x="Gene_set",
-    title="KEGG Enrichment",
-    cmap="viridis_r",
-    size=10,
-    top_term=15,
-    figsize=(6, 8),
-    ofname="enrichment_dotplot.pdf",
-)
-plt.tight_layout()
-plt.savefig("enrichment_dotplot.png", dpi=150, bbox_inches="tight")
-print("Saved: enrichment_dotplot.png")
+enr.results.to_csv("enrichment.csv", index=False)
+print(f"ORA terms: {len(enr.results)} -> enrichment.csv")
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "GSEA dot plot" recipe.
 ```
 
 ### Step 6: Integrate with DESeq2 / scanpy Output

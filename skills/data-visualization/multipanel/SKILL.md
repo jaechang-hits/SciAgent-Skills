@@ -154,9 +154,9 @@ Layout: sketch the grid [[...]], nest subfigures for spanning panels, fill every
    subfigure axis and a standalone figure), build the subfigures (nest for spanning
    panels), call each `draw_<letter>` onto its axis (data) or `imshow` the image,
    collect the subfigures into a `panels` dict, and add panel letters with the helper.
-   Then **always save both outputs** to **workspace-relative** paths under `plots/`:
-   - the **composite** as `plots/combined_figure1.pdf` + `plots/combined_figure1.png`, and
-   - **each individual panel** as `plots/figure1A.png`, `plots/figure1B.png`, … (plus
+   Then **always save both outputs** to **workspace-relative** paths under `figures/`:
+   - the **composite** as `figures/combined_figure1.pdf` + `figures/combined_figure1.png`, and
+   - **each individual panel** as `figures/figure1A.png`, `figures/figure1B.png`, … (plus
      matching `.pdf`) by rendering every `draw_<letter>` onto a fresh standalone figure.
    See "Exporting individual panels" for the exact loop.
 5. **Report the saved paths** back to the user — the combined figure and every
@@ -330,22 +330,22 @@ panels = {"A": sfs[0, 0], "B": sfs[0, 1], "C": top[1]}
 for letter, sf in panels.items():
     DATA_PANELS[letter](sf.subplots())
 add_panel_labels(panels)
-fig.savefig("plots/combined_figure1.pdf")
-fig.savefig("plots/combined_figure1.png", dpi=300)
+fig.savefig("figures/combined_figure1.pdf")
+fig.savefig("figures/combined_figure1.png", dpi=300)
 
 # 3) Individual panels — same functions onto fresh standalone figures (no letter).
 for letter, draw in DATA_PANELS.items():
     w_mm, h_mm = PANEL_SIZE_MM[letter]
     fp = plt.figure(layout="constrained", figsize=(w_mm / 25.4, h_mm / 25.4))
     draw(fp.subplots())
-    fp.savefig(f"plots/figure1{letter}.pdf")
-    fp.savefig(f"plots/figure1{letter}.png", dpi=300)
+    fp.savefig(f"figures/figure1{letter}.pdf")
+    fp.savefig(f"figures/figure1{letter}.png", dpi=300)
     plt.close(fp)
 ```
 
 Output files (Figure 1 with panels A, B, C):
-`plots/combined_figure1.pdf`, `plots/combined_figure1.png`,
-`plots/figure1A.{pdf,png}`, `plots/figure1B.{pdf,png}`, `plots/figure1C.{pdf,png}`.
+`figures/combined_figure1.pdf`, `figures/combined_figure1.png`,
+`figures/figure1A.{pdf,png}`, `figures/figure1B.{pdf,png}`, `figures/figure1C.{pdf,png}`.
 
 Notes:
 - **No panel letter on standalones** — the `A/B/C` label belongs to the composite
@@ -363,11 +363,11 @@ Notes:
 
 - **One figure, one style.** Never stitch separate PNGs or call standalone plot
   functions for a composite; copy their bodies onto each subfigure's axis.
-- **Workspace-relative paths only.** Save under `plots/` (create it if needed);
+- **Workspace-relative paths only.** Save under `figures/` (create it if needed);
   never absolute paths like `/tmp` or `/home/...`.
 - **Only plot data that exists.** Never invent columns, groups, or values.
 - **Label every axis, keep every legend inside its panel, fill every cell.**
-- **Always export both** a vector `.pdf` and a `.png` (dpi≥300) under `plots/`.
+- **Always export both** a vector `.pdf` and a `.png` (dpi≥300) under `figures/`.
 
 ## Common Pitfalls
 

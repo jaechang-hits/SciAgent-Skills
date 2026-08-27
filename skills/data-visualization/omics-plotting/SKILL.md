@@ -3,8 +3,8 @@ name: omics-plotting
 description: >
   Publication-style figure authoring for omics / bioinformatics results. Use
   whenever the user asks for a (single) plot, figure, or chart from analysis
-  results or a data table — volcano, MA, expression / correlation heatmap,
-  GSEA bar / dot plot, box / violin / bar / ridgeline, PCA / UMAP / t-SNE, Kaplan–Meier.
+  results or a data table — volcano, MA, (expression / correlation) heatmap,
+  GSEA bar / dot plot, box / violin / bar / ridgeline, (PCA / UMAP / t-SNE) scatter, Kaplan–Meier.
   The figures are drawn with matplotlib / seaborn; this skill
   supplies the shared style and copy-paste recipes so every figure looks like one
   consistent, journal-ready system. To combine several plots into ONE multi-panel
@@ -113,9 +113,9 @@ What does the table hold?
    below). If the required columns are unclear, inspect the table's header first.
 2. **Write one python script**: paste the style block, load the data,
    draw the plot with the matching recipe, and save to a **workspace-relative**
-   path under `plots/`.
+   path under `figures/`.
 3. **Report the saved path** back to the user (and reference it in any report /
-   deck by that relative path, e.g. `![Volcano](plots/volcano.png)`).
+   deck by that relative path, e.g. `![Volcano](figures/volcano.png)`).
 
 ## Shared style — paste at the top of every plot script
 
@@ -142,6 +142,7 @@ plt.rcParams.update(PUB_STYLE)   # or: with plt.rc_context(PUB_STYLE): ...
 UP, DOWN, NS = "#d73721", "#204897", "#d9d9d9"   # up / down / not-significant
 PALETTE = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4",
            "#008300", "#4a3aa7", "#e34948", "#12a4c0", "#a66a2e"]  # categorical (CVD-safe order)
+GROUP_COLORS = {"Group1": "#204897", "Group2": "#1baf7a", "Group3": "#E7B800"}
 DIVERGING_CMAP = "RdBu_r"    # z-score / log2FC heatmaps — set center=0, vmin=-vmax
 SEQUENTIAL_CMAP = "viridis"  # magnitude / -log10 p / density
 ```
@@ -174,11 +175,14 @@ the column-name variables to match the actual table.
 | Ridgeline | long-form | numeric `x`, categorical `group` |
 | PCA / UMAP / t-SNE | samples × features | numeric features + optional `group` |
 | Kaplan–Meier | survival table | `time`, `event`, `group` |
+| Manhattan | GWAS summary stats | `CHR`, `BP`, `P` |
+| QQ plot | p-value vector | `P` |
+| Forest | effect + CI table | `label`, `estimate`, `ci_low`, `ci_high` |
 
 ## Recipes
 
 Each is a full python script body. Adjust column names, thresholds, and the
-save path. All save under `plots/`.
+save path. All save under `figures/`.
 
 **Volcano** (`-log10 p` vs `log2` fold change):
 
@@ -210,7 +214,24 @@ except ImportError:                             # no adjustText -> label fewer, 
                     fontsize=7, ha="left", va="bottom")
 ax.set_xlabel(r"$\log_{2}$ fold change"); ax.set_ylabel(r"$-\log_{10}$ padj")
 ax.set_title("Volcano plot"); ax.legend(loc="upper right", markerscale=1.4)
-fig.tight_layout(); fig.savefig("plots/volcano.png")
+fig.tight_layout(); fig.savefig("figures/volcano.png")
+```
+
+**MA plot** (`log2` fold change vs mean expression; columns `baseMean`, `log2FoldChange`, optional `padj`):
+
+```python
+import numpy as np, pandas as pd
+df = pd.read_csv("deg_results.csv").dropna(subset=["baseMean", "log2FoldChange"])
+x = np.log10(df["baseMean"].to_numpy(float) + 1)
+fc = df["log2FoldChange"].to_numpy(float)
+sig = (df["padj"].to_numpy(float) < 0.05) if "padj" in df else np.zeros(len(df), bool)
+fig, ax = plt.subplots(figsize=(7, 5))
+ax.scatter(x[~sig], fc[~sig], c=NS, s=10, alpha=0.5, edgecolors="none", rasterized=True, label="NS")
+ax.scatter(x[sig], fc[sig], c=UP, s=14, alpha=0.85, edgecolors="none", label=f"padj<0.05 ({int(sig.sum())})")
+ax.axhline(0, color="0.4", lw=0.8)
+ax.set_xlabel(r"$\log_{10}$(mean norm. count + 1)"); ax.set_ylabel(r"$\log_{2}$ fold change")
+ax.set_title("MA plot"); ax.legend(loc="upper right")
+fig.tight_layout(); fig.savefig("figures/ma.png")
 ```
 
 **Clustered expression heatmap** (z-scored, seaborn `clustermap`):
@@ -222,7 +243,7 @@ g = sns.clustermap(mat, z_score=0, cmap=DIVERGING_CMAP, center=0,
                    figsize=(8, 8), xticklabels=True, yticklabels=mat.shape[0] <= 60,
                    cbar_kws={"label": "z-score"})
 g.ax_col_dendrogram.set_title("Expression heatmap", pad=12)
-g.figure.savefig("plots/heatmap.png")
+g.figure.savefig("figures/heatmap.png")
 ```
 
 **Correlation heatmap** (sample QC):
@@ -233,9 +254,13 @@ corr = pd.read_csv("expr.csv", index_col=0).select_dtypes("number").corr(method=
 mask = np.triu(np.ones_like(corr, dtype=bool), k=1)
 fig, ax = plt.subplots(figsize=(7, 6))
 sns.heatmap(corr, mask=mask, cmap=DIVERGING_CMAP, vmin=-1, vmax=1, center=0,
-            annot=True, fmt=".2f", annot_kws={"size": 7}, square=True,
-            linewidths=0.5, cbar_kws={"label": "Pearson r", "shrink": 0.7}, ax=ax)
-ax.set_title("Sample correlation"); fig.tight_layout(); fig.savefig("plots/corr.png")
+            annot=True, # if the n>20 samples then set annot=False
+            fmt=".2f", annot_kws={"size": 7}, square=True,
+            linewidths=0.5, 
+            cbar_kws={"label": "Pearson r", "shrink": 0.7}, 
+            ax=ax)
+ax.set_title("Sample correlation"); fig.tight_layout(); fig.savefig("figures/corr.png")
+
 ```
 
 **GSEA bar** (top gene sets, colored by direction):
@@ -248,7 +273,7 @@ colors = [UP if v >= 0 else DOWN for v in df["NES"]]
 fig, ax = plt.subplots(figsize=(7, 6))
 ax.barh(df["Term"].astype(str), df["NES"], color=colors)
 ax.axvline(0, color="0.4", lw=0.8); ax.set_xlabel("NES"); ax.set_title("GSEA")
-fig.tight_layout(); fig.savefig("plots/gsea_bar.png")
+fig.tight_layout(); fig.savefig("figures/gsea_bar.png")
 ```
 
 **GSEA dot plot** (clusterProfiler-style; `GeneRatio` may be `"k/n"`):
@@ -267,7 +292,7 @@ fig, ax = plt.subplots(figsize=(7, 6))
 ax.scatter(df["_ratio"], df["Term"].astype(str), s=sizes, c=df["_nlp"], cmap=SEQUENTIAL_CMAP, norm=norm, edgecolors="0.3", linewidths=0.5, zorder=3)
 ax.grid(axis="y", ls=":", color="0.8", zorder=0); ax.set_xlabel("Gene ratio"); ax.set_title("Enrichment")
 cb = fig.colorbar(ScalarMappable(norm=norm, cmap=SEQUENTIAL_CMAP), ax=ax, shrink=0.6, pad=0.02)
-cb.set_label(r"$-\log_{10}$ adj. $p$"); fig.tight_layout(); fig.savefig("plots/dotplot.png")
+cb.set_label(r"$-\log_{10}$ adj. $p$"); fig.tight_layout(); fig.savefig("figures/dotplot.png")
 ```
 
 **Box plot** (long-form, jittered points, optional 2-group test):
@@ -287,34 +312,68 @@ if len(lv) == 2:  # optional significance star
     ymax = df[y].max(); h = (ymax - df[y].min()) * 0.08
     ax.plot([0, 0, 1, 1], [ymax + h, ymax + 2*h, ymax + 2*h, ymax + h], lw=1.0, c="0.2")
     ax.text(0.5, ymax + 2*h, star, ha="center", va="bottom")
-ax.set_title(f"{y} by {x}"); fig.tight_layout(); fig.savefig("plots/box.png")
+ax.set_title(f"{y} by {x}"); fig.tight_layout(); fig.savefig("figures/box.png")
 ```
 
 For **violin** swap `sns.boxplot` → `sns.violinplot(..., inner="box", cut=0)`;
 for **bar of the mean** use `sns.barplot(..., errorbar="se", capsize=0.15)`.
 
-**PCA** (samples × features + `group` column):
+**Grouped embedding scatter (PCA / UMAP / t-SNE / factor scatter):** (samples × features + `group` column):
 
 ```python
-import pandas as pd
-from sklearn.decomposition import PCA
-df = pd.read_csv("samples_features.csv"); grp = df.pop("group") if "group" in df else None
-X = df.select_dtypes("number"); pcs = PCA(n_components=2).fit(X)
-emb = pcs.transform(X); ev = pcs.explained_variance_ratio_ * 100
-fig, ax = plt.subplots(figsize=(6, 5))
-if grp is None:
-    ax.scatter(emb[:, 0], emb[:, 1], s=18, edgecolors="none")
-else:
-    for i, g in enumerate(sorted(grp.unique())):
+import numpy as np, pandas as pd
+
+def scatter_emb(ax, emb, grp, xi=0, yi=1, ev=None, name="PC", centered=True):
+    """emb: (n_samples, n_comp). ev: variance explained % or None. UMAP/t-SNE -> centered=False."""
+    emb, grp = np.asarray(emb), pd.Series(grp).astype(str)
+    for g in [g for g in GROUP_COLORS if g in set(grp)]:     
         m = (grp == g).to_numpy()
-        ax.scatter(emb[m, 0], emb[m, 1], s=18, color=PALETTE[i % len(PALETTE)], edgecolors="none", label=str(g))
-    ax.legend(title=grp.name)
-ax.set_xlabel(f"PC1 ({ev[0]:.1f}%)"); ax.set_ylabel(f"PC2 ({ev[1]:.1f}%)")
-ax.set_title("PCA"); fig.tight_layout(); fig.savefig("plots/pca.png")
+        ax.scatter(emb[m, xi], emb[m, yi], c=GROUP_COLORS[g], s=45, alpha=.9,
+                   edgecolors="white", linewidths=.4, label=g)
+    if centered:                   # PC/factor are 0-centered and equally spaced
+        ax.axhline(0, lw=.5, ls="--", c="0.75"); ax.axvline(0, lw=.5, ls="--", c="0.75")
+        ax.set_aspect("equal", adjustable="datalim")
+    lab = lambda i: f"{name}{i+1}" + (f" ({ev[i]:.1f}%)" if ev is not None else "")
+    ax.set_xlabel(lab(xi)); ax.set_ylabel(lab(yi))
+    ax.spines[["top", "right"]].set_visible(False); ax.legend(frameon=False, fontsize=7)
+```
+FOR **PCA**: samples × features + 'group' column 
+
+``` python
+from sklearn.decomposition import PCA
+
+df = pd.read_csv("samples_features.csv", index_col=0)    
+grp = df.pop("group") if "group" in df else pd.Series("all", index=df.index)
+X = df.select_dtypes("number")
+p = PCA(n_components=min(5, *X.shape)).fit(X) 
+emb, ev = p.transform(X), p.explained_variance_ratio_ * 100
+fig, ax = plt.subplots(figsize=(70/25.4, 70/25.4), constrained_layout=True)
+scatter_emb(ax, emb, grp, 0, 1, ev, "PC")
+fig.savefig("figures/pca.png", dpi=400)
 ```
 
-For **UMAP** use `umap.UMAP(n_neighbors=15, min_dist=0.1)`; for **t-SNE** use
-`sklearn.manifold.TSNE(perplexity=30)` — same scatter styling.
+FOR **UMAP/t-SNE**: no ev
+
+```python
+import umap           # t-SNE: from sklearn.manifold import TSNE
+
+emb = umap.UMAP(n_neighbors=15, min_dist=0.1).fit_transform(X)   # TSNE(perplexity=30).fit_transform(X)
+fig, ax = plt.subplots(figsize=(70/25.4, 70/25.4), constrained_layout=True)
+scatter_emb(ax, emb, grp, name="UMAP", centered=False)    # 원점·축 스케일에 의미 없음
+fig.savefig("figures/umap.png", dpi=400)
+```
+
+FOR **factor scatter**:
+
+```python
+Z  = pd.DataFrame(model.get_factors()["group1"], index=meta.index)
+r2 = model.get_variance_explained()["r2_per_factor"]["group1"]    # view × factor
+ev = r2.sum(axis=0).to_numpy()                           
+keep = [i for i, v in enumerate(ev) if v >= 5.0]        
+fig, ax = plt.subplots(figsize=(70/25.4, 70/25.4), constrained_layout=True)
+scatter_emb(ax, Z, meta["condition"], keep[0], keep[1], ev, "Factor")
+fig.savefig("figures/factor_scatter.png", dpi=400)
+```
 
 **Kaplan–Meier** (survival by group):
 
@@ -328,14 +387,73 @@ for i, g in enumerate(sorted(df["group"].unique())):
     kmf.fit(df.loc[m, "time"], df.loc[m, "event"], label=str(g))
     kmf.plot_survival_function(ax=ax, color=PALETTE[i % len(PALETTE)], ci_show=True)
 ax.set_xlabel("Time"); ax.set_ylabel("Survival probability"); ax.set_ylim(0, 1.02)
-ax.set_title("Kaplan–Meier"); fig.tight_layout(); fig.savefig("plots/km.png")
+ax.set_title("Kaplan–Meier"); fig.tight_layout(); fig.savefig("figures/km.png")
+```
+
+**Manhattan** (GWAS summary stats; columns `CHR`, `BP`, `P`):
+
+```python
+import numpy as np, pandas as pd
+df = pd.read_csv("gwas.csv").dropna(subset=["CHR", "BP", "P"]).copy()
+df["CHR"] = df["CHR"].astype(str)
+chrom_order = sorted(df["CHR"].unique(), key=lambda c: (len(c), c))
+df["_nlp"] = -np.log10(np.clip(df["P"].astype(float), 1e-300, None))
+offset, xticks, ticklabels, xpos = 0.0, [], [], np.zeros(len(df))  # lay chromosomes end-to-end
+for c in chrom_order:
+    m = (df["CHR"] == c).to_numpy()
+    bp = df.loc[m, "BP"].astype(float)
+    xpos[m] = bp + offset
+    xticks.append(offset + bp.median()); ticklabels.append(c)
+    offset = xpos[m].max() + 1
+fig, ax = plt.subplots(figsize=(180/25.4, 70/25.4), constrained_layout=True)
+for i, c in enumerate(chrom_order):
+    m = (df["CHR"] == c).to_numpy()
+    ax.scatter(xpos[m], df["_nlp"].to_numpy()[m], s=6, c=["#2a78d6", "#9fb3c8"][i % 2], edgecolors="none")
+ax.axhline(-np.log10(5e-8), color=UP, lw=0.8, ls="--")   # genome-wide significance
+ax.set_xticks(xticks); ax.set_xticklabels(ticklabels, fontsize=6)
+ax.set_xlabel("Chromosome"); ax.set_ylabel(r"$-\log_{10} p$"); ax.set_title("Manhattan")
+fig.savefig("figures/manhattan.png", dpi=400)
+```
+
+**QQ plot** (p-value calibration; reports genomic inflation λ):
+
+```python
+import numpy as np, pandas as pd
+from scipy import stats
+p = pd.read_csv("gwas.csv")["P"].dropna().astype(float).to_numpy()
+p = np.clip(np.sort(p), 1e-300, 1.0)
+obs = -np.log10(p)
+exp = -np.log10((np.arange(1, len(p) + 1) - 0.5) / len(p))
+lam = np.median(stats.chi2.isf(p, 1)) / stats.chi2.isf(0.5, 1)   # genomic inflation
+fig, ax = plt.subplots(figsize=(70/25.4, 70/25.4), constrained_layout=True)
+ax.scatter(exp, obs, s=6, c="#2a78d6", edgecolors="none")
+lim = float(max(exp.max(), obs.max()))
+ax.plot([0, lim], [0, lim], color="0.4", lw=0.8, ls="--")
+ax.set_xlabel(r"Expected $-\log_{10} p$"); ax.set_ylabel(r"Observed $-\log_{10} p$")
+ax.set_title(f"QQ (λ = {lam:.3f})"); fig.savefig("figures/qq.png", dpi=400)
+```
+
+**Forest** (effect size ± 95% CI per study/variant; columns `label`, `estimate`, `ci_low`, `ci_high`):
+
+```python
+import pandas as pd
+df = pd.read_csv("effects.csv").iloc[::-1].reset_index(drop=True)  # first row at top
+y = list(range(len(df)))
+fig, ax = plt.subplots(figsize=(90/25.4, max(60, 14 * len(df)) / 25.4), constrained_layout=True)
+ax.errorbar(df["estimate"], y,
+            xerr=[df["estimate"] - df["ci_low"], df["ci_high"] - df["estimate"]],
+            fmt="s", color="#204897", ecolor="0.4", capsize=2, markersize=4, lw=0.8)
+ax.axvline(1.0, color=UP, lw=0.8, ls="--")   # null: OR/HR=1 (use 0.0 for log-scale beta)
+ax.set_yticks(y); ax.set_yticklabels(df["label"])
+ax.set_xlabel("Effect size (95% CI)"); ax.set_title("Forest")
+fig.savefig("figures/forest.png", dpi=400)
 ```
 
 ## Best Practices
 
 - **Only plot data that exists.** Never invent columns, groups, or values; if a
   needed column is missing, inspect the header and ask or adapt — do not fabricate.
-- **Workspace-relative paths only.** Save under `plots/` (create it if needed);
+- **Workspace-relative paths only.** Save under `figures/` (create it if needed);
   never write to absolute paths like `/tmp` or `/home/...`.
 - **Reuse the palette across a figure set** so related panels share colors for
   the same group / direction. Use the diverging colormap (centered at 0) for
@@ -343,7 +461,7 @@ ax.set_title("Kaplan–Meier"); fig.tight_layout(); fig.savefig("plots/km.png")
   However, if the user explicitly requests a different color, use it.
 - **Label axes and give a real title.** Include units, group `n`, and thresholds
   where relevant (e.g. volcano cutoff lines).
-- For vector / print output, also save a `.pdf` (`fig.savefig("plots/x.pdf")`);
+- For vector / print output, also save a `.pdf` (`fig.savefig("figures/x.pdf")`);
   text stays editable because `pdf.fonttype=42` / `svg.fonttype="none"`.
 
 ## Common Pitfalls

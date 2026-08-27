@@ -17,6 +17,7 @@ CellChat is an R package that infers and visualizes intercellular signaling netw
 - Comparing intercellular signaling networks between two conditions (e.g., healthy vs. diseased, treatment vs. control) to find rewired or lost communication
 - Discovering pathway-level signaling programs (e.g., MHC-II, COLLAGEN, VEGF) enriched in a particular cell-cell interaction
 - Prioritizing targets for perturbation experiments by ranking signaling pathways by their aggregate communication strength or network centrality
+- Use **omics-plotting** SKILL (Python) for generic figures from exported tables; network chord/heatmap/bubble views use CellChat's R `netVisual_*`
 - Use **liana** (Python/R) instead when you want a pure-Python workflow or a consensus ranking across multiple ligand-receptor databases (CellChat, CellPhoneDB, Connectome, NicheNet)
 - Use **NicheNet** (R) instead when you need ligand-to-target gene regulatory inference — predicting which ligands from sender cells regulate which target genes in receiver cells
 
