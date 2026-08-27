@@ -328,6 +328,8 @@ Only then proceed to **Option 2: Use Standard Workflows**
 
 ### 2.5 Visualization
 
+**For all figures, read `skills/data-visualization/omics-plotting/SKILL.md` and follow its recipes** so every plot shares one publication-ready style. The two plots below map directly onto its recipes — the volcano onto "Volcano", the PCA onto "PCA / UMAP / t-SNE" — with results loaded from an exported CSV (keep computation and plotting in separate steps).
+
 **Volcano Plot**:
 - X-axis: Log2 fold change
 - Y-axis: -Log10 adjusted p-value
@@ -440,8 +442,7 @@ res <- results(dds, contrast=c("condition", "treatment", "control"))
 - Filter significant results (p_adj < 0.05)
 
 **Step 6**: Visualization
-- Create volcano plot
-- Create PCA plot for QC
+- Read `skills/data-visualization/omics-plotting/SKILL.md` and use its "Volcano" and "PCA / UMAP / t-SNE" recipes on the exported results/QC tables
 
 ---
 
@@ -513,6 +514,16 @@ res <- results(dds, contrast=c("condition", "treatment", "control"))
 7. **Treating Option 3 (custom analysis) as a shortcut.**
    *Problem*: Jumping straight to custom methods without first running standard workflows skips peer-reviewed validation and makes results harder to publish and reproduce.
    *How to avoid*: Document a clear justification for why Options 1 and 2 are inadequate before moving to Option 3, and validate any custom method on simulated or held-out data.
+
+## Related Skills
+
+Concrete SKILLs implementing the tiers above:
+
+- **omics-plotting** (`skills/data-visualization/omics-plotting/SKILL.md`) — publication-ready figures for every output here (volcano, MA, expression/correlation heatmap, GSEA bar/dot, PCA/UMAP, Kaplan–Meier, Manhattan/QQ/forest). Read it before writing any plotting code.
+- **deseq2-differential-expression** / **pydeseq2-differential-expression** — Option 1 RNA-seq differential expression (R and Python).
+- **gseapy-gene-enrichment** — GSEA / ORA functional enrichment on ranked DE results.
+- **maxquant-proteomics** — Option 1/2 proteomics quantification and differential abundance.
+- **mofaplus-multi-omics** — Option 3 multi-omics factor integration.
 
 ## References
 
