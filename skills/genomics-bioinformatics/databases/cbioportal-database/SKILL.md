@@ -18,6 +18,7 @@ cBioPortal for Cancer Genomics is a public repository of cancer genomics data in
 - Identifying which cancer studies have molecular profiling data for a specific cancer type (e.g., breast, lung)
 - Downloading gene expression (RNA-seq FPKM/RSEM) data from specific TCGA cohorts for differential expression analysis
 - Correlating genomic alterations with clinical outcomes in a specific study
+- Use **omics-plotting** SKILL to render bar charts, mutation-frequency heatmaps, and Kaplan–Meier curves from the query results
 - Use `gnomad-database` instead when you need population-level variant allele frequencies in healthy individuals
 - For drug-gene interaction lookups use `opentargets-database`; cBioPortal provides the genomic alteration data, not drug interaction annotations
 
@@ -360,12 +361,11 @@ print(gene_df.to_string(index=False))
 
 ### Query 7: Visualization — Mutation Frequency Barplot
 
-Plot mutation frequency across TCGA studies for a cancer driver gene.
+Compute mutation frequency across TCGA studies for a cancer driver gene, then **read `skills/data-visualization/omics-plotting/SKILL.md` and follow its "Box / Violin / Bar" recipe** on the exported CSV (→ `figures/TP53_mutation_frequency.png`).
 
 ```python
 import requests, time
 import pandas as pd
-import matplotlib.pyplot as plt
 
 BASE_URL = "https://www.cbioportal.org/api"
 
@@ -413,18 +413,9 @@ for study_id, label in STUDIES.items():
         print(f"  Skipping {study_id}: {e}")
 
 df = pd.DataFrame(rows).sort_values("freq", ascending=True)
-
-fig, ax = plt.subplots(figsize=(7, 4))
-bars = ax.barh(df["study"], df["freq"], color="#C0392B", edgecolor="white")
-ax.bar_label(bars, labels=[f"{v:.0f}%  (n={n})" for v, n in zip(df["freq"], df["n_mutated"])],
-             padding=4, fontsize=9)
-ax.set_xlabel(f"{GENE_SYMBOL} Mutation Frequency (%)")
-ax.set_title(f"{GENE_SYMBOL} Somatic Mutation Frequency\nacross TCGA PanCancer Atlas Studies")
-ax.set_xlim(0, df["freq"].max() * 1.3)
-plt.tight_layout()
-plt.savefig(f"{GENE_SYMBOL}_mutation_frequency.png", dpi=150, bbox_inches="tight")
-print(f"Saved {GENE_SYMBOL}_mutation_frequency.png")
+df.to_csv(f"{GENE_SYMBOL}_mutation_frequency.csv", index=False)
 print(df[["study", "n_mutated", "n_total", "freq"]].to_string(index=False))
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Box / Violin / Bar" recipe (horizontal bar of freq by study).
 ```
 
 ## Key Concepts
@@ -518,8 +509,6 @@ print(f"\nSaved: {study_id}_driver_mutations.csv")
 ```python
 import requests
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
 
 BASE_URL = "https://www.cbioportal.org/api"
 
@@ -575,40 +564,14 @@ merged = merged.dropna(subset=["OS_STATUS", "OS_MONTHS"])
 merged["OS_MONTHS"] = pd.to_numeric(merged["OS_MONTHS"], errors="coerce")
 merged["event"] = (merged["OS_STATUS"] == "1:DECEASED").astype(int)
 
-# Simple Kaplan-Meier-style plot (manual step function)
-def km_curve(df, time_col="OS_MONTHS"):
-    times = sorted(df[time_col].dropna().values)
-    surv = []
-    s = 1.0
-    n = len(times)
-    for i, t in enumerate(times):
-        s *= (1 - 1 / (n - i))
-        surv.append((t, s))
-    return surv
-
-fig, ax = plt.subplots(figsize=(8, 5))
-colors = {"Amplified": "#C0392B", "Diploid": "#2980B9"}
-for status, color in colors.items():
-    grp = merged[merged["erbb2_status"] == status]
-    if len(grp) < 10:
-        continue
-    km = km_curve(grp)
-    times = [0] + [x[0] for x in km]
-    surv  = [1.0] + [x[1] for x in km]
-    ax.step(times, surv, where="post", color=color,
-            label=f"ERBB2 {status} (n={len(grp)})", lw=2)
-
-ax.set_xlabel("Overall Survival (months)")
-ax.set_ylabel("Survival Probability")
-ax.set_title("ERBB2 CNA Status vs. Overall Survival\nTCGA BRCA (PanCancer Atlas)")
-ax.legend()
-ax.set_ylim(0, 1.05)
-ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig("erbb2_survival.png", dpi=150, bbox_inches="tight")
-print(f"Saved erbb2_survival.png")
-print(f"ERBB2 Amplified: {(merged['erbb2_status']=='Amplified').sum()} samples")
-print(f"ERBB2 Diploid:   {(merged['erbb2_status']=='Diploid').sum()} samples")
+# Survival table for the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Kaplan–Meier" recipe (columns: time, event, group)
+km_input = (merged.loc[merged["erbb2_status"].isin(["Amplified", "Diploid"]),
+                       ["OS_MONTHS", "event", "erbb2_status"]]
+            .rename(columns={"OS_MONTHS": "time", "erbb2_status": "group"}))
+km_input.to_csv("erbb2_survival.csv", index=False)
+print(f"Survival table: {len(km_input)} patients -> erbb2_survival.csv")
+print(km_input["group"].value_counts().to_string())
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Kaplan–Meier" recipe -> figures/erbb2_survival.png
 ```
 
 ### Workflow 3: Multi-Study Alteration Frequency Heatmap
@@ -618,8 +581,6 @@ print(f"ERBB2 Diploid:   {(merged['erbb2_status']=='Diploid').sum()} samples")
 ```python
 import requests, time
 import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
 
 BASE_URL = "https://www.cbioportal.org/api"
 
@@ -673,24 +634,10 @@ for study_id, label in STUDIES.items():
         print(f"  {label}: {e}")
 
 freq_matrix = freq_matrix.fillna(0).astype(float)
-
-fig, ax = plt.subplots(figsize=(7, 4))
-im = ax.imshow(freq_matrix.values, cmap="YlOrRd", aspect="auto", vmin=0, vmax=80)
-ax.set_xticks(range(len(freq_matrix.columns)))
-ax.set_xticklabels(freq_matrix.columns, rotation=30, ha="right")
-ax.set_yticks(range(len(freq_matrix.index)))
-ax.set_yticklabels(freq_matrix.index)
-for i in range(len(freq_matrix.index)):
-    for j in range(len(freq_matrix.columns)):
-        val = freq_matrix.iloc[i, j]
-        ax.text(j, i, f"{val:.0f}%", ha="center", va="center", fontsize=9,
-                color="white" if val > 40 else "black")
-plt.colorbar(im, ax=ax, label="Mutation Frequency (%)")
-ax.set_title("Somatic Mutation Frequency — TCGA PanCancer Atlas")
-plt.tight_layout()
-plt.savefig("mutation_frequency_heatmap.png", dpi=150, bbox_inches="tight")
-print("Saved mutation_frequency_heatmap.png")
+freq_matrix.to_csv("mutation_frequency_matrix.csv")
 print(freq_matrix.to_string())
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Expression heatmap" recipe (gene x cancer-type, YlOrRd,
+# annotated) -> figures/mutation_frequency_heatmap.png
 ```
 
 ## Key Parameters

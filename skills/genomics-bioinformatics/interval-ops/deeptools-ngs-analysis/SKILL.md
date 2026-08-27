@@ -19,6 +19,7 @@ deepTools is a command-line toolkit for processing and visualizing high-throughp
 - Creating heatmaps and profile plots around TSS, peaks, or other genomic regions
 - Analyzing ATAC-seq data with Tn5 offset correction
 - Generating strand-specific RNA-seq coverage tracks
+- Use **omics-plotting** SKILL for custom figures from exported score matrices; standard signal heatmaps/profiles use deeptools' own `plotHeatmap`/`plotProfile`
 - For **read alignment**, use STAR, BWA, or bowtie2 instead
 - For **peak calling**, use MACS2 or HOMER instead
 - For **BAM/VCF file manipulation**, use pysam instead

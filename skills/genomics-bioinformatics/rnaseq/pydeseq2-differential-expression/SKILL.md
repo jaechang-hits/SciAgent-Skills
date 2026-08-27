@@ -16,7 +16,7 @@ PyDESeq2 is a Python reimplementation of the R DESeq2 package for differential g
 - Performing two-group comparisons (e.g., treated vs control) with proper statistical testing
 - Running multi-factor designs that account for batch effects or covariates (e.g., `~batch + condition`)
 - Applying log2 fold change shrinkage (apeGLM) for ranking and visualization
-- Generating volcano plots, MA plots, and heatmaps from differential expression results
+- Use `omics-plotting` SKILL after DE for publication-quality plots of differential expression results
 - Converting R-based DESeq2 workflows to a pure Python environment
 - Integrating DE analysis into larger Python bioinformatics pipelines (e.g., with scanpy, pandas)
 - Use **DESeq2** (R/Bioconductor) or **edgeR** instead for the reference R implementations with the broadest method support and community validation
@@ -168,57 +168,24 @@ print("Results exported to CSV files")
 
 ### Step 7: Visualization — Volcano Plot
 
+Prepare the DEG table, then **read `skills/data-visualization/omics-plotting/SKILL.md` and follow its "Volcano" recipe** on the exported CSV (→ `figures/volcano_plot.png`).
+
 ```python
-import matplotlib.pyplot as plt
-import numpy as np
-
-fig, ax = plt.subplots(figsize=(10, 7))
-res = results.dropna(subset=["padj"]).copy()
-res["-log10_padj"] = -np.log10(res.padj)
-
-# Color categories
-is_sig = (res.padj < 0.05) & (res.log2FoldChange.abs() > 1.0)
-is_up = is_sig & (res.log2FoldChange > 0)
-is_down = is_sig & (res.log2FoldChange < 0)
-
-ax.scatter(res.loc[~is_sig, "log2FoldChange"], res.loc[~is_sig, "-log10_padj"],
-           c="grey", alpha=0.3, s=8, label="Not significant")
-ax.scatter(res.loc[is_up, "log2FoldChange"], res.loc[is_up, "-log10_padj"],
-           c="firebrick", alpha=0.6, s=12, label=f"Up ({is_up.sum()})")
-ax.scatter(res.loc[is_down, "log2FoldChange"], res.loc[is_down, "-log10_padj"],
-           c="steelblue", alpha=0.6, s=12, label=f"Down ({is_down.sum()})")
-
-ax.axhline(-np.log10(0.05), ls="--", c="black", alpha=0.4)
-ax.axvline(-1, ls="--", c="black", alpha=0.4)
-ax.axvline(1, ls="--", c="black", alpha=0.4)
-ax.set_xlabel("Log2 Fold Change")
-ax.set_ylabel("-Log10(Adjusted P-value)")
-ax.set_title("Volcano Plot — Treated vs Control")
-ax.legend()
-plt.tight_layout()
-plt.savefig("volcano_plot.png", dpi=300)
-print("Saved volcano_plot.png")
+# Volcano input = log2FoldChange vs padj; saved in Step 6 as deseq2_all_results.csv
+volcano_input = results[["log2FoldChange", "padj"]].dropna()
+print(f"Volcano input: {len(volcano_input)} genes -> deseq2_all_results.csv")
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Volcano" recipe.
 ```
 
 ### Step 8: Visualization — MA Plot
 
+Prepare the DEG table, then **read `skills/data-visualization/omics-plotting/SKILL.md` and follow its "MA plot" recipe** on the exported CSV (→ `figures/ma_plot.png`).
+
 ```python
-fig, ax = plt.subplots(figsize=(10, 7))
-
-ax.scatter(np.log10(res.loc[~is_sig, "baseMean"] + 1),
-           res.loc[~is_sig, "log2FoldChange"],
-           c="grey", alpha=0.3, s=8)
-ax.scatter(np.log10(res.loc[is_sig, "baseMean"] + 1),
-           res.loc[is_sig, "log2FoldChange"],
-           c="firebrick", alpha=0.6, s=12)
-
-ax.axhline(0, ls="--", c="black", alpha=0.5)
-ax.set_xlabel("Log10(Mean Normalized Count + 1)")
-ax.set_ylabel("Log2 Fold Change")
-ax.set_title("MA Plot")
-plt.tight_layout()
-plt.savefig("ma_plot.png", dpi=300)
-print("Saved ma_plot.png")
+# MA input = log2FoldChange vs mean normalized count (baseMean); from deseq2_all_results.csv
+ma_input = results[["baseMean", "log2FoldChange", "padj"]].dropna(subset=["padj"])
+print(f"MA input: {len(ma_input)} genes -> deseq2_all_results.csv")
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "MA plot" recipe.
 ```
 
 ## Key Parameters
@@ -332,9 +299,9 @@ with open("dds_fitted.pkl", "rb") as f:
 - `deseq2_significant.csv` — Filtered results (padj < 0.05 and |LFC| > 1)
 - `deseq2_upregulated.csv` — Significant upregulated genes sorted by padj
 - `deseq2_downregulated.csv` — Significant downregulated genes sorted by padj
-- `volcano_plot.png` — Volcano plot with significance and fold change thresholds
-- `ma_plot.png` — MA plot showing fold change vs mean expression
-- `qc_diagnostics.png` — P-value distribution and dispersion plot
+- `figures/volcano_plot.png` — Volcano plot with significance and fold change thresholds
+- `figures/ma_plot.png` — MA plot showing fold change vs mean expression
+- `figures/qc_diagnostics.png` — P-value distribution and dispersion plot
 
 ## Troubleshooting
 

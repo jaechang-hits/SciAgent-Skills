@@ -18,6 +18,7 @@ PLINK2 is the high-performance successor to PLINK 1.9, designed for genome-wide 
 - Running PCA on genotype data to identify population stratification
 - Converting between PLINK binary, VCF, and BGEN formats
 - Filtering variants by MAF, HWE, missingness, or INFO score in VCF/imputed data
+- Use **omics-plotting** SKILL to render Manhattan and QQ plots from the association results
 - Use **regenie** or **SAIGE** instead for biobank-scale GWAS (>100k samples) requiring mixed model association to control for population structure
 - Use **VCFtools** as an alternative for VCF-specific population genetics statistics
 
@@ -201,47 +202,23 @@ wc -l results/gwas_qt.*.glm.linear
 
 ### Step 6: Plot Manhattan and QQ Plots
 
-Visualize GWAS results with Python.
+Prepare the association results as a CHR/BP/P table, then **read `skills/data-visualization/omics-plotting/SKILL.md` and follow its "Manhattan" and "QQ plot" recipes** on the exported CSV (→ `figures/manhattan.png`, `figures/qq.png`).
 
 ```python
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.stats import chi2
 
-# Load GWAS results (PLINK2 linear output)
+# Load GWAS results (PLINK2 linear output) as a CHR/BP/P table for plotting
 df = pd.read_csv("results/gwas_qt.PHENO1.glm.linear", sep="\t",
                  usecols=["#CHROM", "POS", "ID", "P"])
-df.columns = ["CHR", "POS", "SNP", "P"]
+df.columns = ["CHR", "BP", "SNP", "P"]
 df = df.dropna(subset=["P"])
 df["P"] = pd.to_numeric(df["P"], errors="coerce")
 df = df[df["P"] > 0].copy()
-df["-log10P"] = -np.log10(df["P"])
+df.to_csv("gwas.csv", index=False)
 
 print(f"Variants: {len(df)}")
 print(f"Genome-wide significant (p<5e-8): {(df['P'] < 5e-8).sum()}")
-
-# Manhattan plot
-fig, ax = plt.subplots(figsize=(14, 4))
-colors = plt.cm.Set1.colors
-chrom_pos = 0
-ticks = []
-for chrom, group in df.groupby("CHR", sort=False):
-    col = colors[int(chrom) % 2] if str(chrom).isdigit() else "gray"
-    ax.scatter(group["POS"] + chrom_pos, group["-log10P"],
-               c=[col], s=2, alpha=0.7)
-    ticks.append((chrom_pos + group["POS"].mean(), str(chrom)))
-    chrom_pos += group["POS"].max() + 1e7
-
-ax.axhline(-np.log10(5e-8), color="red", linestyle="--", lw=1, label="p=5×10⁻⁸")
-ax.set_xticks([t[0] for t in ticks[::2]])
-ax.set_xticklabels([t[1] for t in ticks[::2]], fontsize=6)
-ax.set_xlabel("Chromosome")
-ax.set_ylabel("-log₁₀(p)")
-ax.set_title("GWAS Manhattan Plot")
-plt.tight_layout()
-plt.savefig("manhattan.png", dpi=150)
-print("Saved: manhattan.png")
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Manhattan" and "QQ plot" recipes (input columns CHR, BP, P).
 ```
 
 ## Key Parameters

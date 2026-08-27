@@ -18,6 +18,7 @@ The Mouse Phenome Database (MPD), maintained at the Jackson Laboratory, catalogs
 - Finding MPD projects that measure a trait of interest using ontology terms (MP, VT, MA) or free-text descriptions
 - Validating mouse strain nomenclature (canonical JAX names ↔ stock numbers ↔ MGI IDs) before submitting orders or analyses
 - Looking up coordinates and annotations for mouse genes in the MPD/MGI cross-reference
+- Use **omics-plotting** SKILL to render strain-mean bar charts and strain × measure heatmaps from the query results
 - Use `monarch-database` instead for disease-gene-phenotype knowledge graphs (HPO ↔ MP ↔ disease)
 - Use `ensembl-database` instead for transcript-level mouse gene annotations and variant consequence prediction
 
@@ -316,7 +317,7 @@ Discover the live list any time with `GET /project_filters/mpdsector`.
 **Goal**: From "I want to compare heart rate across inbred strains" → land on real data and produce a ranked barplot.
 
 ```python
-import requests, pandas as pd, matplotlib.pyplot as plt, time
+import requests, pandas as pd, time
 
 MPD = "https://phenome.jax.org/api"
 
@@ -338,18 +339,10 @@ print(f"\nPicked: {projsym} measnum={hr['measnum']} varname={hr['varname']} ({hr
 # 3) Pull strain means, plot male strains ranked
 sm = pd.DataFrame(requests.get(f"{MPD}/pheno/strainmeans/{hr['measnum']}", timeout=30).json()["strainmeans"])
 male = sm[sm["sex"] == "m"].sort_values("mean", ascending=False).reset_index(drop=True)
-
-fig, ax = plt.subplots(figsize=(9, 4))
-bars = ax.bar(male["strain"], male["mean"], yerr=male["sem"],
-              color="#1976D2", capsize=3, edgecolor="white")
-ax.bar_label(bars, fmt="%.0f", padding=3, fontsize=8)
-ax.set_xlabel("Strain")
-ax.set_ylabel(f"Mean {hr['varname']} ({hr['units']})")
-ax.set_title(f"{hr['descrip']} by inbred strain (male) — {projsym}")
-plt.xticks(rotation=30, ha="right")
-plt.tight_layout()
-plt.savefig("mpd_strain_means.png", dpi=150, bbox_inches="tight")
-print("Saved mpd_strain_means.png")
+male.to_csv("mpd_strain_means.csv", index=False)
+print(f"Strain means (male): {len(male)} strains -> mpd_strain_means.csv")
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Box / Violin / Bar" recipe (bar of mean by strain,
+# yerr=sem) -> figures/mpd_strain_means.png
 ```
 
 ### Workflow 2: Per-Animal Data → R/qtl2 CSV Export
@@ -380,7 +373,7 @@ print(out.head().to_string(index=False))
 **Goal**: Build a wide-format strain × measure table (z-scored) from one project for comparative visualisation.
 
 ```python
-import requests, pandas as pd, matplotlib.pyplot as plt
+import requests, pandas as pd
 
 MPD = "https://phenome.jax.org/api"
 projsym = "Jaxwest1"
@@ -397,18 +390,9 @@ print(f"Shape: {wide.shape}  (strains × measures)")
 keep = wide.dropna(axis=1, thresh=int(0.8 * len(wide))).columns[:10]
 wide = wide[keep].dropna()
 print(f"After coverage filter: {wide.shape}")
-
-fig, ax = plt.subplots(figsize=(8, max(3, 0.3 * len(wide))))
-im = ax.imshow(wide.values, aspect="auto", cmap="RdBu_r", vmin=-2, vmax=2)
-ax.set_xticks(range(len(wide.columns)))
-ax.set_xticklabels(wide.columns, rotation=45, ha="right", fontsize=8)
-ax.set_yticks(range(len(wide.index)))
-ax.set_yticklabels(wide.index, fontsize=8)
-fig.colorbar(im, ax=ax, label="z-score")
-ax.set_title(f"{projsym} — strain × measure z-score heatmap (male)")
-plt.tight_layout()
-plt.savefig("mpd_strain_measure_heatmap.png", dpi=150, bbox_inches="tight")
-print("Saved mpd_strain_measure_heatmap.png")
+wide.to_csv("mpd_strain_measure_matrix.csv")
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Expression heatmap" recipe (strain x measure z-score,
+# RdBu_r, center=0) -> figures/mpd_strain_measure_heatmap.png
 ```
 
 ## Key Parameters

@@ -17,6 +17,7 @@ popV (Population Voting for single-cell annotation) annotates a query scRNA-seq 
 - Benchmarking annotation reliability by comparing per-method labels to detect systematic disagreements
 - Annotating large atlas datasets (>100k cells) where batch effects between reference and query are substantial
 - Producing annotation for downstream analyses that require high-confidence labels (clinical data, regulatory submissions)
+- Use **omics-plotting** SKILL for confidence bar charts and method-agreement heatmaps from exported tables (UMAPs stay in scanpy `sc.pl.*`)
 - Use **CellTypist** (celltypist-cell-annotation) instead when speed matters and a pre-trained model matches your tissue; popV is slower because it trains multiple models on your reference
 - Use **scANVI** (scvi-tools-single-cell) instead when you need a single probabilistic deep generative model with formal uncertainty quantification and do not require the ensemble
 
@@ -353,22 +354,10 @@ popv_method_cols = [c for c in query_obs.columns if c.endswith("_popv") and
 print(f"\nLow-confidence cells sample (showing per-method labels):")
 print(low_conf[popv_method_cols + ["popv_prediction"]].head(10).to_string())
 
-# Visualize agreement distribution
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-query_obs["popv_agreement"].hist(bins=20, ax=axes[0], color="steelblue", edgecolor="white")
-axes[0].axvline(0.8, color="red", linestyle="--", label="High-confidence threshold")
-axes[0].set_xlabel("Method Agreement Score")
-axes[0].set_ylabel("Cell Count")
-axes[0].set_title("popV Agreement Distribution")
-axes[0].legend()
-
-query_obs["confidence_tier"].value_counts().plot.bar(ax=axes[1], color="steelblue")
-axes[1].set_title("Cells by Confidence Tier")
-axes[1].set_xlabel("Confidence Tier")
-axes[1].set_ylabel("Cell Count")
-plt.tight_layout()
-plt.savefig("popv_confidence_distribution.png", dpi=150, bbox_inches="tight")
-print("Saved popv_confidence_distribution.png")
+# Save agreement + confidence-tier summaries; render the tier bar chart with the omics-plotting
+# SKILL (skills/data-visualization/omics-plotting/SKILL.md) "Box / Violin / Bar" recipe -> figures/popv_confidence_distribution.png
+query_obs[["popv_agreement", "confidence_tier"]].to_csv("popv_confidence.csv")
+print(query_obs["confidence_tier"].value_counts().to_string())
 ```
 
 ## Key Parameters
@@ -434,8 +423,6 @@ When to use: understanding where methods disagree to identify systematic biases 
 
 ```python
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 query_mask = adata.obs["_dataset"] == "query"
 query_obs = adata[query_mask].obs.copy()
@@ -452,17 +439,10 @@ ct = pd.crosstab(
 )
 # Normalize rows
 ct_norm = ct.div(ct.sum(axis=1), axis=0)
-
-plt.figure(figsize=(12, 10))
-sns.heatmap(ct_norm, cmap="Blues", vmin=0, vmax=1,
-            xticklabels=True, yticklabels=True,
-            cbar_kws={"label": "Fraction of cells"})
-plt.title("knn_harmony vs scanvi label agreement")
-plt.xlabel("SCANVI label")
-plt.ylabel("KNN-Harmony label")
-plt.tight_layout()
-plt.savefig("popv_method_agreement_heatmap.png", dpi=150)
-print("Saved popv_method_agreement_heatmap.png")
+ct_norm.to_csv("popv_method_agreement.csv")
+print(f"Method agreement matrix: {ct_norm.shape} -> popv_method_agreement.csv")
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Expression heatmap" recipe (Blues, 0..1)
+# -> figures/popv_method_agreement_heatmap.png
 ```
 
 ### Recipe: Fast Annotation Without Deep Learning Methods

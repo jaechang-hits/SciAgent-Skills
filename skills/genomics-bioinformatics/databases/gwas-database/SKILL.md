@@ -20,6 +20,7 @@ The NHGRI-EBI GWAS Catalog is a curated collection of published genome-wide asso
 - Identifying published GWAS studies by disease, gene, or PubMed ID
 - Cross-referencing EFO trait ontology terms with GWAS evidence
 - Building candidate gene lists from GWAS association regions
+- Use **omics-plotting** SKILL to render Manhattan, QQ, and forest plots from the summary statistics / association results
 - For **drug target validation from GWAS hits**, use `opentargets-database` instead
 - For **variant functional annotation** (consequence prediction, regulatory impact), use Ensembl VEP via `gget`
 
@@ -409,51 +410,24 @@ for tid, info in sorted(trait_set.items(), key=lambda x: x[1]["best_pval"]):
 
 ```python
 import numpy as np
-import matplotlib.pyplot as plt
-import csv, gzip, io, requests
+import pandas as pd
 
-# Simulated summary statistics for demonstration
-# In practice: download from GWAS Catalog FTP
+# Summary statistics as a CHR/BP/P table (simulated here for demonstration).
+# In practice: download from GWAS Catalog FTP, e.g.
 # url = "http://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/GCSTXXXXXX/..."
-# resp = requests.get(url); data = gzip.decompress(resp.content)
-
+# import gzip, requests; data = gzip.decompress(requests.get(url).content)
 np.random.seed(42)
 n_snps = 5000
-chroms = np.random.choice(range(1, 23), size=n_snps)
-positions = np.random.randint(1, 250_000_000, size=n_snps)
 pvalues = np.random.uniform(0, 1, size=n_snps)
-# Add some "hits"
-pvalues[:20] = 10 ** np.random.uniform(-15, -8, size=20)
-
-# Manhattan plot
-log_p = -np.log10(pvalues)
-chrom_offsets = {}
-running_offset = 0
-for c in range(1, 23):
-    chrom_offsets[c] = running_offset
-    running_offset += 250_000_000
-
-x_positions = [positions[i] + chrom_offsets[chroms[i]] for i in range(n_snps)]
-colors = ["#1f77b4" if c % 2 == 0 else "#ff7f0e" for c in chroms]
-
-fig, ax = plt.subplots(figsize=(14, 5))
-ax.scatter(x_positions, log_p, c=colors, s=4, alpha=0.6)
-ax.axhline(y=-np.log10(5e-8), color="red", linestyle="--", linewidth=0.8,
-           label="Genome-wide significance (p=5e-8)")
-ax.axhline(y=-np.log10(1e-5), color="blue", linestyle=":", linewidth=0.5,
-           label="Suggestive (p=1e-5)")
-ax.set_xlabel("Chromosome")
-ax.set_ylabel("-log10(p-value)")
-ax.set_title("GWAS Manhattan Plot")
-ax.legend(fontsize=8)
-
-# Chromosome labels
-tick_positions = [chrom_offsets[c] + 125_000_000 for c in range(1, 23)]
-ax.set_xticks(tick_positions)
-ax.set_xticklabels([str(c) for c in range(1, 23)], fontsize=7)
-plt.tight_layout()
-plt.savefig("manhattan_plot.png", dpi=300, bbox_inches="tight")
-print("Saved manhattan_plot.png")
+pvalues[:20] = 10 ** np.random.uniform(-15, -8, size=20)   # add some "hits"
+sumstats = pd.DataFrame({
+    "CHR": np.random.choice(range(1, 23), size=n_snps),
+    "BP": np.random.randint(1, 250_000_000, size=n_snps),
+    "P": pvalues,
+})
+sumstats.to_csv("gwas.csv", index=False)
+print(f"Summary stats: {len(sumstats)} SNPs, {(sumstats['P'] < 5e-8).sum()} genome-wide sig -> gwas.csv")
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Manhattan" recipe -> figures/manhattan_plot.png
 ```
 
 ## Key Parameters
@@ -551,8 +525,8 @@ print(f"Total associations in region: {len(region_assocs)}")
 Visualize effect sizes across studies for a single variant.
 
 ```python
-import matplotlib.pyplot as plt
-import numpy as np
+import re
+import pandas as pd
 import requests, time
 
 BASE = "https://www.ebi.ac.uk/gwas/rest/api"
@@ -561,29 +535,24 @@ data = requests.get(f"{BASE}/singleNucleotidePolymorphisms/rs1801282/association
 time.sleep(0.2)
 assocs = data["_embedded"]["associations"]
 
-# Extract OR values (filter to those with OR data)
-entries = []
+def parse_ci(text):
+    """Pull [low-high] confidence bounds out of the GWAS Catalog 'range' string."""
+    nums = re.findall(r"[0-9]*\.?[0-9]+", text or "")
+    return (float(nums[0]), float(nums[1])) if len(nums) >= 2 else (float("nan"), float("nan"))
+
+# Build a forest-plot table: label, estimate (OR), ci_low, ci_high
+rows = []
 for a in assocs:
     or_val = a.get("orPerCopyNum")
-    ci_text = a.get("range", "")
     trait = a.get("efoTraits", [{}])[0].get("trait", "N/A") if a.get("efoTraits") else "N/A"
     if or_val and or_val > 0:
-        entries.append({"trait": trait[:30], "or": or_val, "ci": ci_text})
+        lo, hi = parse_ci(a.get("range", ""))
+        rows.append({"label": trait[:30], "estimate": or_val, "ci_low": lo, "ci_high": hi})
 
-if entries:
-    fig, ax = plt.subplots(figsize=(8, max(3, len(entries) * 0.4)))
-    y_pos = range(len(entries))
-    ors = [e["or"] for e in entries]
-    labels = [f"{e['trait']} (OR={e['or']:.2f})" for e in entries]
-    ax.barh(y_pos, [np.log(o) for o in ors], color=["#d62728" if o > 1 else "#2ca02c" for o in ors])
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels(labels, fontsize=8)
-    ax.axvline(x=0, color="black", linewidth=0.8)
-    ax.set_xlabel("log(OR)")
-    ax.set_title("rs1801282 (PPARG) Effect Sizes")
-    plt.tight_layout()
-    plt.savefig("forest_plot.png", dpi=300, bbox_inches="tight")
-    print(f"Saved forest_plot.png with {len(entries)} entries")
+effects = pd.DataFrame(rows)
+effects.to_csv("effects.csv", index=False)
+print(f"Effect sizes: {len(effects)} entries -> effects.csv")
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Forest" recipe (null line at OR=1) -> figures/forest_plot.png
 ```
 
 ## Troubleshooting

@@ -18,6 +18,7 @@ MOFA+ (Multi-Omics Factor Analysis v2) is an unsupervised statistical framework 
 - Reducing multi-omics dimensionality before clustering, trajectory inference, or survival modeling
 - Discovering which genomic features (genes, peaks, proteins) drive each factor via sparse loadings
 - Annotating latent factors by correlating factor scores with sample metadata (age, stage, treatment response)
+- Use **omics-plotting** SKILL after training for publication-quality factor scatter and loading heatmaps
 - Use **scVI / MultiVI** (scverse) instead when you need deep generative batch correction across modalities with explicit latent space inference and VAE architecture
 - Use **LIGER** instead when your primary goal is integrating datasets across technologies (e.g., snRNA-seq + snATAC-seq) with shared and dataset-specific factors via iNMF
 
@@ -263,54 +264,25 @@ for fc in factor_cols[:5]:
 
 ### Step 7: Visualize Factors — Scatter Plots and Feature Heatmaps
 
-Plot factor score scatter plots colored by metadata, and heatmaps of the top-weighted features (loadings) per factor to understand what each factor captures.
+Extract the feature weights (loadings) per factor here, then **read `skills/data-visualization/omics-plotting/SKILL.md` and follow its recipes** so figures share one consistent style: `factors_meta` (from Step 6) → *factor scatter* (→ `figures/mofa_factor_scatter.png`); `weights_rna` → *expression heatmap* of the top ± loadings (→ `figures/mofa_rna_weights_heatmap.png`).
 
 ```python
 def load_mofa_weights(model_path, view_name):
     """Load feature weights (W) for a specific view. Returns DataFrame (features x factors)."""
     with h5py.File(model_path, "r") as f:
-        views = [v.decode() for v in f["views"]["views"][:]]
-        view_idx = views.index(view_name)
-        # Weights stored per view as (n_factors, n_features)
-        w = f["expectations"]["W"][view_name][:]
+        w = f["expectations"]["W"][view_name][:]   # (n_factors, n_features)
         features = [ft.decode() for ft in f["features"][view_name][:]]
         n_factors = w.shape[0]
         df = pd.DataFrame(w.T, index=features,
                           columns=[f"Factor{i+1}" for i in range(n_factors)])
     return df
 
-# --- Factor scatter plot ---
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
-for ax, (fx, fy) in zip(axes, [("Factor1", "Factor2"), ("Factor1", "Factor3")]):
-    for cond, grp in factors_meta.groupby("condition"):
-        ax.scatter(grp[fx], grp[fy], label=cond, alpha=0.6, s=20)
-    ax.set_xlabel(fx)
-    ax.set_ylabel(fy)
-    ax.legend(title="Condition")
-    ax.set_title(f"{fx} vs {fy}")
-
-plt.tight_layout()
-plt.savefig("mofa_factor_scatter.png", dpi=200)
-print("Saved mofa_factor_scatter.png")
-
-# --- Top-loading heatmap for RNA view ---
 weights_rna = load_mofa_weights("mofa_model.hdf5", "RNA")
-top_n = 20
-top_features = []
-for fc in [f"Factor{i+1}" for i in range(min(5, weights_rna.shape[1]))]:
-    top_pos = weights_rna[fc].nlargest(top_n // 2).index.tolist()
-    top_neg = weights_rna[fc].nsmallest(top_n // 2).index.tolist()
-    top_features.extend(top_pos + top_neg)
-top_features = list(dict.fromkeys(top_features))  # unique, preserve order
+print(f"RNA weights: {weights_rna.shape} (features x factors)")
 
-fig, ax = plt.subplots(figsize=(8, max(6, len(top_features) * 0.3)))
-sns.heatmap(weights_rna.loc[top_features, [f"Factor{i+1}" for i in range(min(5, weights_rna.shape[1]))]],
-            cmap="RdBu_r", center=0, ax=ax, yticklabels=True)
-ax.set_title("Top RNA Feature Weights per Factor")
-plt.tight_layout()
-plt.savefig("mofa_rna_weights_heatmap.png", dpi=200)
-print("Saved mofa_rna_weights_heatmap.png")
+# Plot inputs are ready; use the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) to render:
+#   factors_meta -> "factor scatter"  -> figures/mofa_factor_scatter.png
+#   weights_rna  -> loading heatmap   -> figures/mofa_rna_weights_heatmap.png
 ```
 
 ### Step 8: Downstream — Cluster Cells by Factor Scores and Enrichment
@@ -493,8 +465,8 @@ print("\nSaved mofa_factor_annotation.csv")
 |--------|-------------|
 | `mofa_model.hdf5` | Trained MOFA+ model — factor scores, weights, ELBO trace, variance explained |
 | `mofa_variance_explained.png` | Heatmap of R2 (%) per factor per view; primary diagnostic for factor selection |
-| `mofa_factor_scatter.png` | Scatter plots of Factor1 vs Factor2/3 colored by metadata (condition, patient) |
-| `mofa_rna_weights_heatmap.png` | Heatmap of top RNA feature weights across the first 5 factors |
+| `figures/mofa_factor_scatter.png` | Scatter plots of Factor1 vs Factor2/3 colored by metadata (condition, patient); via omics-plotting |
+| `figures/mofa_rna_weights_heatmap.png` | Heatmap of top RNA feature weights across the first 5 factors; via omics-plotting |
 | `mofa_factor_scores.csv` | Table of per-cell factor scores (cells x factors) with cluster labels |
 | `mofa_factor_annotation.csv` | Factor annotation table: top positive/negative genes per factor |
 | Per-factor gene lists | Input for gseapy Enrichr or GSEA to identify enriched pathways per factor |

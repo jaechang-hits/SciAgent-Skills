@@ -20,6 +20,7 @@ MaxQuant is the community-standard software for label-free quantification (LFQ) 
 - Generating publication-quality volcano plots and GO enrichment from proteomics data in a reproducible Python workflow
 - Use **Proteome Discoverer** instead when working with Thermo raw files requiring instrument-native processing or Sequest HT
 - Use **FragPipe/MSFragger** instead for GPU-accelerated database search (3–10× faster) or when processing DIA (data-independent acquisition) data
+- Use **omics-plotting** SKILL after differential abundance analysis or GSEA for publication-quality plots
 
 ## Prerequisites
 
@@ -346,64 +347,15 @@ print(results[results["significant"]].head(10))
 
 ### Step 7: Volcano Plot Visualization
 
-Generate a publication-quality volcano plot showing log2 fold change vs. -log10(p-value) with significance thresholds highlighted.
+> **Plotting:** compute the DEG table, then **read `skills/data-visualization/omics-plotting/SKILL.md` and follow its "Volcano" recipe** on the exported CSV (→ `figures/volcano_plot.png`).
 
 ```python
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-
-def plot_volcano(results: pd.DataFrame,
-                 gene_names: pd.Series,
-                 fc_threshold: float = 1.0,
-                 pval_threshold: float = 0.05,
-                 top_n_labels: int = 10,
-                 save_path: str = "volcano_plot.pdf") -> None:
-    """Volcano plot: log2FC vs -log10(adjusted p-value)."""
-    df = results.copy()
-    df["gene"] = gene_names.reindex(df.index).fillna("Unknown")
-    df["-log10p"] = -np.log10(df["padj"].clip(lower=1e-300))
-
-    # Classify regulation
-    df["regulation"] = "ns"
-    df.loc[(df["log2FC"] >  fc_threshold) & (df["padj"] < pval_threshold), "regulation"] = "up"
-    df.loc[(df["log2FC"] < -fc_threshold) & (df["padj"] < pval_threshold), "regulation"] = "down"
-
-    color_map = {"up": "#D62728", "down": "#1F77B4", "ns": "#AAAAAA"}
-
-    fig, ax = plt.subplots(figsize=(7, 6))
-    for reg, grp in df.groupby("regulation"):
-        ax.scatter(grp["log2FC"], grp["-log10p"],
-                   c=color_map[reg], s=12, alpha=0.7, linewidths=0, label=reg)
-
-    # Threshold lines
-    ax.axhline(-np.log10(pval_threshold), color="k", lw=0.8, ls="--", alpha=0.5)
-    ax.axvline( fc_threshold,  color="k", lw=0.8, ls="--", alpha=0.5)
-    ax.axvline(-fc_threshold, color="k", lw=0.8, ls="--", alpha=0.5)
-
-    # Label top significant proteins by -log10p
-    top = df[df["regulation"] != "ns"].nlargest(top_n_labels, "-log10p")
-    for _, row in top.iterrows():
-        ax.text(row["log2FC"], row["-log10p"] + 0.1, row["gene"],
-                fontsize=6, ha="center", va="bottom")
-
-    # Counts in legend
-    up_n   = (df["regulation"] == "up").sum()
-    down_n = (df["regulation"] == "down").sum()
-    patches = [
-        mpatches.Patch(color="#D62728", label=f"Up ({up_n})"),
-        mpatches.Patch(color="#1F77B4", label=f"Down ({down_n})"),
-        mpatches.Patch(color="#AAAAAA", label="ns"),
-    ]
-    ax.legend(handles=patches, fontsize=8, frameon=False)
-    ax.set_xlabel("log₂ Fold Change (treat / ctrl)", fontsize=11)
-    ax.set_ylabel("-log₁₀(adjusted p-value)", fontsize=11)
-    ax.set_title("Differential Protein Abundance", fontsize=12)
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=300, bbox_inches="tight")
-    plt.show()
-    print(f"Saved: {save_path}")
-
-plot_volcano(results, pg["Gene names"])
+# Volcano input: log2FC vs padj + protein labels; render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Volcano" recipe.
+volcano_df = results[["log2FC", "padj"]].copy()
+volcano_df["gene"] = pg["Gene names"].reindex(results.index)
+volcano_df.dropna(subset=["log2FC", "padj"]).to_csv("volcano_input.csv")
+print(f"Volcano input: {int(volcano_df['padj'].notna().sum())} proteins -> volcano_input.csv")
+# -> figures/volcano_plot.png via omics-plotting (map log2FC -> log2FoldChange)
 ```
 
 ### Step 8: GO/Pathway Enrichment of Significant Proteins
@@ -538,46 +490,30 @@ print(log2_ratios.describe().round(3))
 
 ### Recipe: Hierarchical Clustering Heatmap
 
-When to use: visualizing patterns across all significant proteins simultaneously.
+When to use: visualizing patterns across all significant proteins simultaneously. Compute the z-scored matrix below, then **read `skills/data-visualization/omics-plotting/SKILL.md` and follow its "Clustered expression heatmap" recipe** (→ `figures/heatmap.pdf`).
 
 ```python
-import seaborn as sns
-import matplotlib.pyplot as plt
+import pandas as pd
 
-def plot_heatmap(lfq_imputed: pd.DataFrame,
-                 results: pd.DataFrame,
-                 gene_names: pd.Series,
-                 top_n: int = 50,
-                 save_path: str = "heatmap.pdf") -> None:
-    """Hierarchical clustering heatmap of top significant proteins."""
-    sig_proteins = results[results["significant"]].nlargest(top_n, "-log10p" if "-log10p" in results else "padj").index
-    # Recalculate if needed
+def prep_heatmap_matrix(lfq_imputed: pd.DataFrame,
+                        results: pd.DataFrame,
+                        gene_names: pd.Series,
+                        top_n: int = 50,
+                        out_path: str = "heatmap_matrix.csv") -> pd.DataFrame:
+    """Z-scored expression matrix of the top significant proteins, for the omics-plotting heatmap."""
     sig_proteins = results[results["significant"]].nsmallest(top_n, "padj").index
-
     heatmap_data = lfq_imputed.loc[sig_proteins].copy()
     heatmap_data.index = gene_names.reindex(sig_proteins).fillna(sig_proteins)
-
-    # Z-score per row for visualization
+    # Z-score per row
     heatmap_z = heatmap_data.subtract(heatmap_data.mean(axis=1), axis=0).divide(
         heatmap_data.std(axis=1).replace(0, 1), axis=0
     )
+    heatmap_z.to_csv(out_path)
+    return heatmap_z
 
-    g = sns.clustermap(
-        heatmap_z,
-        cmap="RdBu_r",
-        center=0,
-        vmin=-2.5, vmax=2.5,
-        figsize=(8, 10),
-        yticklabels=True,
-        xticklabels=True,
-        dendrogram_ratio=(0.15, 0.1),
-        cbar_kws={"label": "Z-score (log₂ LFQ)"},
-    )
-    g.ax_heatmap.set_yticklabels(g.ax_heatmap.get_yticklabels(), fontsize=6)
-    plt.savefig(save_path, dpi=300, bbox_inches="tight")
-    print(f"Saved: {save_path}")
-
-plot_heatmap(lfq_imputed, results, pg["Gene names"])
+mat = prep_heatmap_matrix(lfq_imputed, results, pg["Gene names"])
+print(f"Heatmap matrix: {mat.shape} -> heatmap_matrix.csv")
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Clustered expression heatmap" recipe -> figures/heatmap.pdf
 ```
 
 ### Recipe: STRING-db Network Enrichment for Significant Proteins

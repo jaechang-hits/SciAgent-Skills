@@ -17,6 +17,7 @@ Harmony is a fast, scalable algorithm for batch integration in single-cell data.
 - Performing fast, scalable batch correction on datasets with millions of cells where deep generative model training would be prohibitively slow
 - Correcting for multiple confounding variables simultaneously (batch, donor, sequencing platform, tissue processing protocol)
 - Preparing a corrected embedding for UMAP visualization, Leiden clustering, or label transfer without modifying the gene expression count matrix
+- Use **omics-plotting** SKILL for generic result-table figures; batch-evaluation UMAPs use scanpy `sc.pl.*`
 - Use **scVI/scvi-tools** instead when you need probabilistic batch correction with a variational autoencoder (deep learning), differential expression with uncertainty estimates, or multi-modal integration (RNA + protein)
 - Use **BBKNN** instead when you want graph-based integration that avoids constructing a corrected embedding altogether and directly builds a cross-batch nearest-neighbor graph
 - Use **Seurat Integration / CCA** (R) instead when you are already in a Seurat workflow and prefer anchor-based integration methods

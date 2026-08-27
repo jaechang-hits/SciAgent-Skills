@@ -18,6 +18,7 @@ ARCHS4 (All RNA-seq and ChIP-seq Sample and Signature Search) is a resource of u
 - Comparing expression profiles of multiple genes across tissues to prioritize candidates for wet-lab follow-up
 - Accessing uniformly processed gene expression matrices (HDF5 format) for large-scale cross-study analysis
 - Validating differential expression results by checking whether a gene's expression direction matches population-level tissue profiles
+- Use **omics-plotting** SKILL to render bar charts and expression heatmaps from the query results
 - For variant-level population allele frequencies use `gnomad-database`; ARCHS4 provides expression evidence only
 - For Enrichr pathway enrichment from a gene list use `gget-genomic-databases` (`gget enrichr`); ARCHS4 is for expression lookups
 
@@ -240,53 +241,29 @@ for gene in housekeeping:
 
 ### Query 5: Visualization — Tissue Expression Barplot
 
-Generate a publication-ready barplot of z-score expression across the top tissues for a gene.
+Fetch the top-tissue z-scores, then **read `skills/data-visualization/omics-plotting/SKILL.md` and follow its "Box / Violin / Bar" recipe** on the exported CSV (→ `figures/BRCA1_tissue_expression.png`).
 
 ```python
 import requests
 import pandas as pd
-import matplotlib.pyplot as plt
 
 ARCHS4_BASE = "https://maayanlab.cloud/archs4/api/v1"
 
-def plot_tissue_expression(gene_symbol: str, top_n: int = 20,
-                            species: str = "human",
-                            output_file: str = None) -> None:
-    """Plot top tissue z-score expression for a gene.
-
-    Parameters
-    ----------
-    gene_symbol : str
-        HGNC gene symbol.
-    top_n : int
-        Number of top tissues to display.
-    species : str
-        'human' or 'mouse'.
-    output_file : str
-        If provided, save figure to this path.
-    """
+def tissue_zscores(gene_symbol: str, top_n: int = 20, species: str = "human") -> pd.DataFrame:
+    """Fetch top tissue z-scores for a gene and save for plotting."""
     r = requests.get(
         f"{ARCHS4_BASE}/meta/genes/{gene_symbol}/zscore",
         params={"species": species},
-        timeout=30
+        timeout=30,
     )
     r.raise_for_status()
-    records = r.json().get("values", [])
-    df = pd.DataFrame(records).sort_values("zscore", ascending=False).head(top_n)
+    df = pd.DataFrame(r.json().get("values", [])).sort_values("zscore", ascending=False).head(top_n)
+    df.to_csv(f"{gene_symbol}_tissue_zscores.csv", index=False)
+    return df
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    colors = ["#D73027" if z > 0 else "#4575B4" for z in df["zscore"]]
-    bars = ax.barh(df["tissue"][::-1], df["zscore"][::-1], color=colors[::-1])
-    ax.axvline(0, color="black", linewidth=0.8, linestyle="--")
-    ax.set_xlabel("Expression Z-Score")
-    ax.set_title(f"ARCHS4 Tissue Expression: {gene_symbol} ({species})\nTop {top_n} tissues")
-    ax.bar_label(bars, fmt="%.2f", padding=3, fontsize=8)
-    plt.tight_layout()
-    fname = output_file or f"{gene_symbol}_tissue_expression.png"
-    plt.savefig(fname, dpi=150, bbox_inches="tight")
-    print(f"Saved {fname}  ({len(df)} tissues plotted)")
-
-plot_tissue_expression("BRCA1", top_n=15, output_file="BRCA1_tissue_expression.png")
+df = tissue_zscores("BRCA1", top_n=15)
+print(f"Top tissues for BRCA1: {len(df)} -> BRCA1_tissue_zscores.csv")
+# Render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Box / Violin / Bar" recipe (horizontal bar of zscore by tissue).
 ```
 
 ### Query 6: HDF5 Bulk Data Access
@@ -377,8 +354,6 @@ ARCHS4 indexes human samples using HGNC gene symbols (uppercase, e.g., `TP53`) a
 ```python
 import requests, time
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 ARCHS4_BASE = "https://maayanlab.cloud/archs4/api/v1"
 
@@ -412,25 +387,10 @@ tissue_importance = matrix.abs().max(axis=0).sort_values(ascending=False)
 top_tissues = tissue_importance.head(top_n_tissues).index
 matrix_subset = matrix[top_tissues]
 
-# Plot heatmap
-fig, ax = plt.subplots(figsize=(14, 5))
-sns.heatmap(
-    matrix_subset,
-    cmap="RdBu_r",
-    center=0,
-    vmin=-3,
-    vmax=3,
-    ax=ax,
-    cbar_kws={"label": "Z-Score"},
-    linewidths=0.5
-)
-ax.set_title("ARCHS4 Tissue Expression Profiles — Gene Panel")
-ax.set_xlabel("Tissue")
-ax.set_ylabel("Gene")
-plt.xticks(rotation=45, ha="right", fontsize=8)
-plt.tight_layout()
-plt.savefig("archs4_panel_heatmap.png", dpi=150, bbox_inches="tight")
-print(f"Saved archs4_panel_heatmap.png  ({matrix_subset.shape})")
+# Save the gene × tissue matrix; render with the omics-plotting SKILL (`skills/data-visualization/omics-plotting/SKILL.md`) "Expression heatmap"
+# recipe (RdBu_r, center=0) -> figures/archs4_panel_heatmap.png
+matrix_subset.to_csv("archs4_panel_matrix.csv")
+print(f"Panel matrix ready: {matrix_subset.shape} -> archs4_panel_matrix.csv")
 ```
 
 ### Workflow 2: Co-expression Network Seed Expansion
