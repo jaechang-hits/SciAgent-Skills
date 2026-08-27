@@ -1591,7 +1591,7 @@ entries:
     sub_type: guide
     category: "data-visualization"
     path: "skills/data-visualization/omics-plotting/SKILL.md"
-    description: "omics-plotting publication-style figure authoring for omics/bioinformatics results with matplotlib/seaborn. Draws a single plot from analysis results or a data table — volcano, MA, expression/correlation heatmap, GSEA bar/dot plot, box/violin/bar/ridgeline, PCA/UMAP/t-SNE, Kaplan-Meier. Supplies a shared journal-ready style and copy-paste recipes so every figure looks like one consistent system. For combining several plots into ONE multi-panel composite figure use multipanel."
+    description: "omics-plotting: publication-style figure authoring for omics/bioinformatics results with matplotlib/seaborn. Read before writing any plotting/figure code in any omics analysis (RNA-seq, proteomics, single-cell, variant, database results) — not only when a plot is explicitly requested. Covers volcano, MA, expression/correlation heatmap, GSEA bar/dot plot, box/violin/bar/ridgeline, PCA/UMAP/t-SNE scatter, Kaplan-Meier, Manhattan/QQ/forest. Supplies a shared journal-ready style and copy-paste recipes so every figure looks like one consistent system. For combining several plots into ONE multi-panel composite figure use multipanel."
     date_added: "2026-08-13"
 
   - name: "multipanel"
