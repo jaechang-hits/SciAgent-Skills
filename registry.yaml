@@ -1609,3 +1609,11 @@ entries:
     path: "skills/structural-biology-drug-discovery/aizynthfinder-retrosynthesis/SKILL.md"
     description: "AiZynthFinder retrosynthetic route planning (CASP) from AstraZeneca Molecular AI. Monte Carlo tree search guided by a template-based neural expansion policy recursively disconnects a target SMILES until precursors are found in a purchasable stock. Covers config.yml (v4 format), aizynthcli batch screening, the AiZynthFinder/AiZynthExpander Python API, one-step disconnections, custom stocks via smiles2stock, scorers, Retro*/breadth-first/DFPN search alternatives, and reading output.json.gz / trees.json. Use for synthesis route planning, synthesizability screening, and building-block/precursor search. For reaction barriers use neb-irc-activation-energy; for 2D reaction scheme drawing use rdkit-chemdraw-cdxml."
     date_added: "2026-08-21"
+
+  - name: "scarf-single-cell"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/single-cell/scarf-single-cell/SKILL.md"
+    description: "Analyze single-cell RNA-seq at million-cell scale with Scarf: out-of-core Zarr stores on local disk or object storage, provenance-tracked immutable artifacts, audited QC, clustering, markers and donor-level comparisons."
+    date_added: "2026-10-05"
