@@ -174,3 +174,26 @@ def test_parse_frontmatter_normalises_folded_description():
     text = "---\nname: x\ndescription: >\n  line one\n  line two\n---\nbody"
     skill = sync._skill_from_text("skills/x/SKILL.md", text)
     assert skill == sync.Skill(name="x", description="line one line two", path="skills/x/SKILL.md")
+
+
+def test_load_env_file_parses_frontend_style_dotenv(tmp_path: Path):
+    env_file = tmp_path / ".env.local"
+    env_file.write_text(
+        "# comment\nGOOGLE_SERVICE_ACCOUNT_EMAIL=sa@p.iam.gserviceaccount.com\n"
+        "GOOGLE_PRIVATE_KEY=-----BEGIN\\nabc\\n-----END\n"
+        'export QUOTED="a b"\nNOEQUALS\n',
+        encoding="utf-8",
+    )
+    env = sync.load_env_file(env_file)
+    assert env["GOOGLE_SERVICE_ACCOUNT_EMAIL"] == "sa@p.iam.gserviceaccount.com"
+    assert env["GOOGLE_PRIVATE_KEY"] == "-----BEGIN\\nabc\\n-----END"
+    assert env["QUOTED"] == "a b" and "NOEQUALS" not in env
+    assert sync.load_env_file(tmp_path / "missing") == {}
+
+
+def test_service_account_info_unescapes_key_and_requires_both_vars():
+    info = sync.service_account_info({sync.SA_EMAIL_ENV: "sa@x", sync.SA_KEY_ENV: "-----BEGIN\\nabc\\n-----END"})
+    assert info == {"client_email": "sa@x", "private_key": "-----BEGIN\nabc\n-----END", "token_uri": sync.TOKEN_URI}
+    assert sync.service_account_info({}) is None
+    with pytest.raises(SystemExit):
+        sync.service_account_info({sync.SA_EMAIL_ENV: "sa@x"})

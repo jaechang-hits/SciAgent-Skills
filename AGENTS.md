@@ -325,10 +325,13 @@ uv run scripts/sync_skill_catalog.py push           # add the new tab
 - A skill whose name and description both changed shows up as `remove` + `add`. If it is the same skill, add
   `"old_name"` to the `add` entry and delete the `remove` entry; it becomes a rename that keeps the row's
   position and creation date.
-- Auth is Application Default Credentials: `gcloud auth application-default login
-  --scopes=https://www.googleapis.com/auth/spreadsheets,https://www.googleapis.com/auth/cloud-platform`, or a
-  service account the sheet is shared with via `GOOGLE_APPLICATION_CREDENTIALS`. Without credentials, download
-  the latest tab as CSV, run `plan --from-csv <file> --source-tab "<tab title>"`, then
+- Auth is a service account, read from the same two variables frontend-services `bin/gsheets.js` uses
+  (`GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY`) in the shell environment or a gitignored `.env.local` at
+  the repo root. It currently reuses the frontend account `frontend@frontend-459107.iam.gserviceaccount.com`,
+  which must have editor access to the sheet. Never commit the key or let it reach the plan file or logs.
+  Without those variables it falls back to Application Default Credentials
+  (`gcloud auth application-default login --scopes=...spreadsheets,...cloud-platform`). With no credentials at
+  all, download the latest tab as CSV, run `plan --from-csv <file> --source-tab "<tab title>"`, then
   `push --from-csv ... --csv <out>` and import that CSV as a new tab by hand.
 
 **Column rules.** The script fills `이름`, `생성일자` (first commit of the skill directory) and `최종 수정일자`

@@ -22,6 +22,11 @@ commit recorded on the latest tab, see `METADATA_KEY`) to find added, renamed,
 removed and re-described skills. Skills that existed at the last sync but are
 absent from the sheet are deliberately excluded from the catalog and ignored.
 
+Auth: a service account via GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_PRIVATE_KEY
+(environment or the repo's gitignored .env.local, same variables as frontend-services
+bin/gsheets.js; the sheet must be shared with that account as editor), else
+Application Default Credentials.
+
 Without Google credentials, use the CSV path instead (same as the frontend
 i18n flow): download the latest tab as CSV, `plan --from-csv <file>
 --source-tab <tab title>`, then `push --csv <out>` and import the CSV as a new
@@ -36,6 +41,7 @@ import argparse
 import csv
 import datetime as dt
 import json
+import os
 import re
 import subprocess
 import sys
@@ -47,7 +53,7 @@ from zoneinfo import ZoneInfo
 import yaml
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
 # ---- Repo-specific settings (the only block that differs between the two skill repos) ----
 REPO_ID = "SciAgent-Skills"
@@ -57,6 +63,10 @@ DEFAULT_VISIBILITY = "공개"
 # ---- Shared settings ----
 SPREADSHEET_ID = "1JrIOLKwTwrcWFbkgc-xh0aL9IeUO8avZXqYsOOGx1P4"
 SCOPES = ("https://www.googleapis.com/auth/spreadsheets",)
+TOKEN_URI = "https://oauth2.googleapis.com/token"
+# Same names as frontend-services bin/gsheets.js, so its service account works as is.
+SA_EMAIL_ENV = "GOOGLE_SERVICE_ACCOUNT_EMAIL"
+SA_KEY_ENV = "GOOGLE_PRIVATE_KEY"
 SHEETS_API = "https://sheets.googleapis.com/v4/spreadsheets"
 HEADER = (
     "이름",
@@ -355,14 +365,58 @@ def parse_tab_time(title: str) -> dt.datetime | None:
         return None
 
 
+def load_env_file(path: Path) -> dict[str, str]:
+    """Parses KEY=VALUE lines of a dotenv file; values already in the environment win."""
+    if not path.is_file():
+        return {}
+    parsed: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.removeprefix("export ").split("=", 1)
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        parsed[key.strip()] = value
+    return parsed
+
+
+def service_account_info(env: Mapping[str, str]) -> dict[str, str] | None:
+    """Service account info from the frontend-style env pair, or None when unset.
+
+    Same variables as frontend-services `bin/gsheets.js`: the private key may hold
+    literal `\\n` sequences, as it does in a one-line `.env.local`.
+    """
+    email, key = env.get(SA_EMAIL_ENV, "").strip(), env.get(SA_KEY_ENV, "").strip()
+    if not email and not key:
+        return None
+    if not (email and key):
+        raise SystemExit(f"set both {SA_EMAIL_ENV} and {SA_KEY_ENV}, or neither")
+    return {"client_email": email, "private_key": key.replace("\\n", "\n"), "token_uri": TOKEN_URI}
+
+
 class SheetClient:
-    """Minimal Sheets REST client on Application Default Credentials."""
+    """Minimal Sheets REST client.
+
+    Authenticates with the service account in `GOOGLE_SERVICE_ACCOUNT_EMAIL` /
+    `GOOGLE_PRIVATE_KEY` (environment, then the repo's `.env.local`), falling back
+    to Application Default Credentials.
+    """
 
     def __init__(self) -> None:
         import google.auth
         from google.auth.transport.requests import AuthorizedSession
+        from google.oauth2 import service_account
 
-        credentials, _ = google.auth.default(scopes=list(SCOPES))
+        env = {**load_env_file(REPO_ROOT / ".env.local"), **os.environ}
+        info = service_account_info(env)
+        if info is not None:
+            credentials = service_account.Credentials.from_service_account_info(info, scopes=list(SCOPES))
+            print(f"auth: service account {info['client_email']}", file=sys.stderr)
+        else:
+            credentials, _ = google.auth.default(scopes=list(SCOPES))
+            print("auth: application default credentials", file=sys.stderr)
         self._session = AuthorizedSession(credentials)
 
     def _call(self, method: str, url: str, **kwargs: object) -> dict[str, object]:
