@@ -15,3 +15,6 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Skill catalog sheet sync plan (scripts/sync_skill_catalog.py)
+.skill-catalog-plan.json

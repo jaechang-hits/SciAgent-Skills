@@ -42,6 +42,8 @@ When given a topic (e.g., "CRISPR guide RNA design"), follow these steps:
 > The scaffolder owns Steps 1, 2, 4, 5, and 6 (sub-type selection, category, template copy, registry append, validation). The numbered steps below explain *why* each field exists; the scaffolder is *how* you fill them. Use them together: read the rule, let the scaffolder enforce it.
 >
 > Only skip the scaffolder when (a) editing existing entry content, or (b) migrating an existing entry (see "Migrating from Existing Entries" below).
+>
+> The scaffolder does not do Step 7 (skill catalog sheet sync). Run it yourself after adding, renaming, re-describing or deleting an entry, including edits made without the scaffolder.
 
 ### Step 1. Classify — Code-centric vs Prose-centric, then Sub-type
 
@@ -283,6 +285,72 @@ For quick registry-only validation:
 ```bash
 pixi run validate
 ```
+
+### Step 7. Sync the skill catalog sheet
+
+HyperLab also lists these skills in the Google Sheet "HyperLab 3.0 Skill Catalog"
+(`1JrIOLKwTwrcWFbkgc-xh0aL9IeUO8avZXqYsOOGx1P4`), the same way frontend-services keeps `ko.json`/`en.json`
+alongside a sheet. This repo owns the rows whose `공개여부` is `공개`; hits-private-skills owns the rest and
+runs the same script (`scripts/sync_skill_catalog.py`, tests in `tests/test_sync_skill_catalog.py`; only the
+settings block at the top differs).
+
+**Trigger.** A commit that adds a skill, renames one (frontmatter `name`), changes a description (frontmatter
+`description`) or deletes one. Finish the sync in the same piece of work.
+
+**Rules.**
+
+- **The repo is the source of truth; never sync the other way.** If the sheet's name or description differs
+  from the repo, do not edit `SKILL.md` or `registry.yaml` to match it. The next sync overwrites the sheet from
+  the repo.
+- **Never edit or delete an existing tab.** Each sync adds a new first tab named by its KST timestamp
+  (`YYYY-MM-DD HH-MM-SS`): a copy of the latest tab with only this repo's changes applied.
+- A skill that existed at the last sync but is missing from the sheet was left out of the catalog on purpose
+  (HyperLab does not load it — see `_SCIAGENT_EXCLUDED_SKILLS` in hyperlab-agent `hagent/agent/hl1.py`). The
+  script reports these as `excluded_from_catalog` and does not add them.
+
+**Procedure.**
+
+```bash
+git commit ...                                      # commit the skill change first; the sync records HEAD
+uv run scripts/sync_skill_catalog.py plan           # diff against the latest tab -> .skill-catalog-plan.json (gitignored)
+# fill the empty and needs_review fields per the column rules below, then set reviewed=true on each entry
+uv run scripts/sync_skill_catalog.py push --dry-run # validate only
+uv run scripts/sync_skill_catalog.py push           # add the new tab
+```
+
+- `plan` compares the working tree with this repo's last sync commit (stored as developer metadata on the
+  latest tab) and emits `add` / `rename` / `update_description` / `remove`. Without that record it falls back to
+  the last commit before the tab's timestamp and warns; `--baseline <rev>` overrides.
+- `push` refuses if HEAD or the latest tab changed since `plan`; re-run `plan`.
+- A skill whose name and description both changed shows up as `remove` + `add`. If it is the same skill, add
+  `"old_name"` to the `add` entry and delete the `remove` entry; it becomes a rename that keeps the row's
+  position and creation date.
+- Auth is Application Default Credentials: `gcloud auth application-default login
+  --scopes=https://www.googleapis.com/auth/spreadsheets,https://www.googleapis.com/auth/cloud-platform`, or a
+  service account the sheet is shared with via `GOOGLE_APPLICATION_CREDENTIALS`. Without credentials, download
+  the latest tab as CSV, run `plan --from-csv <file> --source-tab "<tab title>"`, then
+  `push --from-csv ... --csv <out>` and import that CSV as a new tab by hand.
+
+**Column rules.** The script fills `이름`, `생성일자` (first commit of the skill directory) and `최종 수정일자`
+(last commit). You write the rest from `repo_description` (the current frontmatter description).
+
+- `카테고리(분야)`: one of the plan's `categories`. Ask the user before introducing a new one.
+- `공개여부`: always `공개` for this repo.
+- `설명(영문)`: do not copy the description. Write one to three plain sentences about what the user gets: what it
+  does, what it needs, what it does not do. Describe the job, not the library name. Match the tone of the
+  existing rows.
+- `설명(국문)`: a faithful Korean translation of the English description. Keep terms the field uses in English
+  (feature, layer, pose, ...) in English.
+- `프롬프트(영문)` / `프롬프트(국문)`: one sentence a user would send as the **first message** to use this skill.
+  The Korean one is the same request in natural Korean, not a word-for-word translation.
+  - **Stand-alone**: no uploaded file, earlier turn or previous result. Give inputs as public identifiers
+    (gene, PDB ID, UniProt accession, drug name, SMILES) or say "example data". `push` rejects phrasing such as
+    "upload", "my data", "previous results", "업로드", "이전 결과", "제 데이터".
+  - **General skills get general prompts**: a library or format skill used across fields (plotting, dataframes,
+    statistics, file formats) shows its typical use without tying it to one disease or target. Name a specific
+    target only when the skill is about one.
+- `update_description`: rewrite both descriptions for the new frontmatter description, check the prompts still
+  fit, then set `reviewed=true` (check even when nothing needs to change).
 
 ---
 
