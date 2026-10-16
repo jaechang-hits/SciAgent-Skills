@@ -322,6 +322,9 @@ uv run scripts/sync_skill_catalog.py push           # add the new tab
   latest tab) and emits `add` / `rename` / `update_description` / `remove`. Without that record it falls back to
   the last commit before the tab's timestamp and warns; `--baseline <rev>` overrides.
 - `push` refuses if HEAD or the latest tab changed since `plan`; re-run `plan`.
+- With no changes `push` creates no tab. When the latest tab has no sync record for this repo (first use, or
+  after the sheet was edited by hand), run `push --record-baseline` once: it adds an unchanged snapshot tab that
+  records the sync commit.
 - A skill whose name and description both changed shows up as `remove` + `add`. If it is the same skill, add
   `"old_name"` to the `add` entry and delete the `remove` entry; it becomes a rename that keeps the row's
   position and creation date.

@@ -468,8 +468,7 @@ class SheetClient:
     def _set_metadata(self, sheet_id: object, source: dict[str, object], sha: str) -> None:
         # Carry the other repo's sync commit forward and set ours. duplicateSheet
         # may or may not copy metadata, so update what exists and create the rest.
-        wanted = {str(m["metadataKey"]): str(m["metadataValue"]) for m in _metadata(source)}
-        wanted[METADATA_KEY] = sha
+        wanted = planned_metadata(_metadata(source), sha)
         copied = next((t for t in self.tabs() if t["properties"]["sheetId"] == sheet_id), {})  # type: ignore[index]
         existing = {str(m["metadataKey"]): m["metadataId"] for m in _metadata(copied)}
         requests = []
@@ -502,6 +501,13 @@ class SheetClient:
 
 def _metadata(tab: dict[str, object]) -> list[dict[str, object]]:
     return [m for m in tab.get("developerMetadata", []) if str(m.get("metadataKey", "")).startswith("skill-catalog-sync:")]  # type: ignore[union-attr]
+
+
+def planned_metadata(source_metadata: Sequence[dict[str, object]], sha: str) -> dict[str, str]:
+    """Sync metadata for a new tab: the other repo's record carried forward, ours set to `sha`."""
+    wanted = {str(m["metadataKey"]): str(m["metadataValue"]) for m in source_metadata}
+    wanted[METADATA_KEY] = sha
+    return wanted
 
 
 def latest_tab(tabs: Sequence[dict[str, object]]) -> dict[str, object]:
@@ -589,8 +595,8 @@ def cmd_push(args: argparse.Namespace) -> int:
     if plan.get("repo") != REPO_ID:
         raise SystemExit(f"plan is for {plan.get('repo')!r}, this repo is {REPO_ID!r}")
     entries = plan["entries"]
-    if not entries:
-        print("nothing to sync")
+    if not entries and not args.record_baseline:
+        print("nothing to sync (use --record-baseline to snapshot the current state and record the sync commit)")
         return 0
     if skills_dirty() and not args.allow_dirty:
         raise SystemExit("skills/ has uncommitted changes; commit first so the recorded sync commit is accurate")
@@ -608,12 +614,18 @@ def cmd_push(args: argparse.Namespace) -> int:
     if args.csv:
         _write_csv(Path(args.csv), new_rows)
         print(f"wrote {len(new_rows)} rows to {args.csv}; import it as a new tab named {new_title!r}")
+    metadata = planned_metadata(_metadata(tab) if tab is not None else [], str(plan["head"]))
+    summary = (
+        f"new tab {new_title!r} from {title!r}: {len(rows)} -> {len(new_rows)} rows, "
+        f"{len(entries)} change(s); sync metadata "
+        + ", ".join(f"{k}={v[:10]}" for k, v in metadata.items())
+    )
     if args.dry_run or client is None:
-        print(f"dry run: {len(rows)} -> {len(new_rows)} rows, no tab created")
+        print(f"dry run: {summary}; no tab created")
         return 0
     assert tab is not None
     client.add_snapshot(tab, new_title, new_rows, str(plan["head"]))
-    print(f"created tab {new_title!r} ({len(rows)} -> {len(new_rows)} rows)")
+    print(f"created {summary}")
     return 0
 
 
@@ -629,6 +641,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     plan_parser.add_argument("--baseline", default=None, help="git rev the latest tab was synced from")
     push_parser.add_argument("--dry-run", action="store_true", help="validate and diff only")
     push_parser.add_argument("--csv", default=None, help="also write the new tab to this CSV")
+    push_parser.add_argument(
+        "--record-baseline",
+        action="store_true",
+        help="add a snapshot tab even with no changes, to record this repo's sync commit",
+    )
     push_parser.add_argument("--allow-dirty", action="store_true", help="push with uncommitted skills/ changes")
     args = parser.parse_args(argv)
     return cmd_plan(args) if args.command == "plan" else cmd_push(args)

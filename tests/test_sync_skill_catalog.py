@@ -197,3 +197,13 @@ def test_service_account_info_unescapes_key_and_requires_both_vars():
     assert sync.service_account_info({}) is None
     with pytest.raises(SystemExit):
         sync.service_account_info({sync.SA_EMAIL_ENV: "sa@x"})
+
+
+def test_planned_metadata_carries_the_other_repo_and_sets_ours():
+    other = "skill-catalog-sync:some-other-repo"
+    source = [
+        {"metadataKey": other, "metadataValue": "aaa"},
+        {"metadataKey": sync.METADATA_KEY, "metadataValue": "old"},
+    ]
+    assert sync.planned_metadata(source, "new") == {other: "aaa", sync.METADATA_KEY: "new"}
+    assert sync.planned_metadata([], "new") == {sync.METADATA_KEY: "new"}
