@@ -1,6 +1,6 @@
 ---
 name: "popv-cell-annotation"
-description: "Consensus cell type annotation: runs 10+ algorithms (KNN-Harmony/BBKNN/Scanorama/scVI, CellTypist, ONCLASS, Random Forest, SCANVI, SVM, XGBoost) on a labeled reference and transfers labels via majority voting. Outputs per-method labels, consensus, agreement score. Use when single-method annotation is insufficient or you need ensemble uncertainty for novel states."
+description: "Consensus cell type annotation: runs 10+ algorithms (KNN-Harmony/BBKNN/Scanorama/scVI, CellTypist, ONCLASS, Random Forest, SCANVI, SVM, XGBoost) on a labeled reference and transfers labels via majority voting. Outputs per-method labels, consensus, agreement score. Use when single-method annotation is insufficient or you need ensemble uncertainty for novel states; to choose between manual markers, CellTypist and popV, read cell-type-annotation first."
 license: "BSD-3-Clause"
 ---
 
@@ -125,7 +125,7 @@ decisions:
 D1 is asked even though the user has arrived at an ensemble annotator, because
 the alternative is not visible from here: manual marker naming and reference
 transfer fail in opposite directions. If the answer is manual only, this skill
-is not the tool — see `single-cell-annotation-guide`.
+is not the tool — see `cell-type-annotation`.
 
 D5 matters more here than it looks. The agreement score in D7 measures whether
 the methods concur, not whether they are right — several methods sharing one

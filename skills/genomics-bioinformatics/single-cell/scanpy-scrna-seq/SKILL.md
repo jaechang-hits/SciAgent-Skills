@@ -88,17 +88,16 @@ decisions:
     param: annotationStrategy
     kind: required
     source: user
-    ask: "After clustering, should clusters be named from canonical markers by hand, or handed to a reference-based annotator?"
-    default: "manual marker-based within this skill; see `single-cell-annotation-guide` to choose"
+    ask: "Markers (A), a CellTypist model (B), an ensemble on your labelled reference (C), or markers and transfer compared (D)?"
+    default: null
 
   - id: D6c
     param: markerPanel
-    kind: required
+    kind: optional
     source: literature
-    depends_on: [D6b]
-    ask: "Which canonical markers define the populations expected in this tissue and state?"
-    default: null
-    skip_if: "annotation delegated to a reference-based tool"
+    ask: "Which canonical markers define the expected populations?"
+    default: "agent-drafted panel for the tissue and state, listed in the plan"
+    skip_if: "label transfer only"
 
   - id: D7
     param: method (rank_genes_groups)
@@ -125,7 +124,8 @@ decisions:
 D5 hangs on D4 because the elbow is read off a PCA computed over the selected
 variable genes — a different gene count moves where it sits. D2 shapes the
 pipeline rather than a single call: naming a batch adds a correction stage
-(`harmony-batch-correction` or ComBat) before the neighbor graph.
+(`harmony-batch-correction` or ComBat) before the neighbor graph. D6b and D6c
+are the same questions as `cell-type-annotation` D2 and D4; ask each once.
 
 ## Workflow
 
