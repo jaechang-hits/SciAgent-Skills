@@ -1609,3 +1609,84 @@ entries:
     path: "skills/structural-biology-drug-discovery/aizynthfinder-retrosynthesis/SKILL.md"
     description: "AiZynthFinder retrosynthetic route planning (CASP) from AstraZeneca Molecular AI. Monte Carlo tree search guided by a template-based neural expansion policy recursively disconnects a target SMILES until precursors are found in a purchasable stock. Covers config.yml (v4 format), aizynthcli batch screening, the AiZynthFinder/AiZynthExpander Python API, one-step disconnections, custom stocks via smiles2stock, scorers, Retro*/breadth-first/DFPN search alternatives, and reading output.json.gz / trees.json. Use for synthesis route planning, synthesizability screening, and building-block/precursor search. For reaction barriers use neb-irc-activation-energy; for 2D reaction scheme drawing use rdkit-chemdraw-cdxml."
     date_added: "2026-08-21"
+
+  - name: "multimodal-omics-integration"
+    type: skill
+    sub_type: toolkit
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/multimodal-omics-integration/SKILL.md"
+    description: "Multimodal and multi-section integration for spatial and single-cell omics: totalVI joint RNA + protein (Visium CytAssist Gene and Protein, CITE-seq), MultiVI joint RNA + ATAC (10x Multiome, spatial ATAC-RNA), BBKNN integration of several tissue sections, scanpy ingest label transfer between sections, and gene signature scores mapped on tissue. Outputs joint latent spaces, denoised protein maps, integrated clusters, transferred labels. For dissociated CITE-seq and scVI/scANVI use scvi-tools-single-cell; for MOFA+ factor analysis use mofaplus-multi-omics or muon-multiomics-singlecell; for Harmony use harmony-batch-correction."
+    date_added: "2026-10-20"
+    tags: ["spatial-transcriptomics"]
+
+  - name: "spatial-domain-detection"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-domain-detection/SKILL.md"
+    description: "Spatial domain detection (tissue regions / niches) for spatial transcriptomics: SpaGCN (expression + spatial graph + H&E histology, Visium/ST), GraphST (self-supervised graph contrastive embedding, spots or cells) and UTAG (spatial message passing for Xenium/MERFISH/CosMx/IMC cells). Outputs a domain label per spot or cell, boundary refinement, cross-method agreement (ARI) and domain marker genes. For niches defined by the cell type composition of annotated cells use Step 7 of spatial-transcriptomics-cell-type-annotation; for neighbourhood enrichment and spatial statistics use spatial-transcriptomics-analysis-squidpy."
+    date_added: "2026-10-20"
+    tags: ["spatial-transcriptomics"]
+
+  - name: "spatial-mapping-tangram"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-mapping-tangram/SKILL.md"
+    description: "Tangram (tangram-sc) mapping of scRNA-seq onto spatial transcriptomics (Visium, Slide-seq, MERFISH, Xenium), one skill for every Tangram task: marker training genes, cells/clusters/constrained mode, per-spot cell type proportions, held-out gene validation (training scores, compare_spatial_geneexp, AUC, k-fold CV), imputation of unmeasured or dropout genes (project_genes; gimVI alternative), and Visium deconvolution into segmented nuclei with the tissue image (squidpy watershed, target_count, deconvolve_cell_annotations). Task-specific routes follow the main workflow. For probabilistic spot abundances with uncertainty use spatial-transcriptomics-deconvolution-cell2location."
+    date_added: "2026-10-20"
+    tags: ["spatial-transcriptomics"]
+
+  - name: "spatial-panel-design"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-panel-design/SKILL.md"
+    description: "Spatial transcriptomics gene panel design (Xenium, MERFISH, CosMx custom panels) for cell type identification: rank markers on a tissue-matched CELLxGENE scRNA-seq reference, add PanglaoDB and CellMarker 2.0 marker evidence, build a per-gene evidence table, allocate per-cell-type quotas, and check that the panel separates cell types in the reference. Output: final_gene_panel.csv with N genes, cell type and reason. For annotating data from an existing panel use spatial-transcriptomics-cell-type-annotation."
+    date_added: "2026-10-20"
+    tags: ["spatial-transcriptomics"]
+
+  - name: "spatial-transcriptomics-analysis-squidpy"
+    type: skill
+    sub_type: toolkit
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-analysis-squidpy/SKILL.md"
+    description: "Squidpy spatial statistics on annotated spatial transcriptomics: build the spatial graph (Visium grid, kNN, radius, Delaunay), neighbourhood enrichment z-scores, distance-resolved co-occurrence, interaction matrix and centrality scores, Ripley's L/F/G point patterns, spatially variable genes by Moran's I / Geary's C, and permutation ligand-receptor tests (ligrec, OmniPath). Works on Visium spots and single-cell-resolution data (Xenium, MERFISH, CosMx, Slide-seq). Needs cluster or cell type labels for all but the spatially variable gene step. For an end-to-end ligand-receptor workflow use spatial-transcriptomics-cell-cell-communication."
+    date_added: "2026-10-20"
+    tags: ["spatial-transcriptomics"]
+
+  - name: "spatial-transcriptomics-cell-cell-communication"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-cell-cell-communication/SKILL.md"
+    description: "Spatial cell-cell communication / ligand-receptor (LR) interaction analysis, one skill for every route: LIANA consensus ranking between annotated cell types, CellPhoneDB v5 permutation p-values, DEG method and spatial microenvironments, squidpy neighbourhood enrichment to keep spatially adjacent sender-receiver pairs, LIANA bivariate local LR scores on the tissue (works on Visium spots without labels), pathway-focused candidate evidence tables (immune checkpoints, chemokines, Notch, Wnt, TGF-beta) with contact vs secreted classes and PubMed co-mentions, and multi-sample Tensor-cell2cell and MISTy models. Xenium/MERFISH/CosMx cells, Visium spots, scRNA-seq. Route-specific steps follow the main workflow. Needs cell type labels first (spatial-transcriptomics-cell-type-annotation or a deconvolution skill)."
+    date_added: "2026-10-20"
+    tags: ["spatial-transcriptomics"]
+
+  - name: "spatial-transcriptomics-cell-type-annotation"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-cell-type-annotation/SKILL.md"
+    description: "Spatial transcriptomics cell type annotation for single-cell-resolution platforms (Xenium, MERFISH, CosMx, SeqFISH): CELLxGENE reference download, Harmony label transfer, per-cluster marker evidence naming lineages then subtypes, spatial niches. Visium/Slide-seq spots: GPU -> spatial-transcriptomics-deconvolution-cell2location; CPU -> spatial-mapping-tangram (cell types: per-spot proportions); no reference -> spatial-domain-detection (regions: domains from markers). Beyond labels (microenvironment, arrangement, spatial patterns): read spatial-transcriptomics-analysis-squidpy before asking the user."
+    date_added: "2026-10-20"
+    tags: ["spatial-transcriptomics"]
+
+  - name: "spatial-transcriptomics-deconvolution-cell2location"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-deconvolution-cell2location/SKILL.md"
+    description: "Visium and other spot-based spatial transcriptomics (Slide-seq, ST) cell type deconvolution with cell2location: load Space Ranger output, get a tissue-matched scRNA-seq reference from CELLxGENE, learn cell type signatures, estimate cell type abundance per spot with posterior uncertainty, and check the maps against marker genes. Default route for 'annotate cell types' on Visium when a GPU is available. Limits: needs a tissue- and state-matched reference; the default 30000 epochs take hours on CPU, so without a GPU it runs only with fewer epochs (exploratory maps) and can exceed one execution call's time limit. For fast per-spot proportions on CPU use spatial-mapping-tangram (clusters mode); for single-cell-resolution data (Xenium, MERFISH, CosMx) use spatial-transcriptomics-cell-type-annotation."
+    date_added: "2026-10-20"
+    tags: ["spatial-transcriptomics"]
+
+  - name: "trajectory-inference"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/trajectory-inference/SKILL.md"
+    description: "Trajectory inference and cell fate mapping for single-cell and spatial transcriptomics: PAGA graph + diffusion pseudotime (no velocity needed), scVelo RNA velocity (stochastic / dynamical, from spliced/unspliced counts), CellRank 2 terminal states, fate probabilities and lineage drivers, then pseudotime and fates mapped on tissue with a spatial autocorrelation check. Outputs pseudotime, velocity streams, fate probability tables. Imaging panels (Xenium, MERFISH) have no unspliced counts: use PAGA/DPT or the CellRank pseudotime kernel. For a basic PAGA recipe inside a standard scRNA-seq workflow see scanpy-scrna-seq."
+    date_added: "2026-10-20"
+    tags: ["spatial-transcriptomics"]
