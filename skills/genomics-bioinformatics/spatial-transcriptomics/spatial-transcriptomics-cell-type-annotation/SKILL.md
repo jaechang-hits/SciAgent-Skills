@@ -1,6 +1,6 @@
 ---
 name: "spatial-transcriptomics-cell-type-annotation"
-description: "Spatial transcriptomics cell type annotation for single-cell-resolution platforms (Xenium, MERFISH, CosMx, SeqFISH): load Xenium outs, find and download a tissue- and disease-matched scRNA-seq reference from CELLxGENE, transfer labels with Harmony, build a per-cluster evidence table (markers + transferred labels) to name lineages then subtypes, and call spatial niches. Not for spot-based data (Visium, Slide-seq): use spatial-transcriptomics-deconvolution-cell2location."
+description: "Spatial transcriptomics cell type annotation for single-cell-resolution platforms (Xenium, MERFISH, CosMx, SeqFISH): CELLxGENE reference download, Harmony label transfer, per-cluster marker evidence naming lineages then subtypes, spatial niches. Visium/Slide-seq spots: GPU -> spatial-transcriptomics-deconvolution-cell2location; CPU -> spatial-mapping-tangram (cell types: per-spot proportions); no reference -> spatial-domain-detection (regions: domains from markers). Beyond labels (microenvironment, arrangement, spatial patterns): read spatial-transcriptomics-analysis-squidpy before asking the user."
 license: "CC-BY-4.0"
 ---
 
@@ -43,8 +43,65 @@ Visium request to "annotate cell types" goes to deconvolution.
 - **Python packages**: `scanpy`, `cellxgene-census`, `harmonypy`, `scikit-learn`, `squidpy` (niches only)
 
 ```bash
-pip install scanpy cellxgene-census harmonypy scikit-learn squidpy
+# Install only what `import` reports missing. 
+pixi add --pypi harmonypy cellxgene-census   # scanpy, scikit-learn are usually present
+pixi add --pypi squidpy                      # Step 7 (niches) only
 ```
+
+## Pre-flight Interview
+
+```yaml
+decisions:
+  - id: D1
+    param: STATE
+    kind: required
+    source: user
+    ask: "Which tissue, and in what state (healthy, or which tumour or disease)?"
+    default: null
+
+  - id: D2
+    param: referenceSource
+    kind: required
+    source: user
+    ask: "Do you have a matched scRNA/snRNA-seq reference (h5ad with raw counts and a cell type column), or should I search public data (CELLxGENE) for one?"
+    default: null
+
+  - id: D3
+    param: annotationRoute
+    kind: required
+    source: user
+    ask: "Transfer labels from a reference (recommended, slow; CellTypist only if installing the transfer tools fails), run CellTypist (fast, not recommended: less accurate on this panel), or name clusters from markers only?"
+    default: null
+
+  - id: D4
+    param: MIN_COUNTS
+    kind: optional
+    source: user
+    ask: "Keep cells with at least how many transcripts?"
+    default: "10"
+```
+
+Ask D1-D3 together, and give each D3 option its cost:
+
+- **Reference transfer (recommended, slow)**: Harmony + classifier (Step 5),
+  Tangram or scANVI, installed at run time. Fetching a public reference is not
+  guaranteed: install, query and download take minutes or longer, and the
+  dataset can be missing from Census or exhaust memory (Step 4). Transfer is
+  also long: on ~154k cells, UMAP took ~45 s and Leiden ~2 min before Harmony
+  and training even start. Install the transfer tools first, even though
+  CellTypist is pre-installed. Only if that install or import fails, stop,
+  tell the user the error, then fall back to CellTypist with the caveat below
+  and say so in the result.
+- **CellTypist (fast, not recommended)**: pre-installed, but its models are
+  trained on whole-transcriptome scRNA-seq, so on a targeted panel only the
+  overlapping genes are used and labels are less accurate. State this
+  whenever its labels are reported, and check them with markers (Step 6).
+- **Markers only**: no reference; see the Marker-Only recipe.
+
+When the user asks whether anything else must be uploaded, answer from D2:
+the Xenium output is enough to start, and a matched reference of their own is
+the fastest and most reliable route. Never describe the reference fetch or the
+transfer as immediate or guaranteed.
 
 ## Workflow
 
@@ -70,13 +127,59 @@ print(f"panel: {adata.n_vars} genes; median transcripts/cell: {adata.obs['total_
 For an `.h5ad`, `sc.read_h5ad(path)` and confirm `adata.obsm["spatial"]` and
 that `X` holds raw counts (integers). Other platforms: Common Recipes.
 
-### Step 2: Preprocess and Cluster
+### Step 2: QC, Preprocess and Cluster
+
+A targeted panel gives few transcripts per cell, so QC is per cell and
+lenient: high cutoffs or gene filtering remove small and rare cells. Look at
+the distributions first:
 
 ```python
+import numpy as np
+
+obs = adata.obs
+obs["n_counts"] = np.asarray(adata.X.sum(axis=1)).ravel()
+obs["n_genes"] = np.asarray((adata.X > 0).sum(axis=1)).ravel()
+neg_cols = [c for c in ("control_probe_counts", "control_codeword_counts", "unassigned_codeword_counts") if c in obs]
+if neg_cols:  # Xenium cells.csv; absent for MERFISH/CosMx loaded via squidpy
+    neg = obs[neg_cols].sum(axis=1)
+    obs["neg_frac"] = neg / (obs["n_counts"] + neg).clip(lower=1)
+if {"cell_area", "nucleus_area"} <= set(obs):
+    obs["nucleus_ratio"] = obs["nucleus_area"] / obs["cell_area"]
+cols = [c for c in ("n_counts", "n_genes", "cell_area", "nucleus_ratio", "neg_frac") if c in obs]
+print(obs[cols].describe(percentiles=[0.01, 0.05, 0.5, 0.95, 0.99]).round(3))
+```
+
+Check segmentation before reading clusters. Transcripts leaking between
+neighbouring cells show up as cells positive for two exclusive lineages:
+
+```python
+pairs = [("EPCAM", "PTPRC"), ("PECAM1", "PTPRC"), ("COL1A1", "PTPRC"), ("EPCAM", "PECAM1")]
+for a, b in pairs:  # mutually exclusive lineage markers; swap in ones on the panel
+    if a in adata.var_names and b in adata.var_names:
+        pos = (adata[:, [a, b]].X > 0).toarray()
+        pa, pb = pos.mean(axis=0)
+        print(f"{a}+{b}+: {(pos[:, 0] & pos[:, 1]).mean():.1%} of cells (by chance: {pa * pb:.1%})")
+```
+
+Double positives well above the chance rate mean leakage. Mixed clusters and
+mixed transferred labels (Step 6) then reflect segmentation, not biology: report
+it as such, and consider nucleus-only counts or re-segmentation (e.g. Baysor,
+ProSeg) before naming subtypes.
+
+```python
+MIN_COUNTS = 10       # 10-20; higher drops small and rare cells on a small panel
+MAX_NEG_FRAC = 0.05   # cells dominated by control probes / unassigned codewords
+keep = obs["n_counts"] >= MIN_COUNTS
+if "neg_frac" in obs:
+    keep &= obs["neg_frac"] <= MAX_NEG_FRAC
+if "cell_area" in obs:
+    keep &= obs["cell_area"] <= obs["cell_area"].quantile(0.995)  # merged-cell outliers
+print(f"keep {keep.sum()} / {adata.n_obs} cells")
+adata = adata[keep.to_numpy()].copy()
+
 adata.layers["counts"] = adata.X.copy()
-sc.pp.filter_cells(adata, min_counts=10)
 sc.pp.filter_genes(adata, min_cells=5)
-sc.pp.normalize_total(adata)
+sc.pp.normalize_total(adata)          # SCTransform (Seurat, R) is the alternative
 sc.pp.log1p(adata)
 sc.pp.pca(adata, n_comps=30)          # targeted panel: no HVG selection
 sc.pp.neighbors(adata, n_neighbors=15)
@@ -118,39 +221,120 @@ print(hits[["dataset_id", "title", "disease", "n_cells", "n_cell_types"]].head(8
 ```
 
 If nothing matches, relax `STATE` before `TISSUE`; never relax `ORGANISM`.
-Show the candidates to the user rather than picking silently.
+Show the candidates to the user rather than picking silently. Prefer
+whole-tissue datasets with many cell types: a one-compartment subset
+("Myeloid cells", "T cells") cannot label the other lineages. Do not pick a
+smaller dataset to save memory - Step 4 fetches only panel genes and a capped
+number of cells. Each catalog entry's `assets` holds the h5ad download URL.
 
 ### Step 4: Download a Subsampled Reference
 
-Full datasets can be several GB. Cap cells per type through CELLxGENE Census:
+Full datasets are several GB; label transfer needs neither all ~60k genes nor
+all cells. Query CELLxGENE Census for the panel genes only (`var_value_filter`)
+and a capped number of cells per type, reading `obs` first to sample.
+
+Run the query in a separate Python process. After clustering, the notebook
+kernel is often near its memory limit, and TileDB-SOMA's read buffers then fail
+with `std::bad_alloc` even on a small dataset. A child process gets its own
+limit and frees everything on exit; the kernel only reads `reference.h5ad`.
+It still shares the machine's RAM, so `del` large objects you no longer need
+first. Run the child with the interpreter that has `cellxgene_census`, not a
+bare `python`:
 
 ```python
+import gc
+import json
+import pathlib
+import subprocess
+
 import cellxgene_census
+
+DATASET_ID = "<dataset_id from Step 3>"  # or None to pool every matching dataset
+DISEASES = ["normal"]                    # pooled mode only: exact disease labels from Step 3's metadata
+MAX_PER_TYPE = 2000                      # a few thousand per type is enough; rare types keep all
+CENSUS_VERSION = "2025-11-08"            # pin a release; "stable" moves between runs
+# Panel genes only: ~100x less data. Use None (and MAX_PER_TYPE ~300) when the reference
+# needs every gene (spatial-panel-design, cell2location, Tangram).
+GENES = list(adata.var_names)
+
+FETCH_SCRIPT = r'''
+import json, sys
 import numpy as np
+import cellxgene_census
 
-DATASET_ID = "<dataset_id from Step 3>"
-MAX_PER_TYPE = 300  # rare types keep all their cells
-
-with cellxgene_census.open_soma(census_version="stable") as census:
-    found = census["census_info"]["datasets"].read(
-        value_filter=f"dataset_id == '{DATASET_ID}'").concat().to_pandas()
-    assert len(found), "dataset is not in this Census release - pick another candidate"
-    obs = census["census_data"][ORGANISM.lower().replace(" ", "_")].obs.read(
-        value_filter=f"dataset_id == '{DATASET_ID}'",
-        column_names=["soma_joinid", "cell_type"]).concat().to_pandas()
+p = json.load(open(sys.argv[1]))
+if p["dataset_id"]:
+    # Not is_primary_data: integrated atlases (LuCA, HLCA) mark their cells False.
+    obs_filter = f"dataset_id == '{p['dataset_id']}'"
+else:
+    # Pooled: is_primary_data drops cells re-deposited in several datasets.
+    obs_filter = (f"tissue_general == '{p['tissue']}' and disease in {p['diseases']} "
+                  "and is_primary_data == True")
+# Read buffers default to 1 GiB per column; 128 MiB fits under a per-process memory cap.
+buffers = {"soma.init_buffer_bytes": 128 * 1024**2, "py.init_buffer_bytes": 128 * 1024**2}
+with cellxgene_census.open_soma(census_version=p["census_version"], tiledb_config=buffers) as census:
+    obs = census["census_data"][p["organism"].lower().replace(" ", "_")].obs.read(
+        value_filter=obs_filter, column_names=["soma_joinid", "cell_type"]).concat().to_pandas()
+    if obs.empty:
+        sys.exit("no cells match - dataset not in this Census release (download its h5ad below)")
     rng = np.random.default_rng(0)
     keep = np.sort(obs.groupby("cell_type", observed=True)["soma_joinid"]
-                      .apply(lambda s: rng.choice(s.to_numpy(), min(len(s), MAX_PER_TYPE), replace=False))
+                      .apply(lambda s: rng.choice(s.to_numpy(), min(len(s), p["max_per_type"]), replace=False))
                       .explode().astype(int).to_numpy())
-    ref = cellxgene_census.get_anndata(census, organism=ORGANISM, obs_coords=keep,
+    genes = p["genes"]
+    ref = cellxgene_census.get_anndata(census, organism=p["organism"], obs_coords=keep,
+                                       var_value_filter=None if genes is None else f"feature_name in {genes}",
                                        obs_column_names=["cell_type", "disease", "donor_id"])
-
 ref.var_names = ref.var["feature_name"].astype(str)
 ref.var.index.name = None            # same name as a column blocks h5ad writing
 ref.var_names_make_unique()
 ref = ref[ref.obs["cell_type"] != "unknown"].copy()
-ref.write_h5ad("reference.h5ad", compression="gzip")   # X holds raw counts
-print(f"reference: {ref.n_obs} cells, {ref.obs['cell_type'].nunique()} types")
+ref.write_h5ad(p["out"], compression="gzip")   # X holds raw counts
+print(f"reference: {ref.n_obs} cells, {ref.n_vars} genes, {ref.obs['cell_type'].nunique()} types")
+'''
+
+params = {"dataset_id": DATASET_ID, "diseases": DISEASES, "tissue": TISSUE, "organism": ORGANISM,
+          "max_per_type": MAX_PER_TYPE, "census_version": CENSUS_VERSION, "genes": GENES,
+          "out": "reference.h5ad"}
+pathlib.Path("/tmp/census_params.json").write_text(json.dumps(params))
+pathlib.Path("/tmp/fetch_reference.py").write_text(FETCH_SCRIPT)
+
+# <env>/lib/pythonX.Y/site-packages/cellxgene_census/__init__.py -> <env>/bin/python
+py = pathlib.Path(cellxgene_census.__file__).parents[4] / "bin" / "python"
+gc.collect()
+res = subprocess.run([str(py), "/tmp/fetch_reference.py", "/tmp/census_params.json"],
+                     capture_output=True, text=True, timeout=1800)
+print(res.stdout[-2000:], res.stderr[-2000:])
+res.check_returncode()
+ref = sc.read_h5ad("reference.h5ad")
+```
+
+**One dataset's h5ad instead** (not in Census, or Census still fails): this is
+the next step, before any CellTypist fallback. Download the file from the
+`assets` URL in Step 3's catalog entry, open it without loading `X`, and keep
+only sampled cells and panel genes. Read rows in chunks - a row slice loads
+every gene. If the kernel is short on memory, run this the same way, as a
+script with `py`:
+
+```python
+import anndata as ad
+import scipy.sparse as sp
+
+full = ad.read_h5ad("dataset.h5ad", backed="r")
+rng = np.random.default_rng(0)
+ct = full.obs["cell_type"].to_numpy()
+rows = np.sort(np.concatenate([rng.choice(np.flatnonzero(ct == t), min((ct == t).sum(), MAX_PER_TYPE), replace=False)
+                               for t in np.unique(ct)]))
+src = full.raw if full.raw is not None else full     # raw.X holds counts when X is normalized
+symbols = src.var["feature_name"].astype(str).to_numpy()   # var index is Ensembl IDs
+cols = np.flatnonzero(np.isin(symbols, GENES))
+counts = sp.vstack([sp.csr_matrix(src.X[rows[i:i + 5000]])[:, cols] for i in range(0, len(rows), 5000)])
+ref = ad.AnnData(counts.tocsr(), obs=full.obs.iloc[rows][["cell_type", "disease", "donor_id"]].copy(),
+                 var=pd.DataFrame(index=symbols[cols]))
+ref.var_names_make_unique()
+ref = ref[ref.obs["cell_type"] != "unknown"].copy()
+ref.write_h5ad("reference.h5ad", compression="gzip")
+print(f"reference: {ref.n_obs} cells x {ref.n_vars} panel genes")
 ```
 
 ### Step 5: Transfer Labels with Harmony
@@ -252,11 +436,31 @@ stroma"). For graph-based domain methods see `spatial-domain-detection`.
 
 | Parameter | Default | Effect |
 |---|---|---|
+| `MIN_COUNTS` (Step 2) | 10 | Keep 10-20; higher drops small and rare cells |
+| `MAX_NEG_FRAC` (Step 2) | 0.05 | Max share of control probe / unassigned codeword counts per cell |
 | `STATE` (Step 3) | from the user | Healthy vs disease reference; the most consequential choice |
-| `MAX_PER_TYPE` | 300 | Reference size; raise for rare types, lower for speed |
+| `MAX_PER_TYPE` (Step 4) | 2000 | Reference cells per type; 2,000-5,000 is enough, rare types keep all |
+| `GENES` (Step 4) | panel genes | Genes fetched from the reference; `None` only when every gene is needed |
 | Leiden `resolution` | 0.5 | Cluster granularity that names are assigned to |
 | `transfer_conf` cutoff | 0.5 | Below it, rely on markers |
 | `N_NICHES` | 6 | Number of neighbourhood types |
+
+## Key Concepts
+
+### Annotation Routes
+
+| Route | Use when | Tools |
+|---|---|---|
+| (a) Reference label transfer - the most common | A tissue- and state-matched scRNA/snRNA-seq reference exists; transfer on the shared panel genes | Seurat `FindTransferAnchors` / `TransferData` (R), scANVI / scArches (scvi-tools), Tangram; this skill uses Harmony + a classifier (Step 5) |
+| (b) Marker-based manual | No matching reference, or to check (a) | Step 6 evidence table; Marker-Only recipe |
+| (c) Deconvolution, as a supplement | Regions where segmentation is unreliable (dense tissue, merged cells) | RCTD (spacexr), cell2location |
+| (d) Pre-trained classifier - not reference transfer | Fast first look, or fallback when (a) cannot be installed | CellTypist |
+
+Transfer only sees genes that are both on the panel and in the reference.
+CellTypist is not route (a): it applies a fixed model trained on
+whole-transcriptome scRNA-seq, not the user's chosen reference, so on a panel
+only the overlapping genes are used and labels are less accurate. Never use it
+in place of an approved (a); confirm its labels with markers (Step 6).
 
 ## Common Recipes
 
@@ -331,9 +535,15 @@ print(scores.round(2).assign(best=scores.idxmax(axis=1).str.removeprefix("score_
 
 | Problem | Cause | Fix |
 |---|---|---|
+| Many cells removed at QC | Cutoffs too strict for a targeted panel | Lower `MIN_COUNTS` toward 10; check the `neg_frac` distribution |
+| Clusters or transferred labels mix two lineages | Transcripts leaking between neighbouring cells | Step 2 double-positive check; report as segmentation, consider nucleus-only counts or re-segmentation |
 | Few shared genes | Gene symbols differ (Ensembl IDs, case) | Map to symbols; `var["feature_name"]` holds symbols in Census data |
 | Most cells < 0.5 confidence | Reference lacks the tissue's states | Pick a disease-matched reference; fall back to markers |
-| `dataset is not in this Census release` | Dataset newer than Census | Pick the next candidate |
+| `no cells match` in Step 4 | Dataset newer than Census | Download its h5ad (Step 4 alternative) or pick the next candidate |
+| Almost no cells from an atlas `DATASET_ID` | `is_primary_data == True` added; atlases mark their cells False | Drop that filter for a single dataset |
+| `SOMAError: std::bad_alloc` / `MemoryError` fetching the reference | Kernel near its memory limit with 1 GiB read buffers, all genes fetched, or a whole h5ad loaded | Run Step 4 as written (child process, 128 MiB buffers, panel genes); open h5ad files with `backed="r"`. Do not switch to a smaller dataset |
+| `Unable to allocate ... MiB` in the notebook | Kernel memory filled by earlier steps | `del` objects no longer needed and `gc.collect()`; run memory-heavy steps as a script in a child process |
+| CellTypist downloads all 61 models | `Model.load` with no local models | `celltypist.models.download_models(model=["Human_Lung_Atlas.pkl"])` first |
 | Clusters split by sample | Batch effect | See the "Several Sections or Samples" recipe |
 | Leiden very slow | >200k cells | Cluster a subsample, then `sc.tl.ingest` the rest |
 | CosMx cells overlap on one spot | Local FOV coordinates used | Set `obsm["spatial"] = obsm["spatial_fov"]` |

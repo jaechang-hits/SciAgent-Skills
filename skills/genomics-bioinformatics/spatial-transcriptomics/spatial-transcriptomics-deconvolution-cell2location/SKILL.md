@@ -1,6 +1,6 @@
 ---
 name: "spatial-transcriptomics-deconvolution-cell2location"
-description: "Visium and other spot-based spatial transcriptomics (Slide-seq, ST) cell type deconvolution with cell2location: load Space Ranger output, get a tissue-matched scRNA-seq reference from CELLxGENE, learn cell type signatures, estimate cell type abundance per spot, and check the maps against marker genes. This is the route for 'annotate cell types' on Visium. For single-cell-resolution data (Xenium, MERFISH, CosMx) use spatial-transcriptomics-cell-type-annotation."
+description: "Visium and other spot-based spatial transcriptomics (Slide-seq, ST) cell type deconvolution with cell2location: load Space Ranger output, get a tissue-matched scRNA-seq reference from CELLxGENE, learn cell type signatures, estimate cell type abundance per spot with posterior uncertainty, and check the maps against marker genes. Default route for 'annotate cell types' on Visium when a GPU is available. Limits: needs a tissue- and state-matched reference; the default 30000 epochs take hours on CPU, so without a GPU it runs only with fewer epochs (exploratory maps) and can exceed one execution call's time limit. For fast per-spot proportions on CPU use spatial-mapping-tangram (clusters mode); for single-cell-resolution data (Xenium, MERFISH, CosMx) use spatial-transcriptomics-cell-type-annotation."
 license: "CC-BY-4.0"
 ---
 
@@ -22,18 +22,93 @@ per spot and type, maps on the tissue, and a marker check of each map.
 - Producing per-spot compositions for downstream niche or communication analysis
 - Getting abundance estimates with posterior uncertainty (5% quantile)
 - Use `spatial-transcriptomics-cell-type-annotation` instead when each observation is one cell (Xenium, MERFISH, CosMx)
-- Use `spatial-transcriptomics-deconvolution-tangram` instead when you need single cells placed on segmented nuclei of the histology image
+- Use `spatial-mapping-tangram` (constrained deconvolution route) instead when you need single cells placed on segmented nuclei of the histology image
 
 ## Prerequisites
 
 - **Input**: Space Ranger output (`filtered_feature_bc_matrix.h5` and the `spatial/` folder) with raw counts
 - **Reference**: scRNA-seq with raw counts and `obs["cell_type"]` (Step 2 fetches one)
-- **Compute**: runs on CPU, but the spatial model is slow there (Step 4); GPU strongly preferred
+- **Compute**: GPU strongly preferred. On CPU the spatial model (Step 4) needs fewer epochs than the
+  default, chosen by the timing probe there; the reference model (Step 3) takes minutes
 - **Python packages**: `cell2location` (pulls torch, scvi-tools, pyro; large), `scanpy`
 
 ```bash
-pip install cell2location scanpy
+# Install only what `import` reports missing. `--pypi` keeps the env's scanpy/numba
+# stack; a conda add can swap it and bare pip can shadow it.
+pixi add --pypi scanpy cell2location
 ```
+
+## Pre-flight Interview
+
+```yaml
+decisions:
+  - id: D1
+    param: STATE
+    kind: required
+    source: user
+    ask: "Which tissue is this, and in what state (healthy, or which tumour or disease)?"
+    default: null
+
+  - id: D2
+    param: referenceSource
+    kind: required
+    source: user
+    ask: "Do you have a scRNA/snRNA-seq reference from the same tissue and state (h5ad with raw counts and a cell type column), or should I search public data (CELLxGENE)?"
+    default: null
+
+  - id: D3
+    param: CELL_TYPE_KEY
+    kind: required
+    source: data
+    depends_on: [D2]
+    ask: "Which reference column holds the cell types, and at what level: major lineages or fine subtypes?"
+    default: null
+
+  - id: D4
+    param: COMPUTE_ROUTE
+    kind: required
+    source: user
+    ask: "Without a GPU, cell2location runs only with fewer training epochs (exploratory maps, still long). Run it that way, or get per-spot proportions quickly with Tangram (clusters mode)?"
+    default: "cell2location with MAX_EPOCHS from the Step 4 timing probe, reported as exploratory"
+
+  - id: D5
+    param: N_CELLS_PER_SPOT
+    kind: required
+    source: user
+    depends_on: [D1]
+    ask: "About how many nuclei does one spot hold in this tissue? I can use the tutorial value of 30 if you do not know."
+    default: "30"
+
+  - id: D6
+    param: SAMPLE_KEY
+    kind: required
+    source: data
+    skip_if: "a single section"
+    ask: "There are several sections: fit them in one model (shared cell type signatures, per-section sensitivity) or each on its own?"
+    default: "one model with batch_key = section"
+
+  - id: D7
+    param: DETECTION_ALPHA
+    kind: optional
+    source: user
+    ask: "Does RNA detection vary strongly across the slide (uneven tissue quality)?"
+    default: "20 (uneven detection); 200 when detection is even"
+
+  - id: D8
+    param: REF_BATCH_KEY
+    kind: optional_conditional
+    source: data
+    depends_on: [D2]
+    ask: "The reference pools several donors or studies: correct the signatures for that column?"
+    default: "batch_key = donor_id when the reference has more than one donor"
+```
+
+Ask D1, D2 and D4 together, with D6 when there is more than one section. The
+tissue and state come from the user: a sample name will not be found in public
+databases, so do not search the web for it. Spot data cannot tell a tumour from
+healthy tissue reliably; if the user does not know, propose a tissue from the
+top marker genes and ask them to confirm. If D4 picks Tangram, use
+`spatial-mapping-tangram` with `MODE = "clusters"` and the same reference.
 
 ## Workflow
 
@@ -64,10 +139,10 @@ print(f"median UMIs/spot: {np.median(np.asarray(st.X.sum(1)).ravel()):.0f}")
 
 ### Step 2: Get a Reference
 
-Ask the user for tissue and state if the files do not say; the spot data
-cannot tell a tumour from healthy tissue reliably. Then search and download a
-subsampled CELLxGENE reference with Steps 3-4 of
-`spatial-transcriptomics-cell-type-annotation` (same code), and load it:
+Use the tissue and state from D1. Without the user's own reference (D2),
+search and download a subsampled CELLxGENE reference with Steps 3-4 of
+`spatial-transcriptomics-cell-type-annotation` (same code, with `GENES = None` and
+`MAX_PER_TYPE = 300` - signatures need every gene), and load it:
 
 ```python
 ref = sc.read_h5ad("reference.h5ad")      # X = raw counts, obs["cell_type"]
@@ -107,15 +182,44 @@ print(f"shared genes: {len(shared)}")
 st = st[:, shared].copy()
 inf_aver = inf_aver.loc[shared]
 
-N_CELLS_PER_SPOT = 30       # tutorial value; set from nuclei counted on the H&E for this tissue
-DETECTION_ALPHA = 20        # 20 when RNA detection varies across the slide; also try 200
-MAX_EPOCHS = 30000          # tutorial default; on CPU try 3000 first and report it as exploratory
-
+N_CELLS_PER_SPOT = 30       # D5; tutorial value; set from nuclei counted on the H&E for this tissue
+DETECTION_ALPHA = 20        # D7; 20 when RNA detection varies across the slide; also try 200
 Cell2location.setup_anndata(st)
+```
+
+On CPU, time a short run on a throwaway model before choosing `MAX_EPOCHS`.
+The default 30000 epochs often takes hours there, longer than one execution
+call is allowed to run in many sandboxes:
+
+```python
+import time
+import torch
+
+probe = Cell2location(st, cell_state_df=inf_aver,
+                      N_cells_per_location=N_CELLS_PER_SPOT, detection_alpha=DETECTION_ALPHA)
+t0 = time.time()
+probe.train(max_epochs=50, batch_size=None, train_size=1)
+sec_per_epoch = (time.time() - t0) / 50
+del probe
+
+BUDGET_S = 20 * 60          # leave headroom under the per-call time limit
+if torch.cuda.is_available():
+    MAX_EPOCHS = 30000      # tutorial default
+else:
+    MAX_EPOCHS = int(min(30000, BUDGET_S / sec_per_epoch) // 1000 * 1000)
+print(f"{sec_per_epoch:.2f} s/epoch -> MAX_EPOCHS = {MAX_EPOCHS} (30000 needs ~{sec_per_epoch * 30000 / 3600:.1f} h)")
+```
+
+Below ~3000 epochs the maps are too rough to report; switch to the Tangram
+route of D4 instead. Then fit:
+
+```python
 st_model = Cell2location(st, cell_state_df=inf_aver,
                          N_cells_per_location=N_CELLS_PER_SPOT, detection_alpha=DETECTION_ALPHA)
 st_model.train(max_epochs=MAX_EPOCHS, batch_size=None, train_size=1)
 ```
+
+Report `MAX_EPOCHS` with the maps; anything below 30000 is exploratory.
 
 ### Step 5: Export and Check Abundances
 
@@ -239,7 +343,7 @@ A spot's dominant type is a summary, not a label: report its share alongside it.
 ## Related Skills
 
 - `spatial-transcriptomics-cell-type-annotation` - single-cell-resolution platforms; its Steps 3-4 fetch the reference
-- `spatial-transcriptomics-deconvolution-tangram` - per-cell mapping with histology segmentation
+- `spatial-mapping-tangram` - Tangram mapping, incl. per-cell mapping with histology segmentation
 - `spatial-domain-detection` - tissue regions to summarise compositions by
 - `spatial-transcriptomics-cell-cell-communication` - interactions on the deconvolved slide
 

@@ -40,7 +40,9 @@ signature scores on the tissue.
 - **Python packages**: `scvi-tools`, `mudata` (Module 3), `bbknn` (Module 4), `scanpy`
 
 ```bash
-pip install scvi-tools mudata bbknn scanpy
+# Install only what `import` reports missing. `--pypi` keeps the env's scanpy/numba
+# stack; a conda add can swap it and bare pip can shadow it.
+pixi add --pypi scvi-tools mudata bbknn scanpy
 ```
 
 ## Quick Start

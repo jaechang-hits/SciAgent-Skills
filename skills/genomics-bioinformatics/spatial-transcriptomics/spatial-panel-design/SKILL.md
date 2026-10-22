@@ -22,21 +22,97 @@ type each marks, its evidence and a reason.
 - Documenting why each panel gene was chosen, with reference and database evidence
 - Comparing candidate markers from a reference with PanglaoDB and CellMarker 2.0
 - Use `spatial-transcriptomics-cell-type-annotation` instead when the panel already exists and data must be annotated
-- For genes the panel will not measure, use `scrna-spatial-gene-imputation` after the experiment
+- For genes the panel will not measure, use the gene imputation route of `spatial-mapping-tangram` after the experiment
 
 ## Prerequisites
 
 - **From the user**: organism, tissue, state (healthy or a disease) and panel size N
 - **Reference**: tissue- and state-matched; run Steps 3-4 of
   `spatial-transcriptomics-cell-type-annotation` (same code), adding
-  `"cell_type_ontology_term_id"` to `obs_column_names`, to get `reference.h5ad`
+  `"cell_type_ontology_term_id"` to `obs_column_names`, with `GENES = None`
+  (markers are ranked over every gene) and `MAX_PER_TYPE = 300`, to get `reference.h5ad`
 - **Literature**: ask the research subagent / literature tools for published panels
   and canonical markers of this tissue; add what they return in Step 5
 - **Python packages**: `cellxgene-census`, `scanpy`, `openpyxl`, `scikit-learn`
 
 ```bash
-pip install cellxgene-census scanpy openpyxl scikit-learn
+# Install only what `import` reports missing. `--pypi` keeps the env's scanpy/numba
+# stack; a conda add can swap it and bare pip can shadow it.
+pixi add --pypi cellxgene-census scanpy openpyxl scikit-learn
 ```
+
+## Pre-flight Interview
+
+```yaml
+decisions:
+  - id: D1
+    param: ORGANISM
+    kind: required
+    source: user
+    ask: "Human or mouse tissue?"
+    default: null
+  - id: D2
+    param: TISSUE
+    kind: required
+    source: user
+    ask: "Which tissue will be profiled?"
+    default: null
+  - id: D3
+    param: STATE
+    kind: required
+    source: user
+    ask: "Healthy tissue, or which disease or tumour?"
+    default: null
+  - id: D4
+    param: PANEL_SIZE
+    kind: required
+    source: user
+    ask: "How many genes can the panel hold?"
+    default: null
+  - id: D5
+    param: basePanel
+    kind: required
+    source: user
+    ask: "Is this a standalone custom panel, or add-on genes for a vendor base panel (which one)?"
+    default: "standalone panel"
+  - id: D6
+    param: DATASET_ID
+    kind: required
+    source: data
+    depends_on: [D1, D2, D3]
+    ask: "These CELLxGENE datasets match the tissue and state: which one should be the reference?"
+    default: null
+  - id: D7
+    param: cellTypeResolution
+    kind: required
+    source: data
+    depends_on: [D4, D6]
+    ask: "These are the reference cell types; for a panel of this size I propose merging <fine states> into <lineages>. Which types must the panel separate?"
+    default: "major lineages; merge fine states the panel size cannot resolve"
+  - id: D8
+    param: requiredGenes
+    kind: optional
+    source: user
+    ask: "Are there genes that must be on the panel (study targets, known markers)?"
+    default: "none"
+  - id: D9
+    param: MIN_PER_TYPE
+    kind: optional
+    source: user
+    ask: "At least how many genes per cell type, so rare but important types are covered?"
+    default: "3"
+  - id: D10
+    param: cancerTypeFilter
+    kind: derived
+    source: upstream
+    depends_on: [D3]
+    ask: "Keep tumour-derived CellMarker entries?"
+    default: "Normal only for healthy tissue; drop the filter for tumour panels"
+```
+
+Ask D1-D5 together. D6 and D7 come in a later round, after the Census search
+and the reference's cell types are known; D8 genes join the evidence table as
+rows in Step 5.
 
 ## Workflow
 

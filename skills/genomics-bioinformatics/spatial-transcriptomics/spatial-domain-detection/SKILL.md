@@ -36,14 +36,17 @@ agree.
 ## Prerequisites
 
 - **Input**: raw counts in `X` (or `layers["counts"]`) and coordinates in `obsm["spatial"]`
-- **SpaGCN**: initialises with Louvain, which needs the `louvain` package; pulls torch
+- **SpaGCN**: pulls torch. Its Louvain init needs `louvain`, which has no Python 3.13
+  conda build or wheel and cannot be compiled here; without it use the k-means init (Step 3)
 - **GraphST**: pulls torch; a CUDA GPU makes training ~10x faster; the dense
   spot-by-spot graph limits it to ~30k observations
 - **UTAG**: not on PyPI; install from GitHub
 
 ```bash
-pip install SpaGCN louvain GraphST scanpy
-pip install git+https://github.com/ElementoLab/utag.git@main
+# Install only what `import` reports missing. `--pypi` keeps the env's scanpy/numba
+# stack; a conda add can swap it and bare pip can shadow it.
+pixi add --pypi scanpy SpaGCN GraphST
+pixi add --pypi "utag @ git+https://github.com/ElementoLab/utag.git@main"
 ```
 
 ## Workflow
@@ -163,6 +166,9 @@ refined = spg.refine(sample_id=sp.obs_names.tolist(), pred=y_pred.tolist(), dis=
 adata.obs["spagcn_refined"] = pd.Categorical(np.asarray(refined).astype(str))
 print(adata.obs["spagcn_refined"].value_counts())
 ```
+
+Without `louvain`, skip `search_res` and initialise with k-means:
+`clf.train(sp, adj, init_spa=True, init="kmeans", n_clusters=N_DOMAINS, tol=5e-3, lr=0.05, max_epochs=200)`.
 
 `shape="hexagon"` for Visium, `"square"` for legacy ST. Raise `alpha` to give
 histology more weight; set `USE_HISTOLOGY = False` when the image is missing or
@@ -366,7 +372,7 @@ print(f"boundary spots: {boundary.mean():.0%}")
 
 | Problem | Cause | Fix |
 |---|---|---|
-| SpaGCN `UnboundLocalError: y_pred` | `init` other than `"louvain"` / `"kmeans"` | Use `init="louvain"`; `pip install louvain` |
+| SpaGCN `UnboundLocalError: y_pred` | `init` other than `"louvain"` / `"kmeans"` | Use `init="louvain"` (needs `louvain`) or `init="kmeans"` with `n_clusters` |
 | SpaGCN `AttributeError: ... has no attribute 'A'` | Sparse `X` with scipy >= 1.14 | Densify `X` before SpaGCN (Step 3 does) |
 | SpaGCN domains ignore the tissue image | Coordinates swapped or at full-res scale on the hires image | Pass `pxl_row`/`pxl_col` scaled by `tissue_hires_scalef`, row first |
 | GraphST `AssertionError` in clustering | No Leiden resolution gives exactly `n_clusters` | Widen `end` (e.g. 3.0), change `N_DOMAINS` by 1, or use `mclust` |

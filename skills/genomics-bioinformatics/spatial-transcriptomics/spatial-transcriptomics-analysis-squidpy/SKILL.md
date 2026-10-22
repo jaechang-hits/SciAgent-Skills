@@ -42,8 +42,10 @@ Each Core API module answers one question and exports a CSV:
   of `spatial_neighbors_knn/_radius/_delaunay/_grid`; it still works through 1.8
 
 ```bash
-pip install squidpy omnipath scanpy
-pip install liana        # only for the local-LR-list recipe
+# Install only what `import` reports missing. `--pypi` keeps the env's scanpy/numba
+# stack; a conda add can swap it and bare pip can shadow it.
+pixi add --pypi squidpy omnipath scanpy
+pixi add --pypi liana        # only for the local-LR-list recipe
 ```
 
 ## Quick Start
@@ -315,8 +317,8 @@ res = sq.gr.ligrec(adata, cluster_key=CLUSTER_KEY, interactions=pairs_df[["sourc
 print(res["pvalues"].shape)
 ```
 
-Complex (multi-subunit) pairs are dropped here; Module 7 with OmniPath or
-`cellphonedb-cell-cell-interaction` handles complexes.
+Complex (multi-subunit) pairs are dropped here; Module 7 with OmniPath or the
+CellPhoneDB route of `spatial-transcriptomics-cell-cell-communication` handles complexes.
 
 ## Expected Outputs
 
@@ -335,17 +337,15 @@ Complex (multi-subunit) pairs are dropped here; Module 7 with OmniPath or
 | `ValueError` on `coord_type="visium"` | Not a valid value | Use `coord_type="grid"` for Visium |
 | Co-occurrence out of memory | Too many cells | Lower `MAX_CELLS` |
 | Many isolated nodes | `radius` too small for the coordinate units | Check units (pixels vs microns); use kNN |
-| Ligrec fails to download | No internet / omnipath missing | `pip install omnipath`; or pass `interactions=` a DataFrame with `source`/`target` columns |
+| Ligrec fails to download | No internet / omnipath missing | `pixi add --pypi omnipath`; or pass `interactions=` a DataFrame with `source`/`target` columns |
 | Neighbourhood z-scores extreme for rare types | Few cells | Merge rare types or interpret with counts |
 | Deprecation warning for `spatial_neighbors` | squidpy >= 1.7 | Switch to `sq.gr.spatial_neighbors_knn` etc. |
 
 ## Related Skills
 
-- `spatial-transcriptomics-cell-cell-communication` - LIANA ranking filtered by neighbourhood enrichment
+- `spatial-transcriptomics-cell-cell-communication` - LIANA/CellPhoneDB ranking filtered by neighbourhood enrichment, local LR scores, MISTy
 - `spatial-transcriptomics-cell-type-annotation` - labels and niches for single-cell data
 - `spatial-domain-detection` - spatial domains to use as `CLUSTER_KEY`
-- `liana-spatial-cell-cell-communication` - local LR scores and MISTy
-- `cellphonedb-cell-cell-interaction` - CellPhoneDB statistics and microenvironments
 
 ## References
 
