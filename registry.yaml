@@ -1681,3 +1681,12 @@ entries:
     description: "Visium and other spot-based spatial transcriptomics (Slide-seq, ST) cell type deconvolution with cell2location: load Space Ranger output, get a tissue-matched scRNA-seq reference from CELLxGENE, learn cell type signatures, estimate cell type abundance per spot with posterior uncertainty, and check the maps against marker genes. Default route for 'annotate cell types' on Visium when a GPU is available. Limits: needs a tissue- and state-matched reference; the default 30000 epochs take hours on CPU, so without a GPU it runs only with fewer epochs (exploratory maps) and can exceed one execution call's time limit. For fast per-spot proportions on CPU use spatial-mapping-tangram (clusters mode); for single-cell-resolution data (Xenium, MERFISH, CosMx) use spatial-transcriptomics-cell-type-annotation."
     date_added: "2026-10-20"
     tags: ["spatial-transcriptomics"]
+
+  - name: "trajectory-inference"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/trajectory-inference/SKILL.md"
+    description: "Trajectory inference and cell fate mapping for single-cell and spatial transcriptomics: PAGA graph + diffusion pseudotime (no velocity needed), scVelo RNA velocity (stochastic / dynamical, from spliced/unspliced counts), CellRank 2 terminal states, fate probabilities and lineage drivers, then pseudotime and fates mapped on tissue with a spatial autocorrelation check. Outputs pseudotime, velocity streams, fate probability tables. Imaging panels (Xenium, MERFISH) have no unspliced counts: use PAGA/DPT or the CellRank pseudotime kernel. For a basic PAGA recipe inside a standard scRNA-seq workflow see scanpy-scrna-seq."
+    date_added: "2026-10-20"
+    tags: ["spatial-transcriptomics"]
