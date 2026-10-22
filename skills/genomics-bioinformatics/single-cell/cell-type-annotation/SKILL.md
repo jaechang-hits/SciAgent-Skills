@@ -1,61 +1,61 @@
 ---
-name: "single-cell-annotation-guide"
-description: "Cell type annotation strategy for scRNA-seq: name clusters manually from canonical markers, transfer labels from a reference (CellTypist, popV), or do both and validate one against the other. Covers matching tissue and developmental stage, marker evidence, annotation confidence, doublets, unresolved clusters. Use when planning or troubleshooting how to annotate cells."
+name: "cell-type-annotation"
+description: "scRNA-seq cell type annotation - read before any annotation skills. Chooses and runs the route: name clusters manually from canonical markers (scanpy, runnable code here), transfer labels with CellTypist or a popV/scANVI on a reference, or do both and validate one against other. Covers package availability, tissue- and state-matched references, marker panels, confidence and marker validation of transferred labels, doublets, unresolved clusters. Tool-specific code lives in celltypist/popv-cell-annotation and scvi-tools-single-cell."
 license: "CC-BY-4.0"
 ---
 
-# Single-Cell RNA-seq Cell Type Annotation Guide
+# Single-Cell RNA-seq Cell Type Annotation
+
+## Routes at a Glance
+
+Choose the route; the tool skills hold the code for each automated route.
+
+| Route | Fits when | Needs | In default sandbox | Code |
+|-------|-----------|-------|--------------------|------|
+| A. Manual markers | Well-characterized tissue, small dataset, or no reference matches tissue and state | `scanpy` | Installed | This skill, Workflow step 4 |
+| B. CellTypist transfer | A pre-trained model matches tissue and state | `celltypist` | Installed | `celltypist-cell-annotation` |
+| C. Ensemble transfer | You have labelled reference data | `popv` or `scvi-tools` | **Not installed** - install first | `popv-cell-annotation`, `scvi-tools-single-cell` |
+| D. Both, compared, step-wise | Labels feed a biological claim; rare populations | A plus B or C | A + B installed | Workflow steps 4 and 7 |
+
+Spatial data is not covered here: Xenium/MERFISH/CosMx cells go to
+`spatial-transcriptomics-cell-type-annotation`, Visium spots to
+`spatial-transcriptomics-deconvolution-cell2location`.
+
+Ask the route as D2 in the Pre-flight Interview and say which routes run as-is:
+route C needs `popv` or `scvi-tools` installed first.
 
 ## Overview
 
-Cell type annotation is the process of assigning biological identities to computationally defined clusters in single-cell RNA-seq data. It is one of the most consequential analytical decisions in a scRNA-seq project: annotation errors propagate into downstream analyses of differential expression, trajectory inference, and cell-cell communication. This guide presents a three-tier decision strategy — manual marker-based annotation first, automated reference-free classification second, and ensemble reference-based label transfer third — and explains when each approach is most appropriate.
+Cell type annotation is the process of assigning biological identities to computationally defined clusters in single-cell RNA-seq data. It is one of the most consequential analytical decisions in a scRNA-seq project: annotation errors propagate into downstream analyses of differential expression, trajectory inference, and cell-cell communication. This skill chooses among routes A-D above and holds the code for route A.
 
-The guide synthesizes community know-how on CellTypist (Dominguez Conde et al., Science 2022), popV (Luecken et al., Nature Methods 2024), and classical marker-based approaches, following standards established by the Human Cell Atlas project.
+It synthesizes community know-how on CellTypist (Dominguez Conde et al., Science 2022), popV (Luecken et al., Nature Methods 2024), and classical marker-based approaches, following standards established by the Human Cell Atlas project.
 
-The three tiers represent a progression from effort-intensive but transparent (manual) to efficient and scalable (automated). They are not mutually exclusive: best practice is to run automated annotation first to generate hypotheses and then validate with manual marker inspection. For high-stakes biological claims — rare cell types, novel disease states, clinical applications — all three tiers should be used in parallel and discordant results resolved explicitly before publication.
+Routes A to C run from effort-intensive but transparent (manual) to efficient and scalable (automated). They are not mutually exclusive: route D runs automated transfer to generate hypotheses and validates them with manual marker inspection. For high-stakes biological claims — rare cell types, novel disease states, clinical applications — use route D and resolve discordant labels explicitly before publication.
 
 ## Key Concepts
 
-### Cell Type Markers and Cluster Identity
+### Clusters Are Not Cell Types
 
-A cell type marker is a gene whose expression distinguishes one cell population from all others in a dataset. Canonical markers are those validated across many studies and tissues — for example, CD3E for T cells, CD19 and MS4A1 (CD20) for B cells, CD14 for classical monocytes, and EPCAM for epithelial cells. Effective markers fulfill three criteria: they are highly expressed in the target cell type (high sensitivity), they are absent or very low in all other cell types (high specificity), and their identity is confirmed by at least two independent markers.
+Leiden/Louvain clusters group transcriptionally similar cells. One type can split
+across clusters (over-clustering) or two can merge (under-clustering); annotate at
+the resolution the question needs.
 
-Clusters produced by algorithms such as Leiden or Louvain represent groups of transcriptionally similar cells; they do not inherently correspond to biological cell types. A single true cell type may appear as multiple clusters if the resolution parameter is too high (overclustering), and biologically distinct cell types may be merged if resolution is too low. Annotation quality depends on both the quality of the clustering and the quality of the evidence used to assign identities.
+### Marker Evidence
 
-### Reference Atlases and Label Transfer
+The strongest evidence is a canonical marker that also ranks high in this dataset's
+`rank_genes_groups`. Data-only markers are hypotheses; single-study markers are
+supporting evidence. Require at least two co-expressed markers per type.
 
-Reference atlases are large, curated scRNA-seq datasets with expert-validated cell type labels that serve as a "ground truth" for annotation of new query datasets. Prominent examples include the Human Cell Atlas (HCA), the Human Lung Cell Atlas (HLCA, 2.4M cells), Tabula Sapiens (500K cells across 28 tissues), and the Human BM Atlas for bone marrow. Label transfer is the computational process of projecting query cells onto the reference space and assigning labels based on proximity.
+### Reference Match and Confidence
 
-Label transfer quality depends critically on biological match between query and reference. Adult tissue query data annotated with a fetal reference will produce systematic errors for cell types that differ between developmental stages. Similarly, a blood-derived reference will poorly annotate tumor-infiltrating immune cells, which have altered transcriptional programs compared to their circulating counterparts.
+A reference or model is valid only for the tissue and state it was built from; a
+mismatched one still labels every cell, confidently. Low-confidence cells flag novel
+types, doublets, or transitional states - review them, do not accept the label.
 
-### Annotation Confidence and Validation
+### Label Vocabulary
 
-Automated annotation tools produce confidence scores (probability or agreement rate) that quantify the certainty of each cell's label. These scores should never be ignored. Cells with low confidence scores may represent novel cell types absent from the reference, doublets (two cells captured together), or transitional states along a differentiation continuum.
-
-Validation refers to verifying that automated labels are consistent with independent biological evidence — typically canonical marker gene expression. Even when an automated method reports high confidence, a few minutes spent visualizing marker genes in a UMAP or dotplot is essential to catch systematic misannotations, especially for rare or disease-specific cell populations absent from training data.
-
-### Doublets and Technical Artifacts
-
-Doublets are droplets containing two or more cells, which appear as a single cell with an anomalously high gene count and mixed transcriptional identity. Annotating doublets before removing them produces spurious "cell types" that combine markers from two real populations (e.g., an apparent NK-B cell hybrid). Tools such as Scrublet and DoubletFinder should be applied before annotation; doublets should be marked and excluded from the annotation workflow.
-
-Batch effects — systematic technical differences between samples processed at different times, with different reagents, or on different platforms — can mimic cell type differences. If one batch contains more stressed cells (higher stress gene expression), they may cluster separately and be misannotated as a distinct cell type. Batch correction with Harmony, scVI, or BBKNN should be applied before annotation when multiple batches are present.
-
-### Cell Ontology and Annotation Hierarchies
-
-Cell ontologies are formal vocabularies that define cell type names, synonyms, and parent-child relationships. The Cell Ontology (CL), maintained by the OBO Foundry, is the standard used by the Human Cell Atlas and most major atlases. Using ontology-compliant cell type names (e.g., "CD8-positive, alpha-beta T cell" rather than "CD8 T cell") enables cross-dataset comparison and interoperability. CellTypist and popV return labels that map to the Cell Ontology when tissue-matched models are used.
-
-Annotation hierarchies reflect that cell identities exist at multiple levels of granularity. At the coarsest level, cells are classified as broad lineages (immune, epithelial, stromal). At intermediate granularity, they are classified as cell types (T cell, B cell, macrophage). At the finest granularity, they are classified as cell states or subtypes (exhausted CD8 T cell, tissue-resident memory T cell, M1 macrophage). Choosing the right granularity for an annotation depends on the biological question and the depth of sequencing: underpowered studies should not attempt fine-grained annotation.
-
-### Marker Gene Evidence Categories
-
-Marker gene evidence is not all equally reliable. Evidence categories, from most to least reliable, are:
-
-1. **Canonical published markers**: Genes with decades of protein-level validation, e.g., CD3 protein expression for T cells, CD19 for B cells.
-2. **Computationally derived cluster-specific markers**: Genes found by differential expression between clusters in your dataset using `sc.tl.rank_genes_groups`. These are hypothesis-generating and require biological interpretation.
-3. **Cross-validated markers**: Genes that are canonical and also appear as top markers from `rank_genes_groups` in your dataset. This is the strongest evidence — it means the marker's biology is reflected in your actual data.
-4. **Single-study markers**: Genes described as markers in a single publication but not yet widely replicated. These should be treated as supporting evidence, not definitive.
-
-When building a marker panel for annotation, prioritize cross-validated markers (Category 3) and use canonical published markers (Category 1) as anchors.
+Use Cell Ontology (CL) names and state the granularity (lineage, type, or state) so
+labels compare across datasets.
 
 ## Pre-flight Interview
 
@@ -69,118 +69,115 @@ decisions:
     param: tissueContext
     kind: required
     source: user
-    ask: "Which tissue is this, and in what state - healthy adult, fetal or developmental, diseased, cultured, or perturbed?"
+    ask: "Which tissue, and in what state (healthy, fetal, diseased, cultured, perturbed)?"
     default: null
 
   - id: D2
     param: annotationStrategy
     kind: required
     source: user
-    depends_on: [D1]
-    ask: "Name cell types from canonical markers by hand over the clusters, transfer labels from an annotated reference, or do both and compare them against each other?"
+    ask: "Markers (A), a CellTypist model (B), an ensemble on your labelled reference (C), or markers and transfer compared (D)?"
     default: null
 
   - id: D3
     param: referenceAtlas
-    kind: required
+    kind: optional
     source: literature
-    depends_on: [D1, D2]
-    ask: "Which annotated reference matches this tissue AND this developmental or disease state?"
-    default: null
-    skip_if: "manual marker-based annotation only"
+    ask: "Which model or reference matches this tissue and state?"
+    default: "best match for the stated tissue and state, named inside the B/C/D route options"
+    skip_if: "markers-only annotation"
 
   - id: D4
     param: markerPanel
-    kind: required
+    kind: optional
     source: literature
-    depends_on: [D1, D2]
-    ask: "Which canonical markers define the populations expected in this tissue and state?"
-    default: null
-    skip_if: "reference label transfer only, with no marker check"
+    ask: "Which canonical markers define the expected populations?"
+    default: "agent-drafted panel for the tissue and state, listed in the plan"
+    skip_if: "label transfer only"
 
   - id: D5
     param: markerValidation
-    kind: required
+    kind: optional
     source: user
-    depends_on: [D2]
-    ask: "Should transferred labels be checked against canonical marker expression before they are accepted, so a mismatched reference shows itself?"
-    default: "checked - every assigned type is confirmed against its markers"
-    skip_if: "manual marker-based annotation only, where markers are already the evidence"
+    ask: "Check assigned labels against canonical markers before accepting them?"
+    default: "checked"
+    skip_if: "markers-only annotation"
 
   - id: D6
     param: labelGranularity
     kind: required
     source: user
-    depends_on: [D1]
     ask: "Name broad lineages, or subtypes and activation states within them?"
     default: null
 
   - id: D7
     param: unresolvedClusters
-    kind: required
+    kind: optional
     source: user
     ask: "What should happen to clusters that match no expected type - labelled by their top markers, left unassigned, or investigated as possible doublets or artefacts?"
     default: "left unassigned and reported"
 
   - id: D8
     param: doubletHandling
-    kind: required
+    kind: optional_conditional
     source: data
-    ask: "Have doublets been removed upstream, or could clusters co-expressing two lineages still be present?"
-    default: null
+    ask: "Clusters co-express two lineages and no doublet flag exists - remove doublets before annotating?"
+    default: "run Scrublet per sample when adata.obs has no doublet flag"
+    skip_if: "adata.obs already carries a doublet flag from upstream QC"
 ```
 
-D1 comes first because it determines both of the things D3 and D4 offer: a
-reference and a marker panel are only valid for the tissue **and** the state
-they were built from. Fetal populations are not adult populations wearing
-different names, and a tumour carries states no healthy atlas contains — an
-adult reference applied to fetal tissue still labels every cell, confidently
-and wrongly.
+Ask D1, D2 and D6 together in one round; none depends on another. Skip any
+the request already answers. D3 and D4 are proposed, not asked: write the
+matched model into the D2 options (e.g. "B. CellTypist `Immune_All_Low`") and
+list the marker panel in the plan. Both are only valid for the tissue **and**
+the state they were built from - an adult reference applied to fetal or tumour
+tissue still labels every cell, confidently and wrongly - so check them
+against D1 before proposing. D5 defaults to checked because transfer has no
+way to say "these cells are not in my reference"; markers are what make that
+visible.
 
-D2 and D5 are the pair worth keeping separate. Automated transfer is fast and
-has no way to say "these cells are not in my reference"; canonical markers are
-interpretable but miss what nobody thought to look for. Running both and
-comparing is the combination the Decision Framework recommends for anything
-novel, and D5 is what makes it a check rather than two independent guesses.
+`celltypist-cell-annotation` and `scanpy-scrna-seq` repeat the shared
+decisions word for word, so the question survives whichever skill is read;
+when several are read, ask each once.
 
 ## Decision Framework
 
-When planning a cell type annotation strategy, choose the tier based on dataset characteristics and scientific context:
+When planning a cell type annotation strategy, choose the route based on dataset characteristics and scientific context:
 
 ```
 Is the tissue and cell type composition well-characterized?
 ├── YES, standard tissue with clear markers (blood, lung, gut, brain)
 │   ├── Dataset < 5,000 cells OR small team experiment
-│   │   └── Tier 1: Manual marker-based annotation
+│   │   └── A: Manual marker-based annotation
 │   │       (dotplot + violin + UMAP visualization)
 │   └── Dataset ≥ 5,000 cells OR high-throughput study
 │       ├── Standard tissue with pre-trained atlas available
-│       │   └── Tier 2: CellTypist automated annotation
+│       │   └── B: CellTypist automated annotation
 │       │       (select tissue-matched model, use majority_voting)
 │       └── Need cross-atlas integration or rare cell types
-│           └── Tier 3: popV ensemble label transfer
+│           └── C: popV ensemble label transfer
 │               (requires reference AnnData + tissue label)
 └── NO, novel tissue, disease state, or poorly characterized system
     ├── Reference atlas exists for related tissue
-    │   └── Tier 3: popV ensemble label transfer
+    │   └── C: popV ensemble label transfer
     │       (multiple methods + consensus = more robust)
     └── No good reference exists
-        └── Tier 1: Manual annotation (cautious, exploratory)
-            + Tier 2: CellTypist as validation
+        └── D: Manual annotation (cautious, exploratory)
+            with CellTypist as validation
             (report as "putative" cell types, note limitations)
 ```
 
 | Scenario | Recommended Approach | Rationale |
 |----------|---------------------|-----------|
-| Small dataset (<5,000 cells), well-characterized tissue | Tier 1: Manual markers | Automated tools provide marginal advantage; manual review is faster and more transparent |
-| Large dataset (>50,000 cells), blood or immune tissue | Tier 2: CellTypist with Immune_All_High model | CellTypist has the most complete immune training data; scales without added complexity |
-| Large dataset, lung or airway tissue | Tier 2: CellTypist with Human_Lung_Atlas model | HLCA-trained model provides granular lung-specific annotation |
-| Novel disease condition or patient-derived samples | Tier 3: popV with tissue-matched reference | Ensemble consensus is more robust to distribution shift; produces a method-agreement score |
-| Integration with published atlas (e.g., HLCA, HBA) | Tier 3: popV | Designed for atlas-query integration; maintains label ontology compatibility |
-| Rare cell types (<1% of dataset) | Tier 3: popV + manual inspection | Rare populations benefit from multi-method ensemble; manual inspection catches misannotation |
-| Fetal or developmental tissue | Tier 1 + Tier 3 with fetal reference | Fetal cell types are distinct from adult; use a matched fetal reference (Tabula Sapiens fetal) |
-| Mixed or uncertain tissue composition | Tier 2 (CellTypist) then Tier 1 validation | CellTypist provides a quick hypothesis; validate each predicted type with markers |
-| Benchmark or methods comparison study | All three tiers in parallel | Triangulating annotation from multiple strategies increases credibility |
+| Small dataset (<5,000 cells), well-characterized tissue | A: Manual markers | Automated tools provide marginal advantage; manual review is faster and more transparent |
+| Large dataset (>50,000 cells), blood or immune tissue | B: CellTypist with Immune_All_High model | CellTypist has the most complete immune training data; scales without added complexity |
+| Large dataset, lung or airway tissue | B: CellTypist with Human_Lung_Atlas model | HLCA-trained model provides granular lung-specific annotation |
+| Novel disease condition or patient-derived samples | C: popV with tissue-matched reference | Ensemble consensus is more robust to distribution shift; produces a method-agreement score |
+| Integration with published atlas (e.g., HLCA, HBA) | C: popV | Designed for atlas-query integration; maintains label ontology compatibility |
+| Rare cell types (<1% of dataset) | D: popV + manual inspection | Rare populations benefit from multi-method ensemble; manual inspection catches misannotation |
+| Fetal or developmental tissue | D: markers + popV with fetal reference | Fetal cell types are distinct from adult; use a matched fetal reference (Tabula Sapiens fetal) |
+| Mixed or uncertain tissue composition | D: CellTypist, then marker validation | CellTypist provides a quick hypothesis; validate each predicted type with markers |
+| Benchmark or methods comparison study | D: A, B and C in parallel | Triangulating annotation from multiple strategies increases credibility |
 
 ## Best Practices
 
@@ -209,7 +206,7 @@ Is the tissue and cell type composition well-characterized?
    - *How to avoid*: Run Scrublet (`scrub.scrub_doublets()`) or DoubletFinder immediately after QC filtering, before any normalization or clustering. Set the expected doublet rate to the multiplet rate reported by the 10x Genomics cell ranger summary (typically 1–4% per thousand cells loaded). Filter cells with `predicted_doublet == True` from `adata.obs` before proceeding.
 
 3. **Using an atlas from a mismatched tissue or developmental stage**: Annotating adult colon cells with a fetal intestine reference, or annotating diseased tissue with a healthy tissue reference, produces systematic label transfer errors that can affect all clusters in the dataset.
-   - *How to avoid*: Before selecting a reference, check its tissue of origin, developmental stage (fetal vs. adult), health status (normal vs. diseased), and species. Use the CellTypist model table (`celltypist.models.models_description()`) or the popV reference documentation to confirm match. If no matched reference exists, use Tier 1 manual annotation as the primary approach and flag the uncertainty.
+   - *How to avoid*: Before selecting a reference, check its tissue of origin, developmental stage (fetal vs. adult), health status (normal vs. diseased), and species. Use the CellTypist model table (`celltypist.models.models_description()`) or the popV reference documentation to confirm match. If no matched reference exists, use route A (manual annotation) as the primary approach and flag the uncertainty.
 
 4. **Ignoring batch effects that mimic cell type differences**: A dataset with two batches, one processed fresh and one processed after a freeze-thaw cycle, may show stress-responsive gene up-regulation in the freeze-thaw batch. These cells cluster separately and can be mistaken for a "stressed" or "activated" cell subtype.
    - *How to avoid*: Plot the UMAP colored by batch/sample before annotation. If cells segregate by batch rather than by biology, apply Harmony, scVI, or BBKNN batch correction before annotation. Check that canonical markers — not batch-related genes — drive cluster identity.
@@ -245,36 +242,101 @@ Is the tissue and cell type composition well-characterized?
    - Apply Leiden clustering at an initial resolution of 0.5–1.0.
    - Decision point: If clusters fewer than expected for the tissue, increase resolution. If more clusters than anticipated, consider that overclustering has occurred.
 
-4. **Tier 1 — Manual marker-based annotation**:
+4. **Route A — Manual marker-based annotation**:
    - Create a dotplot with top candidate markers for each expected cell type.
    - For each cluster, identify the marker gene set with highest dot size (fraction expressing) and dot color (mean expression).
    - Assign a provisional label based on co-expression of at least two canonical markers.
    - Flag clusters with ambiguous or mixed marker profiles for further scrutiny.
 
-5. **Tier 2 — CellTypist automated annotation (if applicable)**:
+   ```python
+   import numpy as np
+   import pandas as pd
+   import scanpy as sc
+
+   # Panel settled in D4 for this tissue and state; example: adult human PBMC.
+   marker_panel = {
+       "CD4 T cell": ["CD3E", "CD4", "IL7R"],
+       "CD8 T cell": ["CD3E", "CD8A", "GZMK"],
+       "NK cell": ["NKG7", "GNLY", "KLRD1"],
+       "B cell": ["CD19", "MS4A1", "CD79A"],
+       "Classical monocyte": ["CD14", "S100A8", "LYZ"],
+       "Non-classical monocyte": ["FCGR3A", "CX3CR1", "LST1"],
+       "Dendritic cell": ["FCER1A", "CST3", "CD1C"],
+   }
+   # Keep types with at least two markers present in the data.
+   panel = {ct: [g for g in genes if g in adata.var_names] for ct, genes in marker_panel.items()}
+   panel = {ct: genes for ct, genes in panel.items() if len(genes) >= 2}
+   sc.pl.dotplot(adata, var_names=panel, groupby="leiden", standard_scale="var", save="_marker_panel.png")
+
+   # Score every cell per type, average per cluster, propose the best-scoring type.
+   for ct, genes in panel.items():
+       sc.tl.score_genes(adata, genes, score_name=f"score_{ct}")
+   score_cols = [f"score_{ct}" for ct in panel]
+   cluster_scores = adata.obs.groupby("leiden", observed=True)[score_cols].mean()
+   ranked = np.sort(cluster_scores.to_numpy(), axis=1)
+   proposal = pd.DataFrame({
+       "proposed": cluster_scores.idxmax(axis=1).str.removeprefix("score_"),
+       "top_score": ranked[:, -1],
+       "margin": ranked[:, -1] - ranked[:, -2],
+   }, index=cluster_scores.index)
+   # D7: no positive signal or no clear winner -> left unresolved, not forced.
+   proposal.loc[(proposal["top_score"] <= 0) | (proposal["margin"] < 0.1), "proposed"] = "Unresolved"
+   print(proposal.sort_values("top_score", ascending=False))
+   ```
+
+   The proposal is a starting point. Confirm each cluster against the dotplot
+   (positive markers present, negative markers absent), edit the mapping, then
+   store it:
+
+   ```python
+   cluster_to_type = proposal["proposed"].to_dict()  # edit after dotplot review
+   adata.obs["manual_cell_type"] = adata.obs["leiden"].map(cluster_to_type).astype("category")
+   print(adata.obs["manual_cell_type"].value_counts())
+   ```
+
+5. **Route B — CellTypist automated annotation (if applicable; code in `celltypist-cell-annotation`)**:
    - Select the model matching the tissue from `celltypist.models.models_description()`.
    - Ensure input AnnData is log1p-normalized to 10,000 counts before running.
    - Run `celltypist.annotate(adata, model=model, majority_voting=True)`.
    - Store results in `adata.obs["celltypist_cell_type"]` and `adata.obs["celltypist_conf_score"]`.
    - Flag cells with confidence score below 0.5 for manual review.
-   - Decision point: If > 20% of cells are low-confidence, consider whether a better-matched model exists or switch to Tier 3.
+   - Decision point: If > 20% of cells are low-confidence, consider whether a better-matched model exists or switch to route C.
 
-6. **Tier 3 — popV ensemble label transfer (if applicable)**:
+6. **Route C — popV ensemble label transfer (if applicable; code in `popv-cell-annotation`)**:
    - Prepare a reference AnnData with column `cell_type` containing validated labels.
    - Ensure both query and reference contain raw count matrices in `adata.X`.
    - Run `popv.process_query(query_adata, ref_adata, ...)` and `popv.annotate_data(query_adata)`.
    - Store consensus labels in `adata.obs["popv_prediction"]` and agreement scores in `adata.obs["popv_score"]`.
    - Inspect the per-method label breakdown for cells with low agreement scores.
 
-7. **Cross-validation and refinement**:
-   - Compare Tier 1, Tier 2, and Tier 3 labels per cluster using a confusion matrix or sankey plot.
+7. **Route D — Cross-validation and refinement**:
+   - Compare route A labels with route B and/or C labels per cluster using a confusion matrix or sankey plot.
    - For clusters where all methods agree, assign the consensus label with high confidence.
    - For clusters where methods disagree, perform targeted marker visualization and assign a label based on biological reasoning.
    - Document discordant clusters and the evidence used to resolve them.
 
+   ```python
+   # Automated label column: "majority_voting" (CellTypist) or "popv_prediction" (popV).
+   auto_col = "majority_voting"
+
+   def cluster_summary(obs: pd.DataFrame) -> pd.Series:
+       counts = obs[auto_col].value_counts(normalize=True)
+       return pd.Series({
+           "manual": obs["manual_cell_type"].iloc[0],
+           "auto_top": counts.index[0],
+           "auto_frac": round(counts.iloc[0], 2),
+       })
+
+   agreement = adata.obs.groupby("leiden", observed=True).apply(cluster_summary)
+   print(agreement)  # label vocabularies differ: compare by meaning, not string equality
+
+   # D5: do the transferred labels express the markers they claim?
+   sc.pl.dotplot(adata, var_names=panel, groupby=auto_col, standard_scale="var", save="_auto_vs_markers.png")
+   ```
+
 8. **Final annotation and export**:
    - Write final cell type labels to `adata.obs["cell_type"]`.
-   - Write annotation confidence tier to `adata.obs["annotation_method"]` (manual/celltypist/popv/manual_refined).
+   - Write the method behind each label to `adata.obs["annotation_method"]` (manual/celltypist/popv/manual_refined).
    - Export the annotated object as `.h5ad` for downstream analysis.
    - Prepare a supplementary table listing each cell type, the markers used to validate it, the annotation method, and the number of cells.
 
@@ -326,8 +388,8 @@ Is the tissue and cell type composition well-characterized?
 ## Related Skills
 
 - `scanpy-scrna-seq` — Full scRNA-seq analysis pipeline in Scanpy covering QC, normalization, clustering, and basic marker-based annotation; use as the computational foundation before applying this guide's annotation strategy
-- `celltypist-cell-annotation` — Tier 2 automated annotation tool using pre-trained logistic regression models for 100+ cell types across blood, lung, gut, brain, and other tissues
-- `popv-cell-annotation` — Tier 3 ensemble label transfer tool using 10+ methods with majority voting; use for robust annotation of novel or heterogeneous datasets
+- `celltypist-cell-annotation` — Route B automated annotation tool using pre-trained logistic regression models for 100+ cell types across blood, lung, gut, brain, and other tissues
+- `popv-cell-annotation` — Route C ensemble label transfer tool using 10+ methods with majority voting; use for robust annotation of novel or heterogeneous datasets
 - `scvi-tools-single-cell` — Deep generative models for batch correction (scVI) and semi-supervised annotation (scANVI); use scANVI as an alternative to popV for joint integration and annotation
 - `harmony-batch-correction` — Batch correction for PCA embeddings; apply before annotation when integrating samples from multiple donors or processing batches
 - `anndata-data-structure` — Core data container for all scRNA-seq analysis; required for understanding how annotations are stored and propagated in AnnData objects

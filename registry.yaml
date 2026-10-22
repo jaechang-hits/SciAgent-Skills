@@ -1217,12 +1217,12 @@ entries:
     description: "Automated cell type annotation for scRNA-seq data using pre-trained logistic regression models. CellTypist ships 45+ models covering immune cells, gut, lung, brain, fetal tissues, and cancer microenvironments. Inputs a normalized AnnData; outputs per-cell predicted labels, majority-vote cluster labels, and confidence scores. Use when you want fast, reproducible, reference-model-backed annotation without manual marker inspection."
     date_added: "2026-03-08"
 
-  - name: "single-cell-annotation-guide"
+  - name: "cell-type-annotation"
     type: skill
     sub_type: guide
     category: "genomics-bioinformatics"
-    path: "skills/genomics-bioinformatics/single-cell/single-cell-annotation-guide/SKILL.md"
-    description: "Decision framework for choosing between manual marker-based, automated (CellTypist), and reference-based (popV) cell type annotation strategies in single-cell RNA-seq analysis. Covers a three-tier strategy: Tier 1 (manual canonical markers), Tier 2 (CellTypist pre-trained models), and Tier 3 (popV ensemble label transfer). Use when planning or troubleshooting cell type annotation in any scRNA-seq project."
+    path: "skills/genomics-bioinformatics/single-cell/cell-type-annotation/SKILL.md"
+    description: "scRNA-seq cell type annotation - read before any annotation skills. Chooses and runs the route: name clusters manually from canonical markers (scanpy, runnable code here), transfer labels with CellTypist or a popV/scANVI on a reference, or do both and validate one against other. Covers package availability, tissue- and state-matched references, marker panels, confidence and marker validation of transferred labels, doublets, unresolved clusters. Tool-specific code lives in celltypist/popv-cell-annotation and scvi-tools-single-cell."
     date_added: "2026-03-08"
 
   - name: "homer-motif-analysis"
