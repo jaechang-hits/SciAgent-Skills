@@ -2,6 +2,8 @@
 name: uniprot-protein-database
 description: "Query UniProt REST API: search by gene/protein name, fetch FASTA, map IDs (Ensembl, PDB, RefSeq), access Swiss-Prot annotations. Use bioservices for multi-DB access; alphafold-database-access for structures."
 license: CC-BY-4.0
+metadata:
+  quick_use: 'one entry: GET https://rest.uniprot.org/uniprotkb/{ACC}.json?fields=accession,protein_name,gene_names,organism_name,length -> primaryAccession, proteinDescription.recommendedName.fullName.value, sequence.length. By gene: GET https://rest.uniprot.org/uniprotkb/search?query=gene_exact:EGFR AND organism_id:9606 AND reviewed:true&fields=<same>&format=json -> results[0]. Unknown accession -> 404, malformed -> 400, a deleted entry -> 200 with entryType ''Inactive'' and inactiveReason (not a live protein). Cite https://www.uniprot.org/uniprotkb/{ACC}/entry'
 ---
 
 # UniProt — Protein Database

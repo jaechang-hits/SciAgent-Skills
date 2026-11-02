@@ -5,6 +5,8 @@ description: >
   analyze pLDDT/PAE, bulk-fetch proteomes via Google Cloud. For experimental structures
   use PDB; for prediction use ColabFold or ESMFold.
 license: CC-BY-4.0
+metadata:
+  quick_use: 'one entry: GET https://alphafold.ebi.ac.uk/api/prediction/{UniProt ACC} -> a list (canonical, then isoforms such as {ACC}-2); take the item whose uniprotAccession equals the query: entryId, latestVersion, globalMetricValue (mean pLDDT), cifUrl, pdbUrl. Download from cifUrl/pdbUrl as given (model_v4 file names now 404) with requests; the file host returns 403 to curl''s default user agent. No model -> 404. Cite https://alphafold.ebi.ac.uk/entry/{ACC}'
 ---
 
 # AlphaFold Database Access
@@ -50,7 +52,7 @@ af_id = predictions[0]['entryId']  # AF-P00520-F1
 cif_file = alphafold_db.download_cif_for(predictions[0], directory="./structures")
 
 # 3. Check confidence
-conf = requests.get(f"https://alphafold.ebi.ac.uk/files/{af_id}-confidence_v4.json").json()
+conf = requests.get(predictions[0]["plddtDocUrl"]).json()  # file URLs come from the API; never hard-code _vN
 scores = conf['confidenceScore']
 print(f"Mean pLDDT: {np.mean(scores):.1f}, High-conf residues: {sum(1 for s in scores if s > 90)}/{len(scores)}")
 ```
@@ -105,7 +107,7 @@ af_structures = [s for s in data['structures'] if s['provider'] == 'AlphaFold DB
 import requests
 
 af_id = "AF-P00520-F1"
-version = "v4"
+version = "v6"  # = f"v{pred['latestVersion']}" from /api/prediction; v4 file names now 404
 base = "https://alphafold.ebi.ac.uk/files"
 
 # mmCIF (recommended — full metadata, supports large structures)
@@ -132,7 +134,7 @@ pae = requests.get(f"{base}/{af_id}-predicted_aligned_error_{version}.json").jso
 ```python
 import numpy as np
 
-conf_url = f"https://alphafold.ebi.ac.uk/files/{af_id}-confidence_v4.json"
+conf_url = f"https://alphafold.ebi.ac.uk/files/{af_id}-confidence_{version}.json"  # or pred["plddtDocUrl"]
 conf = requests.get(conf_url).json()
 scores = conf['confidenceScore']
 
@@ -149,9 +151,9 @@ print(f"Very high (>90): {very_high}, High (70-90): {high}, Low (50-70): {low}, 
 ```python
 import matplotlib.pyplot as plt
 
-pae_url = f"https://alphafold.ebi.ac.uk/files/{af_id}-predicted_aligned_error_v4.json"
-pae = requests.get(pae_url).json()
-pae_matrix = np.array(pae['distance'])
+pae_url = f"https://alphafold.ebi.ac.uk/files/{af_id}-predicted_aligned_error_{version}.json"  # or pred["paeDocUrl"]
+pae = requests.get(pae_url).json()[0]  # a one-item list
+pae_matrix = np.array(pae["predicted_aligned_error"])
 
 plt.figure(figsize=(10, 8))
 plt.imshow(pae_matrix, cmap='viridis_r', vmin=0, vmax=30)
@@ -203,7 +205,7 @@ import numpy as np
 from scipy.spatial.distance import pdist, squareform
 
 parser = MMCIFParser(QUIET=True)
-structure = parser.get_structure("protein", f"{af_id}-model_v4.cif")
+structure = parser.get_structure("protein", f"{af_id}-model_{version}.cif")
 
 # Extract alpha-carbon coordinates
 coords, plddt_scores = [], []
@@ -239,18 +241,18 @@ print(f"Contacts: {len(contacts[0]) // 2}")
 
 ### AlphaFold ID Format
 
-Format: `AF-{UniProt_accession}-F{fragment_number}` (e.g., `AF-P00520-F1`). Large proteins may be split into fragments (F1, F2, ...). Current database version: **v4** — include version suffix in all file URLs.
+Format: `AF-{UniProt_accession}-F{fragment_number}` (e.g., `AF-P00520-F1`). Large proteins may be split into fragments (F1, F2, ...). The file version suffix changes between releases (v6 as of 2026-11; `_v4` URLs now 404): take it from the API (`latestVersion`, or the ready-made `cifUrl` / `pdbUrl` / `plddtDocUrl` / `paeDocUrl`), never hard-code it. The file host returns 403 to curl's default user agent; download with `requests`.
 
 ### File Types
 
 | File | URL Suffix | Format | Use |
 |------|-----------|--------|-----|
-| Model coordinates | `-model_v4.cif` | mmCIF | Structural analysis (recommended) |
-| Model coordinates | `-model_v4.pdb` | PDB | Legacy tools (<99,999 atoms) |
-| Model coordinates | `-model_v4.bcif` | Binary CIF | Compressed (~70% smaller) |
-| Confidence | `-confidence_v4.json` | JSON | Per-residue pLDDT array |
-| Aligned error | `-predicted_aligned_error_v4.json` | JSON | N×N PAE matrix |
-| PAE image | `-predicted_aligned_error_v4.png` | PNG | Quick visual assessment |
+| Model coordinates | `-model_v6.cif` | mmCIF | Structural analysis (recommended) |
+| Model coordinates | `-model_v6.pdb` | PDB | Legacy tools (<99,999 atoms) |
+| Model coordinates | `-model_v6.bcif` | Binary CIF | Compressed (~70% smaller) |
+| Confidence | `-confidence_v6.json` | JSON | Per-residue pLDDT array |
+| Aligned error | `-predicted_aligned_error_v6.json` | JSON | `[{"predicted_aligned_error": N×N}]` |
+| PAE image | `-predicted_aligned_error_v6.png` | PNG | Quick visual assessment |
 
 ## Common Workflows
 
@@ -295,7 +297,7 @@ for uid in uniprot_ids:
         if not preds:
             continue
         af_id = preds[0]['entryId']
-        conf = requests.get(f"https://alphafold.ebi.ac.uk/files/{af_id}-confidence_v4.json").json()
+        conf = requests.get(preds[0]["plddtDocUrl"]).json()
         scores = conf['confidenceScore']
         results.append({
             'uniprot': uid, 'alphafold_id': af_id,
@@ -331,7 +333,7 @@ print(df.to_string(index=False))
 3. **Anti-pattern — trusting all regions equally**: AlphaFold predictions lack ligands, PTMs, cofactors, and multi-chain context. High pLDDT does not guarantee functional accuracy
 4. **Cache downloaded files locally** — avoid re-downloading the same structures; AlphaFold files are static per version
 5. **Use PAE for multi-domain proteins** — pLDDT tells you per-residue confidence, but PAE reveals whether domain orientations are reliable. Low inter-domain PAE (<5 Å) = trust the arrangement; high PAE (>15 Å) = treat domains independently
-6. **Pin database version in reproducible analyses** — include `_v4` in URLs and document which version was used
+6. **Pin database version in reproducible analyses** — record the `latestVersion` the API returned (v6 as of 2026-11) and document it
 
 ## Common Recipes
 

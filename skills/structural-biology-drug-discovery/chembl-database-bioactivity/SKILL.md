@@ -2,6 +2,8 @@
 name: chembl-database-bioactivity
 description: Query ChEMBL (2M+ compounds, 19M+ bioactivity measurements, 13K+ targets) via the public REST/JSON API with plain `requests` — no SDK install required. Search compounds, retrieve IC50/Ki/EC50 bioactivities, find target inhibitors, run SAR, access drug mechanism/indication data.
 license: CC-BY-SA-3.0
+metadata:
+  quick_use: 'one compound: GET https://www.ebi.ac.uk/chembl/api/data/molecule.json?pref_name__iexact={INN} -> molecules[0].molecule_chembl_id (empty list if unknown). molecule/search.json?q= ranks salts and analogs first (osimertinib -> the mesylate CHEMBL3545063 before the parent CHEMBL3353410); for a brand or salt name, search and report molecule_hierarchy.parent_chembl_id. EBI intermittently returns a 500 HTML page: retry once after a few seconds. Cite https://www.ebi.ac.uk/chembl/explore/compound/{ID}'
 ---
 
 # ChEMBL Database — Bioactivity Queries
