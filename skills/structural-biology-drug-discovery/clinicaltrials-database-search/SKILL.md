@@ -2,8 +2,6 @@
 name: clinicaltrials-database-search
 description: Query ClinicalTrials.gov API v2 for trial data. Search by condition, drug/intervention, location, sponsor, or phase; fetch details by NCT ID; filter by status; paginate; export CSV. For clinical research, patient matching, and trial portfolio analysis.
 license: CC-BY-4.0
-metadata:
-  quick_use: 'searches (condition, drug, sponsor, location, phase, status) and one-trial lookups by NCT ID: call the `clinicaltrials_search` tool, not code. This skill is for bulk export, pagination past 50 results, or fields the tool does not print.'
 ---
 
 # ClinicalTrials.gov Database — Clinical Trial Search
