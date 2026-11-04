@@ -2,6 +2,8 @@
 name: "pubchem-compound-search"
 description: "Query PubChem (110M+ compounds) directly via the PUG-REST/JSON API with plain `requests` — no SDK install required. Search by name/CID/SMILES/InChIKey/formula, retrieve properties (MW, XLogP, TPSA, H-bond counts), do similarity/substructure searches with async ListKey polling, fetch synonyms, descriptions, assay summaries, and download SDF/PNG. For local cheminformatics use rdkit; for bioactivity-centric workflows use chembl-database-bioactivity."
 license: "CC-BY-4.0"
+metadata:
+  quick_use: 'one compound: GET https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{name}/property/SMILES,ConnectivitySMILES,MolecularFormula,MolecularWeight,IUPACName/JSON (or compound/cid/{CID}/...) -> r.json()[''PropertyTable''][''Properties''][0]. Response keys are `SMILES` (isomeric) and `ConnectivitySMILES`; `CanonicalSMILES`/`IsomericSMILES` never come back, even when requested. Unknown name -> 404 (PUGREST.NotFound). 2D image: .../compound/name/{name}/PNG. Cite https://pubchem.ncbi.nlm.nih.gov/compound/{CID}'
 ---
 
 # PubChem Compound Search

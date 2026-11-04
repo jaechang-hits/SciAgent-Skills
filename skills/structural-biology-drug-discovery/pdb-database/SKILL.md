@@ -2,6 +2,8 @@
 name: "pdb-database"
 description: "Query RCSB PDB (200K+ structures) via the public REST + GraphQL APIs with plain `requests` (no SDK). Search by text, attribute, sequence, or 3D structure similarity (Search API); retrieve metadata via GraphQL (Data API); download PDB/mmCIF from files.rcsb.org. For AlphaFold predictions use alphafold-database-access; for protein sequences only use uniprot-protein-database."
 license: "BSD-3-Clause"
+metadata:
+  quick_use: 'one entry: POST https://data.rcsb.org/graphql with {"query": "{ entry(entry_id: \"1M17\") { struct { title } exptl { method } rcsb_entry_info { resolution_combined } nonpolymer_entities { nonpolymer_comp { chem_comp { id name } } } } }"}. An unknown ID returns HTTP 200 with data.entry = null, not 404. Coordinates: GET https://files.rcsb.org/download/{ID}.cif (prefer mmCIF). Cite https://www.rcsb.org/structure/{ID}'
 ---
 
 # PDB Database
