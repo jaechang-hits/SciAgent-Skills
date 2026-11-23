@@ -1690,3 +1690,30 @@ entries:
     description: "Trajectory inference and cell fate mapping for single-cell and spatial transcriptomics: PAGA graph + diffusion pseudotime (no velocity needed), scVelo RNA velocity (stochastic / dynamical, from spliced/unspliced counts), CellRank 2 terminal states, fate probabilities and lineage drivers, then pseudotime and fates mapped on tissue with a spatial autocorrelation check. Outputs pseudotime, velocity streams, fate probability tables. Imaging panels (Xenium, MERFISH) have no unspliced counts: use PAGA/DPT or the CellRank pseudotime kernel. For a basic PAGA recipe inside a standard scRNA-seq workflow see scanpy-scrna-seq."
     date_added: "2026-10-20"
     tags: ["spatial-transcriptomics"]
+
+  - name: "spatial-transcriptomics-qc"
+    type: skill
+    sub_type: guide
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-qc/SKILL.md"
+    description: "Spatial transcriptomics QC router for generic or ambiguous requests. Inspects count matrices, coordinates, metadata, manifests and observation units; routes Visium/Visium HD spot/bin inputs to spatial-transcriptomics-spot-qc and Xenium/CosMx/MERFISH segmented cells to spatial-transcriptomics-imaging-qc. Refuses to guess when evidence conflicts."
+    date_added: "2026-11-23"
+    tags: ["spatial-transcriptomics"]
+
+  - name: "spatial-transcriptomics-spot-qc"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-spot-qc/SKILL.md"
+    description: "Spot/bin spatial transcriptomics QC for Visium, Visium HD and Slide-seq. Runs SpotSweeper local count/detected-feature outliers and conditional mitochondrial regional-artifact analysis, then integrates metric and spatial evidence, visualizes recommended cutoffs, validates expected impact and requires D2 before filtering. For segmented imaging cells use spatial-transcriptomics-imaging-qc."
+    date_added: "2026-11-23"
+    tags: ["spatial-transcriptomics"]
+
+  - name: "spatial-transcriptomics-imaging-qc"
+    type: skill
+    sub_type: pipeline
+    category: "genomics-bioinformatics"
+    path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-imaging-qc/SKILL.md"
+    description: "Imaging-cell spatial transcriptomics QC for Xenium, CosMx and MERFISH. Runs SpaceTrooper spatialPerCellQC, robust outliers and version-compatible QScore; keeps QScore independent of optional D1-approved polygon geometry, restores matched R metrics to full Python IDs, integrates evidence, visualizes cutoffs, validates impact and requires D2 before filtering."
+    date_added: "2026-11-23"
+    tags: ["spatial-transcriptomics"]

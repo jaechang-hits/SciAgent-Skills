@@ -15,6 +15,13 @@ and each cluster is then named from a table that puts its markers next to the
 transferred labels. Output: an AnnData with per-cell labels, confidence and
 niches, plus the evidence table behind every name.
 
+This skill can load and validate the original platform output, but loading the
+data does not replace cell-level QC. Before preprocessing, clustering, or label
+transfer, confirm that `spatial-transcriptomics-imaging-qc` has produced a
+reviewed observation set and preserved QC provenance. If QC is pending, pause
+after Step 1, complete that workflow, and then resume from Step 2. This skill
+does not define cell-quality cutoffs or independently remove cells.
+
 Check the platform before anything else:
 
 | Signal | Single-cell resolution -> this skill | Spot-based -> `spatial-transcriptomics-deconvolution-cell2location` |
@@ -127,56 +134,14 @@ print(f"panel: {adata.n_vars} genes; median transcripts/cell: {adata.obs['total_
 For an `.h5ad`, `sc.read_h5ad(path)` and confirm `adata.obsm["spatial"]` and
 that `X` holds raw counts (integers). Other platforms: Common Recipes.
 
-### Step 2: QC, Preprocess and Cluster
+### Step 2: Preprocess and Cluster the QC-Reviewed Cells
 
-A targeted panel gives few transcripts per cell, so QC is per cell and
-lenient: high cutoffs or gene filtering remove small and rare cells. Look at
-the distributions first:
-
-```python
-import numpy as np
-
-obs = adata.obs
-obs["n_counts"] = np.asarray(adata.X.sum(axis=1)).ravel()
-obs["n_genes"] = np.asarray((adata.X > 0).sum(axis=1)).ravel()
-neg_cols = [c for c in ("control_probe_counts", "control_codeword_counts", "unassigned_codeword_counts") if c in obs]
-if neg_cols:  # Xenium cells.csv; absent for MERFISH/CosMx loaded via squidpy
-    neg = obs[neg_cols].sum(axis=1)
-    obs["neg_frac"] = neg / (obs["n_counts"] + neg).clip(lower=1)
-if {"cell_area", "nucleus_area"} <= set(obs):
-    obs["nucleus_ratio"] = obs["nucleus_area"] / obs["cell_area"]
-cols = [c for c in ("n_counts", "n_genes", "cell_area", "nucleus_ratio", "neg_frac") if c in obs]
-print(obs[cols].describe(percentiles=[0.01, 0.05, 0.5, 0.95, 0.99]).round(3))
-```
-
-Check segmentation before reading clusters. Transcripts leaking between
-neighbouring cells show up as cells positive for two exclusive lineages:
+Do not introduce a new cell-quality filter here. Preserve the reviewed cell set
+and retain any `qc_class`/QC provenance from
+`spatial-transcriptomics-imaging-qc`. Feature prevalence filtering is allowed
+because it removes uninformative genes, not cells.
 
 ```python
-pairs = [("EPCAM", "PTPRC"), ("PECAM1", "PTPRC"), ("COL1A1", "PTPRC"), ("EPCAM", "PECAM1")]
-for a, b in pairs:  # mutually exclusive lineage markers; swap in ones on the panel
-    if a in adata.var_names and b in adata.var_names:
-        pos = (adata[:, [a, b]].X > 0).toarray()
-        pa, pb = pos.mean(axis=0)
-        print(f"{a}+{b}+: {(pos[:, 0] & pos[:, 1]).mean():.1%} of cells (by chance: {pa * pb:.1%})")
-```
-
-Double positives well above the chance rate mean leakage. Mixed clusters and
-mixed transferred labels (Step 6) then reflect segmentation, not biology: report
-it as such, and consider nucleus-only counts or re-segmentation (e.g. Baysor,
-ProSeg) before naming subtypes.
-
-```python
-MIN_COUNTS = 10       # 10-20; higher drops small and rare cells on a small panel
-MAX_NEG_FRAC = 0.05   # cells dominated by control probes / unassigned codewords
-keep = obs["n_counts"] >= MIN_COUNTS
-if "neg_frac" in obs:
-    keep &= obs["neg_frac"] <= MAX_NEG_FRAC
-if "cell_area" in obs:
-    keep &= obs["cell_area"] <= obs["cell_area"].quantile(0.995)  # merged-cell outliers
-print(f"keep {keep.sum()} / {adata.n_obs} cells")
-adata = adata[keep.to_numpy()].copy()
-
 adata.layers["counts"] = adata.X.copy()
 sc.pp.filter_genes(adata, min_cells=5)
 sc.pp.normalize_total(adata)          # SCTransform (Seurat, R) is the alternative
