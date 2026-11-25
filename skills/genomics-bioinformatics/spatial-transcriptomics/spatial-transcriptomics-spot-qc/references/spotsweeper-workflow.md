@@ -1,142 +1,85 @@
-# SpotSweeper Execution Details
+# SpotSweeper Official API Used by This Skill
 
-Read this reference before writing the R execution step. It supplements the
-entrypoint with the version-sensitive bridge, engine logging, and plotting
-contract. The shared interpretation policy is at
-`/SciAgent-Skills/skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-qc/references/integrated-assessment.md`.
+Source inspected: SpotSweeper 1.9.3, commit
+`7e6ebf68c205cf0c102d8ed6b363752d5288d179`.
 
-## Observation contract
+## `localOutliers()`
 
-The `SpatialExperiment` passed to SpotSweeper must have:
+Defaults: `metric="detected"`, `direction="lower"`, `n_neighbors=36`,
+`samples="sample_id"`, `log=TRUE`, `cutoff=3`, `workers=1`.
 
-- raw counts in `assay(spe, "counts")`;
-- unique spot/bin IDs in `colnames(spe)`;
-- two finite coordinates in `spatialCoords(spe)` with matching row names;
-- `sample_id` for independent slides/sections;
-- platform metadata distinguishing Visium from Visium HD;
-- selected HD `bin_size_um` when applicable.
-
-Keep off-tissue observations in the preserved source object. Use an explicit
-analysis view for tissue observations and record that transition as
-`analysis_view`, not filtering.
-
-## Execution status
-
-Use these statuses consistently:
+For every sample separately, `BiocNeighbors::findKNN()` finds `k` neighbors and
+excludes the focal spot. With transformed or raw metric `x`, the score is:
 
 ```text
-runtime_unavailable, package_missing, dependency_error, api_incompatible,
-input_incompatible, execution_failed, executed, not_applicable
+qnorm(0.75) * (x_i - median(x_neighbors)) /
+               median(abs(x_neighbors - median(x_neighbors)))
 ```
 
-Log package version, function, actual parameters, input status, execution
-status, and exact error/reason to `qc_execution_log.tsv`. A Python or scuttle
-fallback is never SpotSweeper execution.
+Zero/non-finite neighborhood MAD yields score 0. Outputs are `<metric>_z`,
+`<metric>_outliers`, and `<metric>_log` when `log=TRUE`. A sample must contain
+more spots than `n_neighbors`; metric and coordinates must be finite.
 
-```r
-record_engine_status <- function(engine, fun, input_status, execution_status,
-                                 reason="", parameters="") {
-  clean <- function(x) gsub("[\\t\\r\\n]+", " ", as.character(x))
-  row <- data.frame(engine=engine, function_name=fun,
-    package_version=if (requireNamespace(engine, quietly=TRUE))
-      as.character(packageVersion(engine)) else "",
-    input_status=input_status, execution_status=execution_status,
-    parameters=clean(parameters), reason=clean(reason))
-  path <- "qc_execution_log.tsv"
-  write.table(row, path, sep="\t", quote=FALSE, row.names=FALSE,
-    col.names=!file.exists(path), append=file.exists(path))
-}
-```
+## `localVariance()` and `findArtifacts()`
 
-## Local outliers
+`localVariance()` uses k nearest neighbors plus the focal spot, calculates
+sample variance and mean, replaces non-finite statistics with 0, fits
+`MASS::rlm(log2(var) ~ mean)`, and stores residuals.
 
-Run within each sample, never across unrelated slides. Choose
-`n_neighbors < min(table(sample_id))`; reduce it transparently for small groups
-and do not run when a group has fewer than three observations.
+`findArtifacts()` requires one `SpatialExperiment` sample and numeric nonzero
+mitochondrial percentage/sum. For orders `i=1..n_order`, neighborhood sizes are
+`3*i*(i+1)` for hexagonal and `4*i*(i+1)` for square arrays. It concatenates
+local-variance residuals, mitochondrial percentage, and mitochondrial sum;
+runs scaled PCA; clusters two groups with `kmeans(..., centers=2, nstart=25)`;
+and labels as artifact the cluster with the smaller mean second-order residual
+(`k18` hexagonal or `k24` square). The current source always writes `artifact`
+and retains `k*` columns; its `name`/`var_output` arguments do not alter that
+implementation. Record the package version because this may change.
 
-```r
-group_sizes <- table(spe_qc$sample_id)
-n_neighbors <- min(36L, as.integer(min(group_sizes)) - 1L)
-stopifnot(n_neighbors >= 2L)
+## `flagVisiumOutliers()`
 
-spe_qc <- SpotSweeper::localOutliers(
-  spe_qc, metric="sum", direction="lower", n_neighbors=n_neighbors,
-  samples="sample_id", log=TRUE, cutoff=3, workers=1)
-spe_qc <- SpotSweeper::localOutliers(
-  spe_qc, metric="detected", direction="lower", n_neighbors=n_neighbors,
-  samples="sample_id", log=TRUE, cutoff=3, workers=1)
-```
+This is a package-maintained boolean flag for six **standard 10x Visium** array
+row/column positions: `(38,88)`, `(28,32)`, `(49,103)`, `(57,99)`, `(47,77)`, and
+`(53,117)`. It is not a learned score or numeric metric cutoff. It requires
+`array_row`/`array_col` metadata or compatible Seurat image coordinates.
+The official documentation calls these systematic positions observed across
+Visium datasets; it does not define them for Visium HD, Slide-seq, or arbitrary
+arrays that reuse the same metadata column names.
 
-The robust-z cutoff identifies metric-level local outliers. It is not the final
-filtering cutoff. Validate distribution, spatial position, biological region,
-and agreement with other evidence before proposing an integrated rule.
+## Plotting and object support
 
-Save native plots for each sample and metric:
+`localOutliers()` and `flagVisiumOutliers()` support `SpatialExperiment` and
+Seurat adapters. `findArtifacts()`/`localVariance()` require
+`SpatialExperiment`. `plotQCmetrics()` maps a metric with an outlier overlay for
+one sample; `plotQCpdf()` repeats this by sample. Plotting does not choose a
+filtering rule.
 
-```r
-dir.create("qc_package_plots", showWarnings=FALSE)
-for (sample_value in unique(as.character(spe_qc$sample_id))) {
-  for (metric_name in c("sum", "detected")) {
-    outlier_name <- paste0(metric_name, "_outliers")
-    p <- SpotSweeper::plotQCmetrics(
-      spe_qc, sample_id="sample_id", sample=sample_value,
-      metric=metric_name, outliers=outlier_name)
-    safe <- gsub("[^A-Za-z0-9_.-]+", "_", sample_value)
-    ggplot2::ggsave(file.path("qc_package_plots", paste0(
-      "spotsweeper_", safe, "_", metric_name, ".png")),
-      p, width=6, height=6, dpi=200)
-  }
-}
-```
+## Metrics and integrated score
 
-## Mitochondrial regional artifacts
+The package describes standard QC metrics as library size, unique/detected
+genes, and mitochondrial percentage. It calculates local z-scores, local
+variance residuals, and boolean flags. The inspected source provides **no
+QScore-like integrated quality score**. This Skill must not create one.
 
-Run `findArtifacts()` only when feature annotation proves mitochondrial genes
-are measured and both mitochondrial sum and percentage are finite and non-zero.
-Panel or FFPE assays without mitochondrial targets make this step
-`input_incompatible`, not failed.
+## Capability and failure policy
 
-```r
-can_find_artifacts <- all(c("expr_chrM_ratio", "expr_chrM") %in%
-  colnames(colData(spe_qc))) && any(spe_qc$expr_chrM > 0, na.rm=TRUE)
-if (can_find_artifacts) {
-  spe_qc <- SpotSweeper::findArtifacts(
-    spe_qc, mito_percent="expr_chrM_ratio", mito_sum="expr_chrM",
-    samples="sample_id", n_order=5, shape="hexagonal", log=TRUE,
-    name="artifact", var_output=TRUE)
-}
-```
+Run count metrics when valid counts/IDs exist. Run local outliers only for
+present finite numeric metrics with coordinates, sample IDs, and more than `k`
+observations per sample. Run systematic flags only for a confirmed standard
+10x Visium platform with array row/column; otherwise skip that function.
+Mitochondrial functions require measured mitochondrial annotations; absence is
+not a zero measurement. Regional artifacts additionally require positive
+mitochondrial signal, one sample per call, verified shape, and enough spots for
+the largest neighborhood. Record unmet inputs as `skipped` and unexpected
+optional-call errors as `failed`, preserving all completed results. Corrupt
+counts, count/metadata shape mismatch, and invalid observation IDs are fatal.
 
-Use the actual array geometry. Do not assume a hexagonal grid for irregular HD
-bins or another technology.
+## Python fallback mapping
 
-## Return bridge
-
-Export results by observation ID after all package calls. Enforce complete ID
-set equality and reorder to Python before joining.
-
-```r
-qc_from_r <- as.data.frame(colData(spe_qc))
-qc_from_r$observation_id <- as.character(colnames(spe_qc))
-stopifnot(!anyDuplicated(qc_from_r$observation_id))
-write.table(qc_from_r, "qc_metrics_from_r.tsv", sep="\t", quote=FALSE,
-            row.names=FALSE, na="")
-```
-
-```python
-qc_from_r = pd.read_csv("qc_metrics_from_r.tsv", sep="\t",
-                        dtype={"observation_id": str}).set_index("observation_id")
-python_ids = pd.Index(adata.obs_names.astype(str), name="observation_id")
-missing = python_ids.difference(qc_from_r.index)
-extra = qc_from_r.index.difference(python_ids)
-if len(missing) or len(extra):
-    raise ValueError(f"Python/R observation mismatch: missing={len(missing)}, extra={len(extra)}")
-qc_from_r = qc_from_r.reindex(python_ids)
-adata.obs = adata.obs.join(qc_from_r, how="left", validate="one_to_one", rsuffix="_r")
-```
-
-## Interpretation handoff
-
-After the return bridge, read and execute the shared integrated-assessment
-reference. The SpotSweeper local-outlier columns and artifact result are metric
-evidence only. Do not convert them directly to `Exclude candidate`.
+`scripts/spotsweeper_fallback.py` preserves sample-specific processing and the
+equations above while replacing all-pairs distances with batched `cKDTree`
+queries. It emits explicitly suffixed fallback columns. Local z-score flags are
+usable with engine disclosure; local-variance and artifact outputs remain
+provisional diagnostics and must not be the sole final filtering condition.
+Routine user QC does not perform qualification comparisons. Read
+`fallback-validation.md` for current use limits and dependency requirements.

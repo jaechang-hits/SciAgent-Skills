@@ -1696,7 +1696,7 @@ entries:
     sub_type: guide
     category: "genomics-bioinformatics"
     path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-qc/SKILL.md"
-    description: "Spatial transcriptomics QC router for generic or ambiguous requests. Inspects count matrices, coordinates, metadata, manifests and observation units; routes Visium/Visium HD spot/bin inputs to spatial-transcriptomics-spot-qc and Xenium/CosMx/MERFISH segmented cells to spatial-transcriptomics-imaging-qc. Refuses to guess when evidence conflicts."
+    description: "Spatial transcriptomics QC routing for ambiguous or generic requests. Inspect count matrices, coordinates, metadata, manifests and observation units; classify inputs as spot/bin (Visium/Visium HD) or segmented imaging-cell (Xenium/CosMx/MERFISH), then read the corresponding SpotSweeper or SpaceTrooper QC skill. Do not choose from filenames alone or invent a route when evidence conflicts."
     date_added: "2026-11-23"
     tags: ["spatial-transcriptomics"]
 
@@ -1705,7 +1705,7 @@ entries:
     sub_type: pipeline
     category: "genomics-bioinformatics"
     path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-spot-qc/SKILL.md"
-    description: "Spot/bin spatial transcriptomics QC for Visium, Visium HD and Slide-seq. Runs SpotSweeper local count/detected-feature outliers and conditional mitochondrial regional-artifact analysis, then integrates metric and spatial evidence, visualizes recommended cutoffs, validates expected impact and requires D2 before filtering. For segmented imaging cells use spatial-transcriptomics-imaging-qc."
+    description: "SpotSweeper spot/bin QC for Visium, Visium HD, Slide-seq and related assays. Automatically compute input-supported metrics, local robust-z outliers and conditional spatial flags, inspect overall/sample distributions, and recommend data-dependent cutoffs and a final explicit rule. D2 is required only when the user requests a filtered copy. Uses the scalable Python fallback only after official execution fails; no invented integrated score."
     date_added: "2026-11-23"
     tags: ["spatial-transcriptomics"]
 
@@ -1714,6 +1714,6 @@ entries:
     sub_type: pipeline
     category: "genomics-bioinformatics"
     path: "skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-imaging-qc/SKILL.md"
-    description: "Imaging-cell spatial transcriptomics QC for Xenium, CosMx and MERFISH. Runs SpaceTrooper spatialPerCellQC, robust outliers and version-compatible QScore; keeps QScore independent of optional D1-approved polygon geometry, restores matched R metrics to full Python IDs, integrates evidence, visualizes cutoffs, validates impact and requires D2 before filtering."
+    description: "SpaceTrooper imaging-cell QC for Xenium, CosMx and MERFISH. Automatically compute input-supported per-cell metrics and QScore when possible, inspect overall/sample distributions, recommend data-dependent QScore and individual-metric cutoffs, and map expected removals. Require D1 before polygon QC; require D2 only when the user later requests a filtered copy. Use the sparse Python fallback only after official installation or execution fails."
     date_added: "2026-11-23"
     tags: ["spatial-transcriptomics"]

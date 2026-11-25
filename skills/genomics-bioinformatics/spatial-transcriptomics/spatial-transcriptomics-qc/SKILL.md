@@ -14,6 +14,12 @@ WorkflowPlanner as if it contained the analysis workflow. It inventories the
 input, establishes the observation unit, and requires the Supervisor to read
 the selected specialist Skill in full before planning.
 
+The selected pipeline automatically computes every input-supported package
+metric/flag, reviews observed distributions, and recommends cutoffs. A QC-only
+request ends with the report; D2 is used only after a filtering request. This
+router does not run a mandatory three-class QC classification or request a
+filtering cutoff before metrics are available.
+
 The two executable routes are:
 
 - `spatial-transcriptomics-spot-qc`: Visium, Visium HD, Slide-seq and other
@@ -140,6 +146,9 @@ Generic spatial QC request
    concise evidence summary containing route, platform, observation unit,
    matrix layer, coordinate columns, ID field, sample/FOV fields, capabilities,
    uncertainty and relevant file paths.
+10. Do not ask the user to preselect QC metrics. The specialist implementation
+    must detect capabilities, run all supported functions it can, and report
+    unavailable or failed functions without fabricating zero-valued metrics.
 
 ## Protocol Guidelines
 
@@ -152,6 +161,8 @@ Generic spatial QC request
 - Counts plus coordinates do not prove polygon, control, mitochondrial, image
   or QScore capability.
 - Preserve classification evidence with the downstream QC report.
+- Package outlier flags and the final selected filtering mask are different
+  outputs; the specialist Skill owns that distinction.
 
 ## Further Reading
 

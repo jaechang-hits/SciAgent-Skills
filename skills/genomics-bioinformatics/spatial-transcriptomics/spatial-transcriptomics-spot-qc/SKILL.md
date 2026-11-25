@@ -1,6 +1,6 @@
 ---
 name: "spatial-transcriptomics-spot-qc"
-description: "Spot/bin spatial transcriptomics QC for Visium, Visium HD, Slide-seq and related capture-location assays. Validate raw counts, aligned coordinates, sample and bin metadata; run SpotSweeper local count/detected-feature outliers and conditional mitochondrial regional-artifact detection; visualize and integrate evidence, validate expected impact, and require D2 before creating a filtered copy. For Xenium/CosMx/MERFISH cells use spatial-transcriptomics-imaging-qc."
+description: "SpotSweeper spot/bin QC for Visium, Visium HD, Slide-seq and related assays. Automatically compute input-supported metrics, local robust-z outliers and conditional spatial flags, inspect overall/sample distributions, and recommend data-dependent cutoffs and a final explicit rule. D2 is required only when the user requests a filtered copy. Uses the scalable Python fallback only after official execution fails; no invented integrated score."
 license: "CC-BY-4.0"
 ---
 
@@ -8,329 +8,347 @@ license: "CC-BY-4.0"
 
 ## Overview
 
-Assess spot/bin data without treating capture locations as segmented cells.
-SpotSweeper is the primary spatial engine. Produce auditable metrics,
-recommendations and expected filtering impact while preserving source counts
-and observations. A local-outlier flag or 3-MAD-like fence is supporting
-evidence, never an automatic final exclusion rule.
+Use SpotSweeper as the primary spatial QC engine. It has no SpaceTrooper-like
+integrated QScore, so do not invent one. Review raw metric distributions and
+SpotSweeper spatial flags, recommend numeric cutoffs and a final explicit
+filtering rule, and keep package flags distinct from raw-metric cutoffs.
 
-Before planning, read both bundled references:
+Before execution, read:
 
-- `/SciAgent-Skills/skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-spot-qc/references/spotsweeper-workflow.md`
-- `/SciAgent-Skills/skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-qc/references/integrated-assessment.md`
-
-The Supervisor must pass this Skill and those required reference contents to
-WorkflowPlanner; the Planner does not read Skills itself.
+- `references/spotsweeper-workflow.md` for official calculations/conditions;
+- `references/fallback-validation.md` before fallback execution;
+- `../spatial-transcriptomics-qc/references/cutoff-and-filtering.md` for cutoff,
+  D2, and report consistency;
+- `scripts/spotsweeper_fallback.py` only after an official failure.
 
 ## When to Use
 
-- QC a Space Ranger Visium section before downstream analysis
-- QC a selected Visium HD bin resolution while preserving its bin size
-- Detect low-count or low-detected-feature spots relative to spatial neighbours
-- Inspect regional mitochondrial artifacts when mitochondrial signal is measured
-- Compare spot/bin QC distributions and expected impact across slides or samples
-- Use `spatial-transcriptomics-imaging-qc` instead for Xenium, CosMx or MERFISH segmented cells
-- Use `spatial-transcriptomics-qc` first when the observation unit is uncertain
+- QC Visium or Visium HD spots/bins before downstream analysis
+- Detect locally low library size or detected-feature spots
+- Inspect local mitochondrial outliers when mitochondrial targets are measured
+- Detect regional mitochondrial artifacts on a valid array geometry
+- Report known systematic Visium array positions separately
+- Compare metric distributions and expected filtering impact across sections
+- Use `spatial-transcriptomics-imaging-qc` instead for Xenium/CosMx/MERFISH cells
 
 ## Prerequisites
 
-SpotSweeper is the required spot/bin engine, not an optional enhancement.
-Install it before writing any QC code, just as a Python skill installs its
-required package before importing it. This runtime uses R 4.5/Bioconductor
-3.22; do not switch to a development Bioconductor release.
+Require valid nonnegative raw counts and unique aligned spot/bin IDs for count
+QC. Coordinates, sample/slide fields, array positions, mitochondrial features,
+and verified array geometry are separate capabilities. Missing optional inputs
+skip only their dependent functions; do not fill unmeasured metrics with zero.
 
-Run this bootstrap first. It installs only missing packages, then loads
-SpotSweeper and checks the functions required by this workflow:
+Check before installing:
 
-```python
-import subprocess
-
-r_code = r'''
-if (!requireNamespace("BiocManager", quietly=TRUE))
-  install.packages("BiocManager", repos="https://cloud.r-project.org")
-missing <- c("SpotSweeper", "zellkonverter")[
-  !vapply(c("SpotSweeper", "zellkonverter"), requireNamespace,
-          quietly=TRUE, FUN.VALUE=logical(1))
-]
-if (length(missing))
-  BiocManager::install(missing, version="3.22", ask=FALSE, update=FALSE)
-suppressPackageStartupMessages({
-  library(SpotSweeper)
-  library(zellkonverter)
-  library(SpatialExperiment)
-})
-required <- c("localOutliers", "findArtifacts", "plotQCmetrics")
-stopifnot(all(required %in% getNamespaceExports("SpotSweeper")))
-cat("SpotSweeper", as.character(packageVersion("SpotSweeper")), "import OK\n")
-'''
-
-result = subprocess.run(
-    ["Rscript", "-e", r_code],
-    capture_output=True,
-    text=True,
-)
-print(result.stdout)
-if result.returncode != 0:
-    raise RuntimeError(f"SpotSweeper bootstrap failed:\n{result.stderr}")
+```bash
+command -v Rscript
+Rscript -e 'cat(requireNamespace("SpotSweeper", quietly=TRUE), "\n")'
 ```
 
-Obtain the runtime's required slow-install approval before running the bootstrap
-when installation is needed. If installation or import fails, preserve the
-exact error. Only then may the workflow record `engine_unavailable` and offer
-labeled common QC; never describe common QC as SpotSweeper-equivalent.
+Attempt the compatible official Bioconductor package when missing:
 
-Required data:
+```r
+if (!requireNamespace("BiocManager", quietly=TRUE))
+  install.packages("BiocManager", repos="https://cloud.r-project.org")
+if (!requireNamespace("SpotSweeper", quietly=TRUE))
+  BiocManager::install("SpotSweeper", ask=FALSE, update=FALSE)
+stopifnot(requireNamespace("SpotSweeper", quietly=TRUE))
+packageVersion("SpotSweeper")
+```
 
-- integer-like raw count matrix with unique spot/bin IDs;
-- two finite coordinates aligned one-to-one with observations;
-- explicit sample/slide identifiers;
-- platform and observation unit; for HD, selected `bin_size_um`;
-- validated feature annotation before mitochondrial calculations.
+Record the actual error if install/load/function execution fails. Only then
+execute the bundled fallback; do not write a new approximation during analysis.
 
 ## Pre-flight Interview
 
-Inspect first. This pipeline has no optional polygon decision. Ask D2 only after
-the final recommendation and impact bundle exists.
+There is no D1 polygon decision for spot/bin QC and no pre-QC metric-selection
+question. Automatically run every supported function whose inputs are usable.
+Ask D2 only if the user requests filtering after seeing the report and impact.
 
 ```yaml
 decisions:
   - id: D2
-    param: applyFiltering
-    kind: required
+    param: filtering_rule
+    kind: optional_conditional
     source: user
-    ask: "I have shown the final integrated rule, cutoff/flag plots, expected impact and biological-loss risk. Should I create a separately named filtered copy using this exact rule set?"
+    ask: "Which displayed rule should I apply to a separately named filtered copy: the final recommendation, one metric at its recommended cutoff, your own rule, or no filtering?"
     default: null
-    skip_if: "assessment/recommendation only, or no Exclude candidate observations"
+    skip_if: "the user has not requested filtering"
 ```
 
 ## Workflow
 
-### Step 1: Confirm Spot/Bin Routing and Capabilities
+### Step 1: Confirm Spot/Bin Routing and Preserve the Source
 
-Require compound spot/bin evidence from the router. Recheck matrix, IDs,
-coordinates, sample groups and platform metadata; never route from a filename
-alone.
+Require compound spot/bin evidence, verify the selected HD resolution, align
+IDs and coordinates, and preserve the complete source. A tissue-only analysis
+view is not filtering and must be recorded separately.
 
 ```python
-from pathlib import Path
 import json
+from pathlib import Path
 
-classification = json.loads(Path("qc_input_classification.json").read_text())
-if classification["route"] != "spot":
-    raise ValueError("spot QC requires confirmed spot/bin routing")
-print(classification["confidence"], classification["spot_evidence"])
+route = json.loads(Path("qc_input_classification.json").read_text())
+if route["route"] != "spot":
+    raise ValueError("spot/bin evidence is required")
+print(route["platform_candidates"], route["observation_unit"])
 ```
 
-Write `qc_capabilities.tsv` and initialize observation accounting. Keep input,
-join, analysis-view and later intentional-filtering losses distinct.
+### Step 2: Detect Capabilities and Compute Supported Numeric Metrics
 
-### Step 2: Load the Requested Resolution Without Filtering
-
-For Visium HD, resolve the selected `binned_outputs/square_<N>um` directory;
-for Visium, use the Space Ranger root. Preserve off-tissue observations and
-create a named tissue analysis view.
-
-```python
-import pandas as pd
-import scanpy as sc
-
-MATRIX_H5 = "path/to/filtered_feature_bc_matrix.h5"
-POSITIONS_CSV = "path/to/spatial/tissue_positions.csv"
-positions = pd.read_csv(POSITIONS_CSV, index_col="barcode")
-adata_full = sc.read_10x_h5(MATRIX_H5, gex_only=False)
-adata_full.var_names_make_unique()
-adata_full.layers["counts"] = adata_full.X.copy()
-adata_full.obs = adata_full.obs.join(positions, how="left", validate="one_to_one")
-adata_full.obsm["spatial"] = adata_full.obs[
-    ["pxl_col_in_fullres", "pxl_row_in_fullres"]].to_numpy(float)
-analysis_mask = adata_full.obs["in_tissue"].astype(int).eq(1).to_numpy()
-adata = adata_full[analysis_mask].copy()
-print(adata_full.n_obs, adata.n_obs)
-```
-
-Changing HD bin size loads a different observation set and requires separate
-provenance; it is not a plotting parameter.
-
-### Step 3: Compute Common Metrics and Build the R Bridge
-
-Calculate totals and detected features from raw counts. Add mitochondrial
-metrics only after feature annotation proves they are meaningful.
-
-```python
-import numpy as np
-
-X = adata.layers["counts"]
-adata.obs["total_counts"] = np.asarray(X.sum(axis=1)).ravel()
-adata.obs["detected_genes"] = np.asarray((X > 0).sum(axis=1)).ravel()
-print(adata.obs[["total_counts", "detected_genes"]].describe())
-```
-
-Create a barcode-keyed AnnData bridge and construct a `SpatialExperiment` with
-the same ID order. Do not let package defaults remove zero-count observations.
-
-```python
-import anndata as ad
-
-bridge = ad.AnnData(X=adata.layers["counts"], obs=adata.obs.copy(),
-                    var=adata.var.copy(),
-                    obsm={"spatial": adata.obsm["spatial"].copy()})
-bridge.write_h5ad("qc_bridge_input.h5ad", compression="gzip")
-print(bridge.shape)
-```
+Calculate `sum`/total counts and `detected` genes from raw counts. Add
+mitochondrial sum/percentage only after identifying actual mitochondrial
+features. If no mitochondrial features are measured, omit those columns and
+record `skipped`; if measured counts are all zero, retain true zeros but skip
+functions requiring positive signal. Retain raw and transformed columns used
+by SpotSweeper. Record each function as `completed`, `skipped`, or `failed`.
 
 ```r
-suppressPackageStartupMessages({
-  library(SpotSweeper)
-  library(zellkonverter)
-  library(SpatialExperiment)
-})
-
-sce <- readH5AD("qc_bridge_input.h5ad", X_name="counts", reader="R",
-                use_hdf5=FALSE, obsm="spatial")
-xy <- as.matrix(reducedDim(sce, "spatial"))
-storage.mode(xy) <- "double"
-rownames(xy) <- colnames(sce)
-spe <- SpatialExperiment(
-  assays=assays(sce), rowData=rowData(sce), colData=colData(sce),
-  spatialCoords=xy, metadata=metadata(sce))
-stopifnot(!anyDuplicated(colnames(spe)),
-          identical(colnames(spe), rownames(spatialCoords(spe))))
-metadata(spe)$platform <- unique(as.character(spe$platform))
+spe <- scuttle::addPerCellQCMetrics(
+  spe, subsets=list(Mito=is_mitochondrial_feature))
+stopifnot(all(c("sum", "detected") %in% colnames(colData(spe))))
 ```
 
-### Step 4: Run SpotSweeper by Sample
+### Step 3: Resolve Official vs Fallback Mode
 
-Read
-`/SciAgent-Skills/skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-spot-qc/references/spotsweeper-workflow.md`
-now. Run `localOutliers()` for `sum` and `detected` within each sample and save
-package-native plots. Record actual version, neighbours, directions, cutoff,
-workers and errors.
+Verify exports and actual execution compatibility. Official use requires the
+function call to succeed, not just namespace load.
 
 ```r
-stopifnot(requireNamespace("SpotSweeper", quietly=TRUE))
-group_sizes <- table(spe_qc$sample_id)
-n_neighbors <- min(36L, as.integer(min(group_sizes)) - 1L)
-stopifnot(n_neighbors >= 2L)
-spe_qc <- SpotSweeper::localOutliers(
-  spe_qc, metric="sum", direction="lower", n_neighbors=n_neighbors,
+required <- c("localOutliers", "localVariance", "findArtifacts",
+              "flagVisiumOutliers", "plotQCmetrics")
+official_ready <- requireNamespace("SpotSweeper", quietly=TRUE) &&
+  all(required %in% getNamespaceExports("SpotSweeper"))
+print(official_ready)
+```
+
+Log mode, version, function, parameters, and failure reason.
+
+### Step 4: Run Official Local Outliers by Sample
+
+For each sample, choose `n_neighbors` smaller than its spot count. Run
+`localOutliers()` on `sum` and `detected` (usually lower direction, `log=TRUE`)
+and on mitochondrial percentage only when measured. The official modified z is
+the focal value versus neighbor median/unscaled MAD; the focal spot is excluded.
+
+```r
+k <- min(36L, min(table(spe$sample_id)) - 1L)
+stopifnot(k >= 1L)
+spe <- SpotSweeper::localOutliers(
+  spe, metric="sum", direction="lower", n_neighbors=k,
+  samples="sample_id", log=TRUE, cutoff=3, workers=1)
+spe <- SpotSweeper::localOutliers(
+  spe, metric="detected", direction="lower", n_neighbors=k,
   samples="sample_id", log=TRUE, cutoff=3, workers=1)
 ```
 
-The robust cutoff detects local metric outliers only. Do not predeclare it as
-the final filtering cutoff.
+`cutoff=3` applies to the local robust z-score and creates a package flag. It
+is not a raw-count cutoff and is not automatically the final filtering rule.
+Run this automatically for every calculable supported metric. Missing metrics,
+coordinates, or sufficient per-sample neighbors skip only that calculation.
 
-### Step 5: Run Conditional Mitochondrial Artifact Detection
+### Step 5: Run Conditional Spatial Artifact Functions
 
-Skip with an explicit input-incompatible reason when mitochondrial targets or
-finite non-zero signal are absent.
+Only for confirmed standard 10x Visium arrays with array row/column metadata,
+report the six package-maintained `systematic_outliers` positions separately.
+Do not apply this fixed list to Visium HD, Slide-seq, or another spot platform
+merely because it has columns named `array_row` and `array_col`.
 
 ```r
-if (all(c("expr_chrM_ratio", "expr_chrM") %in% colnames(colData(spe_qc))) &&
-    any(spe_qc$expr_chrM > 0, na.rm=TRUE)) {
-  spe_qc <- SpotSweeper::findArtifacts(
-    spe_qc, mito_percent="expr_chrM_ratio", mito_sum="expr_chrM",
-    samples="sample_id", n_order=5, shape="hexagonal", log=TRUE,
+if (identical(confirmed_platform, "10x Visium") &&
+    all(c("array_row", "array_col") %in% colnames(colData(spe))))
+  spe <- SpotSweeper::flagVisiumOutliers(spe)
+```
+
+Run `findArtifacts()` only for one sample at a time, with measured finite
+nonzero mitochondrial sum/percentage and verified hexagonal/square geometry.
+
+```r
+if (mitochondrial_signal_available) {
+  sample_spe <- spe[, spe$sample_id == selected_sample]
+  sample_spe <- SpotSweeper::findArtifacts(
+    sample_spe, mito_percent="subsets_Mito_percent",
+    mito_sum="subsets_Mito_sum", samples="sample_id",
+    n_order=5, shape="hexagonal", log=TRUE,
     name="artifact", var_output=TRUE)
 }
 ```
 
-Verify actual grid geometry before choosing `shape`, especially for HD or
-non-Visium inputs.
+Treat `artifact`, `systematic_outliers`, and `*_outliers` as package flag
+results, not numeric cutoff recommendations.
 
-### Step 6: Return Metrics and Integrate Evidence
+### Step 6: Use the Scalable Python Fallback Only After Official Failure
 
-Export the completed R result by ID and require exact Python/R ID equality
-before joining. Then read the shared integrated-assessment reference.
+Standardize metadata with IDs, sample, coordinates, and numeric metrics, copy
+the script unchanged, and execute it. Parquet is preferred for large inputs;
+TSV/CSV remains supported for metadata only. The script requires `numpy`,
+`pandas`, and `scipy`.
 
-```python
-qc_from_r = pd.read_csv("qc_metrics_from_r.tsv", sep="\t",
-                        dtype={"observation_id": str}).set_index("observation_id")
-python_ids = pd.Index(adata.obs_names.astype(str), name="observation_id")
-if len(python_ids.difference(qc_from_r.index)) or len(qc_from_r.index.difference(python_ids)):
-    raise ValueError("Python/R observation IDs do not match exactly")
-adata.obs = adata.obs.join(qc_from_r.reindex(python_ids), validate="one_to_one")
+```bash
+python spotsweeper_fallback.py \
+  --metadata spot_metrics.parquet \
+  --output qc_metrics.parquet \
+  --id-column observation_id \
+  --x x --y y --sample sample_id \
+  --neighbors 36 --cutoff 3 --workers 1
 ```
 
-Assess correlated evidence domains, spatial coherence, sample effects and
-biological alternatives. Produce metric rows and an integrated rule without
-turning one package flag into exclusion.
+Confirmed standard Visium plus valid `array_row`/`array_col` columns trigger
+systematic-position checks; pass `--platform "10x Visium"` when the metadata
+does not already contain an unambiguous platform/technology field. The legacy
+`--systematic` flag does not bypass platform validation. Pass
+`--artifacts --mito-percent ... --mito-sum ... --shape ...` only after array
+geometry is verified; the script then checks remaining input conditions.
+Disclose fallback scalability and tie limitations from the validation
+reference. Outputs use
+`*_z_fallback_python`, `*_outliers_fallback_python`, and
+`artifact_fallback_python` names so they cannot be mistaken for official
+package output.
 
-### Step 7: Visualize, Validate Impact, Resolve D2 and Report
+When `--metrics` is omitted, the script automatically uses the supported
+numeric metrics actually present: lower/logged for `sum` and `detected`, and
+higher/raw for measured mitochondrial percentage, matching the official
+vignette. Its status JSON records each function as
+`completed`, `skipped`, or `failed`. An optional local/artifact failure does not
+discard count metrics or other successful outputs; corrupt counts and ID/shape
+mismatches remain fatal.
 
-Create all major distributions, explicit cutoff overlays and spatial maps from
-the same recommendation configuration. Validate overall and per-sample impact.
+The fallback uses `cKDTree` per sample, processes queries in batches, and never
+forms an N-by-N distance matrix. Its local modified-z equation is the official
+equation. Local variance uses a Python Huber-IRLS approximation to `MASS::rlm`;
+artifact PCA/k-means and random initialization differ from R. Present these as
+fallback flags. Local modified-z results may support cutoff recommendations
+with fallback-engine disclosure. Treat local-variance residuals and artifact
+flags as provisional diagnostics, not as the sole basis for a final filtering
+rule. Routine user QC must not run official-versus-fallback qualification.
 
-```python
-class_order = ["Retain", "Review", "Exclude candidate"]
-impact = adata.obs["qc_class"].value_counts().reindex(class_order, fill_value=0)
-print(impact, (100 * impact / adata.n_obs).round(2))
+When `sum`/`detected` are not already available, pass an observations-by-
+features sparse NPZ and feature list with `--counts-npz` and `--features`.
+Optionally pass `--mito-feature-file` containing explicitly validated
+mitochondrial features; the script then computes the requested mitochondrial
+sum/percent columns without densifying counts. Do not infer mitochondrial
+features from an unverified naming prefix.
+
+### Step 7: Plot and Review Actual Distributions and Flags
+
+Plot every major numeric metric overall and by sample: total counts, detected
+genes, mitochondrial sum/percentage when valid, and any requested metric.
+Also map raw metric values, local z-scores, package flags, and artifact regions.
+
+```r
+p <- SpotSweeper::plotQCmetrics(
+  spe, sample_id="sample_id", sample=selected_sample,
+  metric="sum", outliers="sum_outliers")
+ggplot2::ggsave("spotsweeper_sum_outliers.png", p, width=6, height=6)
 ```
 
-If no exclusions exist or the request is assessment-only, record D2 as
-`not_applicable`. Otherwise show the final bundle and ask D2 once for the exact
-`rule_set_id`. Only an approved D2 may create a separately named filtered copy.
+```python
+for metric in numeric_metrics:
+    print(metric, metrics.groupby("sample_id")[metric].describe())
+for flag in package_flags:
+    print(flag, metrics.groupby("sample_id")[flag].agg(["sum", "size"]))
+```
+
+### Step 8: Recommend Numeric Cutoffs and the Final Rule
+
+Only after inspecting plots, recommend raw-metric cutoffs and directions.
+Explain the observed tail/separation/sample behavior and show exact count,
+percentage, and spatial map for each. A metric may be `no_cutoff` when a single
+value is not defensible.
+
+Do not translate the local z cutoff into a raw-count threshold. Present numeric
+rules separately from `sum_outliers`, `detected_outliers`,
+`systematic_outliers`, and `artifact`. Because SpotSweeper has no integrated
+score, recommend a transparent final expression such as one numeric criterion,
+one package flag, or an explicit AND/OR combination—never a new weighted score.
+
+```text
+(sum < reviewed_sum_cutoff) OR detected_outliers
+```
+
+#### Calculate Exact Impact and Complete the Report
+
+Write the selected rows to `qc_filter_rules.tsv`, state AND/OR, run the shared
+calculator, and map `selected_filter_match`.
+
+```bash
+python qc_apply_rules.py --metrics qc_metrics.tsv \
+  --rules qc_filter_rules.tsv --rule-set-id agent-final-001 --logic OR \
+  --mode preview \
+  --id-column observation_id --group-column sample_id \
+  --output-prefix qc_recommendation
+```
+
+Show overall/sample counts, percentages, and spatial distribution. With no
+filtering request, record D2=`not_applicable` and finish the QC report. If the
+user later selects another rule, preview that exact rule set again. D2 approval
+includes its digest and becomes invalid after any rule or AND/OR change. Apply
+only the approved mask to a separately named copy.
 
 ## Key Parameters
 
-| Parameter | Default/reference | Decision rule |
-|---|---|---|
-| `bin_size_um` | user-selected Space Ranger output | fixed per loaded HD object; never silently switch |
-| `n_neighbors` | 36 maximum | less than every sample size; reduce transparently |
-| `cutoff` | 3 robust-z units | metric-level outlier evidence, not final filtering cutoff |
-| `direction` | lower for `sum`/`detected` | higher only for validated bad-high metrics |
-| `samples` | `sample_id` | never mix unrelated sections in one neighbourhood |
-| `n_order` | 5 | only for measured mitochondrial regional artifacts |
-| `shape` | actual array geometry | do not assume hexagonal for arbitrary bins |
+| Function/parameter | Official default | Condition |
+|---|---:|---|
+| `localOutliers(metric)` | `detected` | numeric metadata column |
+| `direction` | `lower` | `lower`, `higher`, or `both` |
+| `n_neighbors` | `36` | strictly less than every sample size |
+| `log` | `TRUE` | uses `log1p(metric)` and keeps `<metric>_log` |
+| local-z `cutoff` | `3` | package flag reference, not raw cutoff |
+| `findArtifacts(n_order)` | `5` | one sample, sufficient spots and mito signal |
+| `shape` | `hexagonal` | verify actual geometry; square is supported |
+| `workers` | `1` | changes neighbor-search execution only |
 
 ## Common Recipes
 
-### Quantify Impact Without Filtering
-
-```python
-impact = (adata.obs.assign(flagged=adata.obs["qc_class"].eq("Exclude candidate"))
-          .groupby("sample_id", dropna=False)["flagged"].agg(["sum", "size"]))
-impact["percent"] = 100 * impact["sum"] / impact["size"]
-print(impact)
-```
-
-### Inspect a Package Outlier Column
+### Inspect Local-Z Flags Without Filtering
 
 ```r
-flag <- spe_qc$sum_outliers
-print(table(flag, useNA="ifany"))
-print(attributes(flag))
+table(spe$sum_outliers, useNA="ifany")
+summary(spe$sum_z)
+```
+
+### D2-Approved Filtered Copy
+
+```python
+matches = pd.read_csv("qc_recommendation_matches.tsv", sep="\t")
+mask = matches.set_index("observation_id").loc[adata.obs_names,
+                                                  "selected_filter_match"]
+adata_filtered = adata[(~mask).to_numpy()].copy()
+adata_filtered.write_h5ad("spatial_spot_qc_filtered_copy.h5ad")
 ```
 
 ## Expected Outputs
 
-- `qc_input_classification.json`, `qc_capabilities.tsv`
-- `qc_environment_status.tsv`, `qc_execution_log.tsv`
-- `qc_observation_accounting.tsv`, `qc_observation_flags.tsv`
-- SpotSweeper package plots and cross-engine recommendation plots
-- `qc_cutoff_recommendations.tsv`, candidate/rule/impact/validation tables
-- `qc_filtering_recommendation.html`, `spatial_qc_report.html`
-- optional `spatial_qc_filtered_copy.h5ad` only after D2
+- official/fallback execution log with version, parameters, and reason
+- complete numeric metrics, local z-scores, and package flag table
+- overall/sample distributions and spatial maps
+- numeric cutoff recommendations separate from package flags
+- explicit final AND/OR rule and exact impact tables
+- D2 state and optional separately named filtered copy
+- unchanged source object and observation accounting
 
 ## Troubleshooting
 
-| Problem | Cause | Solution |
+| Problem | Cause | Resolution |
 |---|---|---|
-| `Rscript` or SpotSweeper unavailable | runtime/package/dependency missing | request the slow install when required, install and verify the approved 1.6.0 build; use labeled common QC only after an actual install/import attempt fails |
-| No spatial map | positions were not joined by barcode | enforce one-to-one join and finite aligned coordinates |
-| Local outlier call fails | groups smaller than neighbourhood | reduce neighbours transparently or mark input incompatible |
-| `findArtifacts()` has no signal | mitochondrial targets absent or all zero | skip and record the reason; do not fabricate signal |
-| HD result changes unexpectedly | another bin size was loaded | record and compare distinct observation sets |
-| A coherent region is flagged | biology or regional artifact | inspect histology/region and multiple evidence domains |
-| Outliers exist but no exclusion | integrated assessment incomplete or inconclusive | finish impact review; never promote the package cutoff automatically |
+| `n_neighbors` error | sample has at most `k` spots | reduce `k` and record it |
+| Non-finite after log | negative/invalid metric | correct input; do not run flag |
+| Artifact call fails | no mitochondrial signal or multiple samples | skip with reason or run per sample |
+| Wrong artifact neighborhood | incorrect array shape | verify hexagonal versus square |
+| Fallback is slow | base-R all-pairs neighbor search | use official package for large data |
+| Equidistant results differ | fallback deterministic tie break differs | disclose; compare flags spatially |
+| Final rule looks like a score | independent flags were numerically combined | replace with explicit AND/OR rule |
 
 ## Bundled Resources
 
-- `references/spotsweeper-workflow.md` — required execution and bridge details.
-- `../spatial-transcriptomics-qc/references/integrated-assessment.md` — required shared interpretation and D2 policy.
+- `references/spotsweeper-workflow.md` — official functions and algorithms.
+- `references/fallback-validation.md` — runtime validation status, use limits, and dependencies.
+- `scripts/spotsweeper_fallback.py` — scalable runtime fallback used only after official failure.
+- `../spatial-transcriptomics-qc/references/cutoff-and-filtering.md` — shared cutoff/D2/report contract.
+- `../spatial-transcriptomics-qc/scripts/qc_apply_rules.py` — deterministic rule/impact calculator.
 
 ## References
 
-- SpotSweeper Bioconductor package: https://bioconductor.org/packages/SpotSweeper
 - SpotSweeper source: https://github.com/MicTott/SpotSweeper
-- 10x Genomics Space Ranger outputs: https://www.10xgenomics.com/support/software/space-ranger/latest/analysis/outputs/output-overview
-- SpatialExperiment package: https://bioconductor.org/packages/SpatialExperiment
+- SpotSweeper Bioconductor package: https://bioconductor.org/packages/SpotSweeper
+- SpatialExperiment: https://bioconductor.org/packages/SpatialExperiment

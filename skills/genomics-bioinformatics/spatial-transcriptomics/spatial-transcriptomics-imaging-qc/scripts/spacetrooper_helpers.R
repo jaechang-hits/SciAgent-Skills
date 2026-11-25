@@ -26,12 +26,12 @@ set_metadata_value <- function(x, name, value) {
 space_trooper_preflight <- function(x) {
   issues <- character()
   if (!inherits(x, "SpatialExperiment"))
-    return(list(ok=FALSE, issues="not a SpatialExperiment"))
+    return(list(ok=FALSE, issues="not a SpatialExperiment", capabilities=list()))
   if (!"counts" %in% SummarizedExperiment::assayNames(x))
     issues <- c(issues, "counts assay missing")
   xy <- SpatialExperiment::spatialCoords(x)
-  if (nrow(xy) != ncol(x) || ncol(xy) < 2L || any(!is.finite(xy[, 1:2])))
-    issues <- c(issues, "finite aligned x/y coordinates missing")
+  has_coordinates <- nrow(xy) == ncol(x) && ncol(xy) >= 2L &&
+    all(is.finite(xy[, 1:2]))
   tech <- S4Vectors::metadata(x)$technology
   supported <- c("10X_Xenium", "Nanostring_CosMx",
                  "Nanostring_CosMx_Protein", "Vizgen_MERFISH")
@@ -51,8 +51,15 @@ space_trooper_preflight <- function(x) {
     "Nanostring_CosMx_Protein"=positive("Area.um2") || positive("Area_um"),
     "Vizgen_MERFISH"=positive("Area_um") || positive("volume"),
     FALSE)
-  if (!has_size) issues <- c(issues, "positive platform size field missing")
-  list(ok=length(issues) == 0L, issues=issues)
+  feature_names <- rownames(x)
+  prefixes <- c("NegPrb", "Negative", "SystemControl", "Ms IgG1", "Rb IgG",
+    "BLANK_", "NegControlProbe", "NegControlCodeword", "UnassignedCodeword", "Blank")
+  has_controls <- any(vapply(prefixes, function(prefix)
+    any(startsWith(feature_names, prefix)), logical(1)))
+  list(ok=length(issues) == 0L, issues=issues,
+    capabilities=list(coordinates=has_coordinates, platform_size=has_size,
+      negative_controls=has_controls,
+      signal_density=has_size || identical(tech, "Nanostring_CosMx_Protein")))
 }
 
 run_supported_qscore <- function(x, seed=1713L) {
@@ -67,7 +74,7 @@ run_supported_qscore <- function(x, seed=1713L) {
     if (qc_has_spe) "computeQCScore" else NA_character_
   if (is.na(q_fun)) {
     record_engine_status("SpaceTrooper", "QScore", "api_incompatible",
-      "not_run", "no supported QScore function exposes spe")
+      "skipped", "no supported QScore function exposes spe")
     return(list(spe=x, usable=FALSE, score_col=NA_character_))
   }
 
@@ -79,14 +86,14 @@ run_supported_qscore <- function(x, seed=1713L) {
     reason <- paste(c(if (!signal_ok) "finite log2SignalDensity missing",
       if (!total_ok) "total missing"), collapse="; ")
     record_engine_status("SpaceTrooper", q_fun, "input_incompatible",
-      "not_run", reason)
+      "skipped", reason)
     return(list(spe=x, usable=FALSE, score_col=NA_character_))
   }
 
   keep <- is.finite(suppressWarnings(as.numeric(x$total))) & x$total > 0
   if (!any(keep)) {
     record_engine_status("SpaceTrooper", q_fun, "input_incompatible",
-      "not_run", "no positive-count cells for QScore training")
+      "skipped", "no positive-count cells for QScore training")
     return(list(spe=x, usable=FALSE, score_col=NA_character_))
   }
   q_input <- x[, keep]
@@ -103,7 +110,7 @@ run_supported_qscore <- function(x, seed=1713L) {
     error=function(e) list(value=NULL, error=conditionMessage(e)))
   if (!is.null(result$error)) {
     record_engine_status("SpaceTrooper", q_fun, "compatible",
-      "execution_failed", result$error, paste0("seed=", seed))
+      "failed", result$error, paste0("seed=", seed))
     return(list(spe=x, usable=FALSE, score_col=NA_character_))
   }
 
@@ -111,7 +118,7 @@ run_supported_qscore <- function(x, seed=1713L) {
     colnames(SummarizedExperiment::colData(result$value)))[1]
   if (is.na(score_col)) {
     record_engine_status("SpaceTrooper", q_fun, "compatible",
-      "execution_failed", "no supported score column returned")
+      "failed", "no supported score column returned")
     return(list(spe=x, usable=FALSE, score_col=NA_character_))
   }
   stopifnot(all(colnames(result$value) %in% colnames(x)))
@@ -137,7 +144,7 @@ run_supported_qscore <- function(x, seed=1713L) {
     model_metrics=model_metrics, best_lambda=best_lambda,
     polygon_required=FALSE)
   x <- set_metadata_value(x, "qscore_execution", qscore_execution)
-  record_engine_status("SpaceTrooper", q_fun, "compatible", "executed",
+  record_engine_status("SpaceTrooper", q_fun, "compatible", "completed",
     reason=if (usable) "" else "no finite score returned",
     parameters=paste0("seed=", seed, "; score_column=", score_col,
       "; model_formula=", model_formula, "; model_metrics=", model_metrics,

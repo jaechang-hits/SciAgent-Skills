@@ -1,6 +1,6 @@
 ---
 name: "spatial-transcriptomics-imaging-qc"
-description: "Imaging-cell spatial transcriptomics QC for Xenium, CosMx and MERFISH segmented cells. Validate counts, cell IDs, centroids, controls, size and FOV fields; run SpaceTrooper spatialPerCellQC, robust computeSpatialOutlier and version-compatible QScore; optionally add D1-approved polygon geometry without gating QScore; restore matched R results to the full Python baseline, integrate evidence, visualize cutoffs, validate impact, and require D2 before filtering."
+description: "SpaceTrooper imaging-cell QC for Xenium, CosMx and MERFISH. Automatically compute input-supported per-cell metrics and QScore when possible, inspect overall/sample distributions, recommend data-dependent QScore and individual-metric cutoffs, and map expected removals. Require D1 before polygon QC; require D2 only when the user later requests a filtered copy. Use the sparse Python fallback only after official installation or execution fails."
 license: "CC-BY-4.0"
 ---
 
@@ -8,344 +8,335 @@ license: "CC-BY-4.0"
 
 ## Overview
 
-Assess segmented-cell imaging assays with SpaceTrooper while preserving the
-complete cell denominator. Basic table/centroid QC and QScore eligibility are
-independent of polygon approval. Polygon parsing, attachment, geometry metrics
-and polygon maps require D1. No metric, package flag, 3-MAD fence or low QScore
-alone is a final filtering decision.
+Use SpaceTrooper as the primary calculation engine. The agent inspects computed
+distributions and recommends filtering cutoffs; it does not invent a new QC
+score or perform mandatory biological evidence adjudication. QScore is the
+preferred final numeric criterion when valid. Individual metric cutoffs are
+also reported. Keep package outlier labels separate from the selected
+filtering mask.
 
-Before planning, read all required resources:
+Before execution, read:
 
-- `/SciAgent-Skills/skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-imaging-qc/references/spacetrooper-workflow.md`
-- `/SciAgent-Skills/skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-qc/references/integrated-assessment.md`
-- `/SciAgent-Skills/skills/genomics-bioinformatics/spatial-transcriptomics/spatial-transcriptomics-imaging-qc/scripts/spacetrooper_helpers.R`
-
-The Supervisor must pass this Skill and required reference content to
-WorkflowPlanner. The Planner does not read Skills itself.
+- `references/spacetrooper-workflow.md` for official APIs and conditions;
+- `references/fallback-validation.md` before using the fallback;
+- `../spatial-transcriptomics-qc/references/cutoff-and-filtering.md` for D2,
+  exact-rule accounting, and reporting;
+- `scripts/spacetrooper_helpers.R` for official-package bridging;
+- `scripts/spacetrooper_fallback.py` only after an official failure.
 
 ## When to Use
 
-- QC Xenium segmented cells before annotation or downstream spatial analysis
-- QC CosMx RNA or protein cell tables with global coordinates and FOV metadata
-- QC MERFISH/MERSCOPE cells with counts, centroids and area/volume metadata
-- Evaluate signal density, controls, cell size, aspect ratio or FOV-border effects
-- Compute a dataset-specific QScore when installed APIs and metrics support it
-- Add polygon validity and geometry QC after explicit D1 approval
-- Use `spatial-transcriptomics-spot-qc` instead for Visium or Visium HD spots/bins
-- Use `spatial-transcriptomics-qc` first when observation type is uncertain
+- QC Xenium segmented cells before downstream analysis
+- QC CosMx RNA or protein cells with size, FOV, and control information
+- QC MERFISH/MERSCOPE cells with area or volume metadata
+- Calculate SpaceTrooper signal-density, control, geometry, and QScore outputs
+- Recommend a QScore cutoff from observed whole-dataset/sample distributions
+- Recommend individual SpaceTrooper metric cutoffs when QScore is not desired
+- Add polygon-derived checks only after explicit D1 approval
+- Use `spatial-transcriptomics-spot-qc` for spot/bin assays instead
 
 ## Prerequisites
 
-SpaceTrooper is the required imaging engine, not an optional enhancement.
-Install it before writing any QC code, just as a Python skill installs its
-required package before importing it. This runtime uses R 4.5/Bioconductor
-3.22; do not switch to a development Bioconductor release.
+Require unique aligned cell IDs, a valid nonnegative raw count matrix, and
+technology metadata. Coordinates, sample/FOV, controls, area/volume, polygons,
+and platform-specific fields are independent capabilities: absence skips only
+the functions that require them. Never replace an unmeasured capability with a
+zero-valued metric.
 
-Run this bootstrap first. It installs only when the package is missing, then
-loads the package and checks the functions required by this workflow:
+Check before installing and record the successful version and signatures:
 
-```python
-import subprocess
+```bash
+command -v Rscript
+Rscript -e 'cat(requireNamespace("SpaceTrooper", quietly=TRUE), "\n")'
+```
 
-r_code = r'''
+If missing, attempt a compatible official Bioconductor installation. Do not
+force a development release incompatible with the installed R version:
+
+```r
 if (!requireNamespace("BiocManager", quietly=TRUE))
   install.packages("BiocManager", repos="https://cloud.r-project.org")
 if (!requireNamespace("SpaceTrooper", quietly=TRUE))
-  BiocManager::install("SpaceTrooper", version="3.22", ask=FALSE, update=FALSE)
-suppressPackageStartupMessages({
-  library(SpaceTrooper)
-  library(SpatialExperiment)
-  library(SummarizedExperiment)
-  library(S4Vectors)
-})
-required <- c("readXeniumSPE", "readCosmxSPE", "readMerfishSPE",
-              "spatialPerCellQC", "computeSpatialOutlier")
-stopifnot(all(required %in% getNamespaceExports("SpaceTrooper")))
-cat("SpaceTrooper", as.character(packageVersion("SpaceTrooper")), "import OK\n")
-'''
-
-result = subprocess.run(
-    ["Rscript", "-e", r_code],
-    capture_output=True,
-    text=True,
-)
-print(result.stdout)
-if result.returncode != 0:
-    raise RuntimeError(f"SpaceTrooper bootstrap failed:\n{result.stderr}")
+  BiocManager::install("SpaceTrooper", ask=FALSE, update=FALSE)
+stopifnot(requireNamespace("SpaceTrooper", quietly=TRUE))
+packageVersion("SpaceTrooper")
 ```
 
-Obtain the runtime's required slow-install approval before running the bootstrap
-when installation is needed. If installation or import fails, preserve the
-exact error. Only then may the workflow record `engine_unavailable` and offer
-labeled common QC; never describe common QC as SpaceTrooper-equivalent.
-
-Required core data:
-
-- raw counts with unique cell IDs;
-- finite cell centroids aligned one-to-one to cells;
-- supported technology metadata and sample/FOV grouping;
-- positive platform size field required by `spatialPerCellQC()`.
-
-Controls, polygons and images are conditional capabilities, not prerequisites
-for all basic QC.
+Preserve installation and execution errors. Use the bundled fallback only
+after an actual official attempt fails; never rewrite fallback code ad hoc.
 
 ## Pre-flight Interview
 
-Inspect first and ask only applicable decisions.
+Inspect polygon availability read-only, then ask D1 before any QC calculation
+when usable polygon information exists. Do not ask which metrics to calculate.
+D2 is not part of a QC-only request and is asked only after a later filtering
+request and exact impact preview.
 
 ```yaml
 decisions:
   - id: D1
-    param: polygonGeometryQC
-    kind: optional_conditional
+    param: polygon_qc
+    kind: required
     source: data
-    ask: "I found parseable non-empty cell polygons with overlapping IDs. Should I include polygon validity, matching loss, multipolygon, area/aspect-ratio and polygon-map checks?"
-    default: "basic table/centroid QC only"
-    skip_if: "no usable polygon/segmentation geometry capability"
+    ask: "Usable cell polygons are present. Should I run Polygon QC in addition to Basic QC?"
+    default: null
+    skip_if: "no parseable polygon source with cell-ID overlap"
 
   - id: D2
-    param: applyFiltering
-    kind: required
+    param: filtering_rule
+    kind: optional_conditional
     source: user
-    ask: "I have shown the final integrated rule, cutoff/flag plots, expected impact and biological-loss risk. Should I create a separately named filtered copy using this exact rule set?"
+    ask: "Which displayed rule should I apply to a separately named filtered copy: the final recommendation, one metric at its recommended cutoff, your own rule, or no filtering?"
     default: null
-    skip_if: "assessment/recommendation only, or no Exclude candidate observations"
+    skip_if: "the user has not requested filtering"
 ```
 
-D1 controls only polygon-derived work. It never authorizes filtering and never
-blocks polygon-free SpaceTrooper metrics, robust outliers or an otherwise
-executable QScore. D2 occurs only after impact validation. Persist both in
-`qc_approval_state.tsv` with decision, exact scope, status, reason and timestamp;
-reuse a decision only while that scope is unchanged.
+D1 applies identically to official and fallback execution. Approval adds
+Polygon QC to Basic QC; declining it runs Basic QC only. D1 never authorizes
+filtering. Record both decisions and their exact scope.
 
 ## Workflow
 
-### Step 1: Confirm Imaging Routing and Inventory Capabilities
+### Step 1: Confirm Imaging Route and Preserve the Baseline
 
-Require compound segmented-cell evidence. Record matrix, cell IDs, centroids,
-technology, sample/FOV, controls, size fields, images and polygon sources with
-evidence and uncertainty.
+Verify the router selected `imaging`, align counts/metadata/coordinates by cell
+ID, and keep an immutable baseline. Record loader/join losses separately.
 
 ```python
-from pathlib import Path
 import json
+from pathlib import Path
 
-classification = json.loads(Path("qc_input_classification.json").read_text())
-if classification["route"] != "imaging":
-    raise ValueError("imaging QC requires confirmed segmented-cell routing")
-print(classification["confidence"], classification["imaging_evidence"])
+route = json.loads(Path("qc_input_classification.json").read_text())
+if route["route"] != "imaging":
+    raise ValueError("segmented-cell imaging evidence is required")
+print(route["platform_candidates"], route["confidence"])
 ```
 
-Initialize `qc_observation_accounting.tsv`; distinguish loader/join/polygon
-losses from any later D2-approved filtering.
+### Step 2: Resolve Official vs Fallback Execution
 
-### Step 2: Build One Baseline Object and Probe Polygons Read-Only
-
-Use the platform loader with polygon attachment disabled. Preserve raw counts,
-cell IDs, centroids, controls and size fields. Keep one immutable baseline.
+Probe namespace, exports, formals, and a minimal input-compatible call. The
+official path wins only when both loading and required execution succeed.
 
 ```r
-suppressPackageStartupMessages({
-  library(SpaceTrooper)
-  library(SpatialExperiment)
-  library(SummarizedExperiment)
-  library(S4Vectors)
-})
-spe <- SpaceTrooper::readXeniumSPE(
-  XENIUM_DIR, keepPolygons=FALSE, addFOVs=FALSE)
-stopifnot("counts" %in% SummarizedExperiment::assayNames(spe),
-          !anyDuplicated(colnames(spe)))
-xy <- SpatialExperiment::spatialCoords(spe)
-stopifnot(nrow(xy) == ncol(spe), all(is.finite(xy[, 1:2])))
-spe_baseline <- spe
+required <- c("spatialPerCellQC", "computeSpatialOutlier",
+              "computeOutliersQScore", "computeQScore")
+official_ready <- requireNamespace("SpaceTrooper", quietly=TRUE) &&
+  all(required %in% getNamespaceExports("SpaceTrooper"))
+print(official_ready)
 ```
 
-Adapt the official loader to CosMx or MERFISH as observed. Before D1, use the
-official polygon reader only to verify parseability, required normalized
-columns, non-empty geometry, unique polygon IDs and overlap. Do not attach,
-derive geometry metrics, plot, or flag.
+Log `official`, `fallback_python`, or `not_run`, plus the failure reason. A
+failure in official calculation may trigger the bundled Python fallback from
+the preserved baseline. Python fallback requirements are `numpy`, `pandas`,
+and `scipy`; `anndata` is optional and used only for direct H5AD input.
 
-### Step 3: Define Shared Helpers Before Branching
+### Step 3: Perform the D1 Polygon Gate
 
-Read the bundled helper, copy it unchanged into the analysis workspace, and
-source that workspace copy after constructing `spe` and before choosing basic
-or polygon branches. This placement prevents Polygon QC from skipping required
-definitions.
-
-```r
-source("spacetrooper_helpers.R")
-stopifnot(exists("record_engine_status"),
-          exists("set_metadata_value"),
-          exists("space_trooper_preflight"),
-          exists("run_supported_qscore"),
-          exists("export_spatial_qc"))
-```
-
-The helpers log engine status, validate the object contract, adapt to installed
-QScore APIs and restore matched results to the complete baseline.
-
-### Step 4: Execute Exactly One SpaceTrooper Metric Branch
-
-If D1 is declined/not applicable, run basic `spatialPerCellQC()` on a copy with
-`rmZeros=FALSE`. If D1 is approved, the integrated polygon branch replaces the
-basic branch: attach polygons, account for matching loss, join geometry by ID,
-then run `spatialPerCellQC(..., rmZeros=FALSE)` once.
-
-```r
-spe_qc <- spe_baseline
-check <- space_trooper_preflight(spe_qc)
-if (!check$ok) stop(paste(check$issues, collapse="; "))
-n_before <- ncol(spe_qc)
-spe_qc <- SpaceTrooper::spatialPerCellQC(spe_qc, rmZeros=FALSE)
-stopifnot(ncol(spe_qc) == n_before)
-spe_qc <- set_metadata_value(spe_qc, "space_trooper_executed", TRUE)
-```
-
-In the D1 branch, preserve `ids_before`, write matching status for every cell,
-and never count unmatched cells as metric outliers. Read the execution reference
-for the complete branch contract.
-
-### Step 5: Compute Robust Outliers and QScore Independently of D1
-
-Run `computeSpatialOutlier()` on supported observed metrics. Use medcouple for
-skewed distributions and scuttle MAD for symmetric ones after inspecting the
-distribution; package fences remain metric evidence.
-
-```r
-metrics <- intersect(c("log2SignalDensity", "Area_um", "log2AspectRatio",
-  "log2Ctrl_total_ratio", "polygon_area"),
-  colnames(SummarizedExperiment::colData(spe_qc)))
-for (metric in metrics)
-  spe_qc <- SpaceTrooper::computeSpatialOutlier(
-    spe_qc, computeBy=metric, method="both", scuttleType="both")
-```
-
-Then call the same version-adaptive QScore helper after either branch. Its
-eligibility depends on actual metrics and installed API, not D1.
-
-```r
-qscore_run <- run_supported_qscore(spe_qc, seed=1713L)
-spe_qc <- qscore_run$spe
-qscore_usable <- qscore_run$usable
-qscore_col <- qscore_run$score_col
-```
-
-Record actual function, version, output column, seed, model formula, included
-metrics and lambda when exposed. Do not invent missing predictors or transfer a
-model between datasets.
-
-### Step 6: Plot, Restore Full IDs and Integrate Evidence
-
-Save SpaceTrooper histograms and centroid maps for major metrics and QScore.
-Save polygon maps only in the D1-approved branch. A centroid/polygon map is
-descriptive, not a local-neighbour test.
-
-```r
-dir.create("qc_package_plots", showWarnings=FALSE)
-for (metric in intersect(c("sum", "detected", "log2SignalDensity", "Area_um",
-    "log2AspectRatio", "log2Ctrl_total_ratio", qscore_col),
-    colnames(SummarizedExperiment::colData(spe_qc)))) {
-  p <- SpaceTrooper::plotMetricHist(spe_qc, metric=metric)
-  ggplot2::ggsave(file.path("qc_package_plots", paste0(metric, "_distribution.png")),
-                  p, width=6, height=4, dpi=200)
-}
-```
-
-Export matched metrics onto the complete pre-polygon baseline and require exact
-Python/R ID equality and ordering. Unmatched cells retain missing derived
-metrics and explicit matching status.
-
-Read the shared assessment reference. Treat QScore and its optional low-score
-flag as one evidence domain. Call the installed QScore flag function only when
-the review has recorded an explicit cutoff; never silently use `0.5`.
-
-### Step 7: Visualize Recommendations, Validate Impact, Resolve D2 and Report
-
-Plot all major metric distributions and spatial views. Draw a cutoff only when
-the recommendation configuration contains that explicit numeric value.
-Validate final impact overall and by sample/FOV on the complete baseline.
+Before QC, inspect only polygon presence, parseability, non-empty geometry, and
+cell-ID overlap. If usable, ask D1. Do not calculate polygon area/aspect ratio,
+attach geometry, or map polygons until approved.
 
 ```python
-import pandas as pd
-
-class_order = ["Retain", "Review", "Exclude candidate"]
-impact = adata.obs["qc_class"].value_counts().reindex(class_order, fill_value=0)
-print(impact, (100 * impact / adata.n_obs).round(2))
-if "polygon_unmatched" in adata.obs:
-    unmatched = adata.obs["polygon_unmatched"].fillna(False).astype(bool)
-    assert not adata.obs.loc[unmatched, "qc_class"].eq("Exclude candidate").any()
+polygon_usable = polygon_file_exists and polygon_ids_overlap_cells
+print({"polygon_usable": polygon_usable, "matched_cells": matched_count})
+# Ask D1 here when polygon_usable is true; otherwise continue Basic QC.
 ```
 
-If no exclusions exist or the request is assessment-only, record D2 as
-`not_applicable`. Otherwise show the exact final rule set, plots, expected
-impact and biological-loss risk and ask D2 once. Preserve the original and
-write only a separately named filtered copy after approval.
+### Step 4: Detect Capabilities, Then Run Supported Official Functions
+
+Before each call, inspect feature annotations and metadata. Always calculate
+valid count totals/detected features. Calculate control metrics only when
+recognized controls are actually measured; area/signal density only when the
+platform area/volume input exists; aspect/border metrics only when their source
+fields exist; and QScore only when its eligible predictors and training set are
+available. A measured control value of zero is different from no control
+features. Record every function as `completed`, `skipped`, or `failed`, with a
+reason. Unexpected failure of an optional function preserves earlier outputs;
+invalid counts, duplicate/misaligned IDs, or corrupt core input remain fatal.
+
+Use the documented platform loader with polygon attachment matching D1. Run
+`spatialPerCellQC(..., rmZeros=FALSE)` to preserve the denominator. Basic
+outputs include `sum`, `detected`, control/target metrics, control ratio,
+`Area_um`, and signal density; aspect ratio and CosMx border distance are
+conditional.
+
+```r
+spe_qc <- SpaceTrooper::spatialPerCellQC(spe_baseline, rmZeros=FALSE)
+stopifnot(ncol(spe_qc) == ncol(spe_baseline))
+```
+
+Calculate package outlier labels for supported QScore metrics, then calculate
+dataset-specific QScore with a recorded seed. Do not transfer an unrelated
+model.
+
+```r
+set.seed(1713)
+spe_qc <- SpaceTrooper::computeOutliersQScore(spe_qc)
+spe_qc <- SpaceTrooper::checkOutliers(spe_qc, verbose=TRUE)
+spe_qc <- SpaceTrooper::computeQScore(spe_qc, verbose=TRUE)
+stopifnot("QScore" %in% colnames(SummarizedExperiment::colData(spe_qc)))
+```
+
+For other displayed metrics, calculate official fences as references, not
+final cutoffs.
+
+```r
+spe_qc <- SpaceTrooper::computeSpatialOutlier(
+  spe_qc, computeBy="log2SignalDensity", method="both", scuttleType="both")
+print(attr(spe_qc$log2SignalDensity_outlier_sc, "thresholds"))
+```
+
+### Step 5: Run the Sparse Python Fallback Only After Failure
+
+Copy the bundled script unchanged to the workspace. Keep counts sparse: use a
+SciPy sparse NPZ plus a feature list and metadata, or H5AD when `anndata` is
+available. Do not export the count matrix to TSV. Pass polygon vertices only
+after D1 approval.
+
+```bash
+python spacetrooper_fallback.py \
+  --counts-npz cells_by_features.npz \
+  --metadata cell_metadata.tsv \
+  --features feature_names.csv \
+  --technology 10X_Xenium \
+  --output qc_metrics.parquet \
+  --seed 1713
+```
+
+The fallback detects the same capabilities, preserves completed metrics when
+polygon/outlier/QScore work is skipped or fails, and emits `*.status.json` with
+per-feature `completed`/`skipped`/`failed` states. It names its candidate
+`QScore_fallback_python`, never `QScore`. It preserves the official training-
+label rules, balanced sampling, pairwise interactions, ridge-binomial model,
+and cross-validation, but SciPy optimization/lambda paths and Python sampling
+differ from `glmnet`/R. The candidate is currently unvalidated and its status
+remains `qscore_usable=false` with `validation_state=unvalidated`. Never use
+`QScore_fallback_python` for cutoff recommendation, expected-removal preview,
+or filtering. Record QScore as unavailable and continue with individual
+metrics. Official-versus-fallback qualification is a development activity and
+must not be repeated on routine user datasets.
+
+### Step 6: Review QScore Distributions and Recommend Its Cutoff
+
+Plot QScore overall and by sample/FOV, inspect tails and sample shifts, then
+choose a candidate cutoff. Show sensitivity around nearby values. Do not accept
+the package flag default `0.5` without this review.
+
+```python
+q = metrics["QScore"].dropna()
+print(q.describe(percentiles=[.01, .05, .1, .25, .5, .75, .9, .95, .99]))
+for cutoff in candidate_cutoffs:
+    print(cutoff, int((metrics["QScore"] < cutoff).sum()))
+```
+
+Record the recommended cutoff with `operator=lt`, explanation, exact expected
+impact, and spatial map. This QScore workflow applies to official SpaceTrooper
+`QScore`; do not substitute `QScore_fallback_python`. If the official score is
+missing, incomplete, or has no defensible cutoff, explain why and use individual
+metrics.
+
+### Step 7: Recommend Individual Metric Cutoffs
+
+Review overall/sample distributions for all available major metrics. Prioritize
+`log2SignalDensity` (bad-low), `Area_um` (data-dependent; SpaceTrooper uses
+bad-high for QScore training), `log2Ctrl_total_ratio` (bad-high), and CosMx
+`log2AspectRatio`/border context (two-sided when appropriate). Also report
+`sum`, `detected`, control, and target metrics when informative.
+
+```python
+for metric in available_metrics:
+    print(metric, metrics.groupby("sample_id")[metric].describe())
+```
+
+For each metric, record a cutoff and direction or `no_cutoff` with a reason.
+Report metric-level package outliers separately.
+
+### Step 8: Recommend the Final Rule and Complete the QC Report
+
+Prefer a valid QScore cutoff; otherwise use the smallest defensible individual-
+metric rule. Use explicit AND/OR for multiple conditions. Run the shared
+calculator and map `selected_filter_match`.
+
+```bash
+python qc_apply_rules.py --metrics qc_metrics.tsv \
+  --rules qc_filter_rules.tsv --rule-set-id agent-final-001 --logic OR \
+  --mode preview \
+  --id-column observation_id --group-column sample_id \
+  --output-prefix qc_recommendation
+```
+
+Show exact overall/sample removal counts and spatial distribution in the QC
+report. If filtering was not requested, record D2=`not_applicable` and finish.
+If the user later requests the recommendation, one metric, a changed cutoff,
+or an AND/OR combination, preview that exact `rule_set_id`, show revised impact,
+then obtain D2. Apply mode requires the matching rule-set digest; any change
+invalidates the prior approval. Only then create a separately named copy.
 
 ## Key Parameters
 
-| Parameter | Default/reference | Decision rule |
-|---|---|---|
-| `rmZeros` | `FALSE` | invariant; package default may silently subset cells |
-| `method` | compare `both` | choose medcouple vs MAD from observed distribution |
-| `scuttleType` | `both` | metric-specific direction after inspection |
-| QScore seed | `1713` | provenance/reproducibility; does not gate D1 |
-| `modelFormula` | installed package default | never invent unavailable predictors |
-| `keepMultiPol` | `TRUE` | preserve and flag multipolygons |
-| `micronConvFact` | platform metadata | never assume when coordinates already use microns |
-| D1 | conditional explicit approval | polygon-derived work only |
+| Parameter | Official default | Use in this workflow |
+|---|---:|---|
+| `spatialPerCellQC(rmZeros)` | `TRUE` | set `FALSE`; preserve source denominator |
+| `micronConvFact` | `0.12` | use only for CosMx pixels and record provenance |
+| `computeSpatialOutlier(method)` | `mc/scuttle/both` | package reference flags selected from actual skew |
+| `scuttleType` | `both` | choose direction per displayed metric |
+| `computeQScore(bestLambda)` | internal CV | leave `NULL`, record seed and returned lambda |
+| `computeQScoreFlags(qsThreshold)` | `0.5` | call only with reviewed explicit cutoff |
+| QScore minimum outliers | `0.1%` | package eligibility rule, not filtering cutoff |
 
 ## Common Recipes
 
-### Inspect Actual QScore Metadata
+### Apply the Reviewed QScore Cutoff
 
 ```r
-print(S4Vectors::metadata(spe_qc)$qscore_execution)
-score_column <- S4Vectors::metadata(spe_qc)$qscore_execution$score_column
-print(summary(spe_qc[[score_column]]))
+reviewed_cutoff <- rules$threshold[rules$metric == "QScore"]
+spe_qc <- SpaceTrooper::computeQScoreFlags(
+  spe_qc, qsThreshold=reviewed_cutoff, useQSQuantiles=FALSE)
 ```
 
-### Inspect SpaceTrooper Fences Without Filtering
+### Preserve Original and Create the D2-Approved Copy
 
-```r
-flag <- spe_qc$log2SignalDensity_outlier_sc
-print(attr(flag, "thresholds"))
-print(table(flag, useNA="ifany"))
+```python
+approved = pd.read_csv("qc_recommendation_matches.tsv", sep="\t")
+mask = approved.set_index("observation_id").loc[adata.obs_names,
+                                                   "selected_filter_match"]
+adata_filtered = adata[(~mask).to_numpy()].copy()
+adata_filtered.write_h5ad("spatial_imaging_qc_filtered_copy.h5ad")
 ```
 
 ## Expected Outputs
 
-- `qc_input_classification.json`, `qc_capabilities.tsv`
-- `qc_environment_status.tsv`, `qc_execution_log.tsv`
-- `qc_observation_accounting.tsv`, `qc_observation_flags.tsv`
-- actual `QScore`/`QC_score` values and execution metadata when supported
-- `qc_polygon_matching_status.csv` only after approved polygon work
-- SpaceTrooper distributions, centroid maps and conditional polygon maps
-- recommendation, candidate, impact and validation tables
-- `qc_filtering_recommendation.html`, `spatial_qc_report.html`
-- optional filtered copy only after D2
+- engine/version/function log and fallback reason
+- complete per-cell metric/QScore table and package outlier columns
+- D1 polygon results only when approved
+- overall/sample distributions and maps for QScore and major metrics
+- exact rules and per-rule/final impact tables
+- QC report containing D1/D2 and actual filtering result
+- optional separately named filtered object; unchanged source object
 
 ## Troubleshooting
 
-| Problem | Cause | Solution |
+| Problem | Cause | Resolution |
 |---|---|---|
-| `Rscript` or SpaceTrooper unavailable | runtime/package/dependency missing | request the slow install when required, install and verify the approved 1.0.1 build; use labeled common QC only after an actual install/import attempt fails |
-| `spatialPerCellQC()` loses cells | `rmZeros=TRUE` used | restart from baseline with `rmZeros=FALSE` |
-| QScore unavailable | required metrics/API/model fit absent | log actual reason; do not tie the skip to D1 |
-| Polygon object has fewer cells | unmatched/invalid polygon IDs | account before/after IDs; restore full baseline on export |
-| Polygon plot cannot find geometry | flattened geometry column varies by reader | inspect actual `colData` names and class |
-| R/Python join fails | subset or order mismatch | export all baseline IDs and enforce exact set/order |
-| Empty candidate file fails | zero-byte TSV lacks headers | normalize to the shared declared schema |
-| A single fence drives exclusion | integrated review was skipped | finish evidence integration, plots and impact validation |
+| Official package cannot install | R/Bioconductor or system dependency mismatch | preserve error, run bundled fallback, disclose mode |
+| Counts disappear | package default `rmZeros=TRUE` | restart from baseline with `rmZeros=FALSE` |
+| QScore fails | required metric/outliers/training set/dependencies absent | report reason; recommend individual metrics |
+| Fallback QScore status is false | official parity is unverified or dependencies failed | ignore the quarantined candidate; use individual metrics |
+| Polygon fields exist but D1 unanswered | mandatory conditional approval unresolved | pause before QC and ask D1 |
+| Samples have different distributions | slide shift | show per-sample panels; avoid blind global cutoff |
+| Count differs from plot | thresholds duplicated in code | use only the rule table and rerun calculator |
 
 ## Bundled Resources
 
-- `scripts/spacetrooper_helpers.R` — required shared definitions before branching.
-- `references/spacetrooper-workflow.md` — required branch, polygon and bridge details.
-- `../spatial-transcriptomics-qc/references/integrated-assessment.md` — required shared interpretation and D2 policy.
+- `references/spacetrooper-workflow.md` — official functions, formulas, inputs, and errors.
+- `references/fallback-validation.md` — runtime validation status, use limits, and dependencies.
+- `scripts/spacetrooper_helpers.R` — official package bridge.
+- `scripts/spacetrooper_fallback.py` — sparse runtime fallback used only after official failure.
+- `../spatial-transcriptomics-qc/references/cutoff-and-filtering.md` — shared cutoff/D2/report contract.
+- `../spatial-transcriptomics-qc/scripts/qc_apply_rules.py` — deterministic rule/impact calculator.
 
 ## References
 
-- SpaceTrooper Bioconductor package: https://bioconductor.org/packages/SpaceTrooper
 - SpaceTrooper source: https://github.com/drighelli/SpaceTrooper
-- SpatialExperiment package: https://bioconductor.org/packages/SpatialExperiment
-- zellkonverter AnnData/H5AD conversion: https://bioconductor.org/packages/zellkonverter
+- SpaceTrooper Bioconductor package: https://bioconductor.org/packages/SpaceTrooper
+- SpatialExperiment: https://bioconductor.org/packages/SpatialExperiment
